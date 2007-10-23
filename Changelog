@@ -1,6 +1,8 @@
 Changelog. A lot less detailed than usual, at least for past
 history. 
 
+2007/10/23: Merged into the c-binding branch from trunk.
+
 2007/10/19: Merged in ILU(P,T). To be tested extensively.
 
 2007/10/17: Merged ILU(K) into trunk.
