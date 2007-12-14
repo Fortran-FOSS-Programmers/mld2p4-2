@@ -331,15 +331,15 @@ contains
         ! Copy the i-th local row of the matrix, stored in a,
         ! into laspk/d(i)/uaspk 
         !
-        call ilu_copyin(i,ma,a,i,1,m,l1,lia1,lia2,laspk,&
-             & d(i),l2,uia1,uia2,uaspk,ktrw,trw)
+        call ilu_copyin(i,ma,a,i,1,m,l1,lia1,laspk,&
+             & d(i),l2,uia1,uaspk,ktrw,trw)
       else
         !
         ! Copy the i-th local row of the matrix, stored in b
         ! (as (i-ma)-th row), into laspk/d(i)/uaspk 
         !
-        call ilu_copyin(i-ma,mb,b,i,1,m,l1,lia1,lia2,laspk,&
-             & d(i),l2,uia1,uia2,uaspk,ktrw,trw)
+        call ilu_copyin(i-ma,mb,b,i,1,m,l1,lia1,laspk,&
+             & d(i),l2,uia1,uaspk,ktrw,trw)
       endif
 
       lia2(i+1) = l1 + 1
@@ -509,10 +509,6 @@ contains
   !               The column indices of the nonzero entries of the lower triangle
   !               copied in laspk row by row (see mld_dilu_fctint), according
   !               to the CSR storage format.
-  !    lia2    -  integer, dimension(:), input/output.
-  !               The indices identifying the first nonzero entry of each row
-  !               of the lower triangle copied in laspk row by row (see
-  !               mld_dilu_fctint), according to the CSR storage format.
   !    laspk   -  real(kind(1.d0)), dimension(:), input/output.
   !               The array where the entries of the row corresponding to the
   !               lower triangle are copied.
@@ -524,10 +520,6 @@ contains
   !               The column indices of the nonzero entries of the upper triangle
   !               copied in uaspk row by row (see mld_dilu_fctint), according
   !               to the CSR storage format.
-  !    uia2    -  integer, dimension(:), input/output.
-  !               The indices identifying the first nonzero entry of each row
-  !               of the upper triangle copied in uaspk row by row (see
-  !               mld_dilu_fctint), according to the CSR storage format.
   !    uaspk   -  real(kind(1.d0)), dimension(:), input/output.
   !               The array where the entries of the row corresponding to the
   !               upper triangle are copied. 
@@ -542,8 +534,8 @@ contains
   !               until we empty the buffer. Thus we will make a call to psb_sp_getblk
   !               every nrb calls to copyin. If A is in CSR format it is unused.
   !
-  subroutine ilu_copyin(i,m,a,jd,jmin,jmax,l1,lia1,lia2,laspk,&
-       & dia,l2,uia1,uia2,uaspk,ktrw,trw)
+  subroutine ilu_copyin(i,m,a,jd,jmin,jmax,l1,lia1,laspk,&
+       & dia,l2,uia1,uaspk,ktrw,trw)
 
     use psb_base_mod
 
@@ -552,7 +544,7 @@ contains
     ! Arguments
     type(psb_dspmat_type) :: a,trw
     integer               :: i,m,ktrw,jd,jmin,jmax,l1,l2
-    integer               :: lia1(:),lia2(:),uia1(:),uia2(:)
+    integer               :: lia1(:), uia1(:)
     real(kind(1.d0))      :: laspk(:), uaspk(:), dia
 
     ! Local variables

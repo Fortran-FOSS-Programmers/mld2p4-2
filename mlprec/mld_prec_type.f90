@@ -921,6 +921,14 @@ contains
     is_legal_ml_coarse_mat = ((ip>=mld_distr_mat_).and.(ip<=mld_repl_mat_))
     return
   end function is_legal_ml_coarse_mat
+  function is_distr_ml_coarse_mat(ip)
+    use psb_base_mod
+    integer, intent(in) :: ip
+    logical             :: is_distr_ml_coarse_mat
+
+    is_distr_ml_coarse_mat = (ip==mld_distr_mat_)
+    return
+  end function is_distr_ml_coarse_mat
   function is_legal_ml_fact(ip)
     use psb_base_mod
     integer, intent(in) :: ip

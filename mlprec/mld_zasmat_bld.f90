@@ -115,8 +115,8 @@ subroutine mld_zasmat_bld(ptype,novr,a,blk,desc_data,upd,desc_p,info,outfmt)
   n_col  = desc_data%matrix_data(psb_n_col_)
   nhalo  = n_col-nrow_a
 
-
-  If (ptype == mld_bjac_) Then
+  select case (ptype)
+  case (mld_bjac_) 
     !
     ! Block-Jacobi preconditioner. Copy the descriptor, just in case 
     ! we want to renumber the rows and columns of the matrix. 
@@ -143,7 +143,7 @@ subroutine mld_zasmat_bld(ptype,novr,a,blk,desc_data,upd,desc_p,info,outfmt)
       end if
     endif
 
-  Else If (ptype == mld_as_) Then
+  case(mld_as_) 
 
 
     !
@@ -231,16 +231,15 @@ subroutine mld_zasmat_bld(ptype,novr,a,blk,desc_data,upd,desc_p,info,outfmt)
 
     if (debug) write(0,*) 'After psb_sphalo ',&
          & blk%fida,blk%m,psb_nnz_,blk%infoa(psb_nnz_)
-
-    t3 = psb_wtime()
-    if (debugprt) then 
-      open(40+me) 
-      call psb_csprt(40+me,blk,head='% Ovrlap rows')
-      close(40+me)
-    endif
-
-
-  End If
+  case default
+    if(info /= 0) then
+      info=4000
+      ch_err='Invalid ptype'
+      call psb_errpush(info,name,a_err=ch_err)
+      goto 9999
+    end if
+    
+  End select
 
   call psb_erractionrestore(err_act)
   return

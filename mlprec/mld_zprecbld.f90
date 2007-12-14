@@ -169,6 +169,13 @@ subroutine mld_zprecbld(a,desc_a,p,info,upd)
         goto 9999
       endif
 
+      if (i<size(p%baseprecv)) then 
+        !
+        ! A replicated matrix only makes sense at the coarsest level
+        !
+        call mld_check_def(p%baseprecv(i)%iprcparm(mld_coarse_mat_),'Coarse matrix',&
+             &   mld_distr_mat_,is_distr_ml_coarse_mat)
+      end if
       !
       ! Build the base preconditioner corresponding to level i
       !

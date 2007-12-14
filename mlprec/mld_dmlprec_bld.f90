@@ -49,7 +49,7 @@
 !               matrix to be preconditioned.
 !    desc_a  -  type(<psb_desc_type>), input.
 !               The communication descriptor of a.
-!       p       -  type(<mld_dbaseprc_type>), input/output.
+!    p       -  type(<mld_dbaseprc_type>), input/output.
 !               The base preconditioner data structure containing the local
 !               part of the base preconditioner to be built.
 !    info    -  integer, output.
