@@ -34,10 +34,10 @@
 !!$  POSSIBILITY OF SUCH DAMAGE.
 !!$ 
 !!$
-! File: mld_dbaseprec_aply.f90.
+! File: mld_dbaseprec_aply.f90
 !
-! Subroutine: mld_dbaseprec_aply.
-! Version:    real.
+! Subroutine: mld_dbaseprec_aply
+! Version:    real
 !
 !  This routine applies a base preconditioner by computing
 !

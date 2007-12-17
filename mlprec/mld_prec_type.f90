@@ -34,9 +34,9 @@
 !!$  POSSIBILITY OF SUCH DAMAGE.
 !!$ 
 !!$
-! File: mld_prec_type.f90.
+! File: mld_prec_type.f90
 !
-! package: mld_prec_type.
+! package: mld_prec_type
 !          Data structure(s) for sparse matrices
 !
 !  This module defines: 
@@ -64,6 +64,8 @@ module mld_prec_type
        & psb_sizeof
 
   !
+  ! type: mld_dprec_type
+  !
   !  mld_dprec_type and mld_zprec_type are the real and complex      preconditioner
   !  data structures. In the following description 'd' and 'z' are omitted.
   !
@@ -78,7 +80,6 @@ module mld_prec_type
   ! The levels are numbered in increasing order      starting from the finest
   ! one, i.e. level 1 is the finest level and A(1) is the matrix A.
   !
-  ! type: mld_prec_type
   !
   !|  type mld_dprec_type
   !|    type(mld_dbaseprc_type), allocatable  :: baseprecv(:) 
@@ -87,7 +88,7 @@ module mld_prec_type
   !   baseprecv(ilev) is the base preconditioner      at level ilev.
   !   The number of levels is given by  size(baseprecv(:)).
   !                 
-  ! type: mld_baseprc_type
+  ! type: mld_dbaseprc_type
   !
   !    av         -  type(psb_dspmat_type), dimension(:), allocatable(:).
   !                  The sparse matrices needed to apply the preconditioner at
@@ -462,8 +463,8 @@ contains
   !
 
   !
-  ! Subroutine: mld_out_prec_descr.
-  ! Version: real.
+  ! Subroutine: mld_out_prec_descr
+  ! Version: real
   !
   !  This routine prints to the standard output a description of the
   !  preconditioner.
@@ -485,8 +486,8 @@ contains
   end subroutine mld_zout_prec_descr
 
   !
-  ! Subroutine: mld_file_prec_descr.
-  ! Version: real.
+  ! Subroutine: mld_file_prec_descr
+  ! Version: real
   !
   !  This routine prints to a file a description of the preconditioner.
   !
