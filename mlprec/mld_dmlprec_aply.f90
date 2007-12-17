@@ -64,11 +64,11 @@
 !  level 1 is the finest level and A(1) is the matrix A.
 !
 !  For a general description of (parallel) multilevel preconditioners see
-!    1. B.F. Smith, P.E. Bjorstad & W.D. Gropp,
+!    -  B.F. Smith, P.E. Bjorstad & W.D. Gropp,
 !       Domain decomposition: parallel multilevel methods for elliptic partial
 !       differential equations,
 !       Cambridge University Press, 1996.
-!    2. K. Stuben,
+!    -  K. Stuben,
 !       Algebraic Multigrid (AMG): An Introduction with Applications,
 !       GMD Report N. 70, 1999.
 !
@@ -182,7 +182,7 @@ subroutine mld_dmlprec_aply(alpha,baseprecv,x,beta,y,desc_data,trans,work,info)
   ! Local variables
   integer :: n_row,n_col
   integer :: ictxt,np,me,i, nr2l,nc2l,err_act
-  logical, parameter          :: debug=.false., debugprt=.false.
+  logical, parameter          :: debug=.false.
   integer      :: ismth, nlev, ilev, icm
   character(len=20)   :: name
 
