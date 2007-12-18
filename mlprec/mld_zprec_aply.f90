@@ -232,9 +232,9 @@ subroutine mld_zprec_aply1(prec,x,desc_data,info,trans)
     goto 9999      
   end if
 
-  call mld_prec_aply(prec,x,ww,desc_data,info,trans_,work=w1)
+  call mld_precaply(prec,x,ww,desc_data,info,trans_,work=w1)
   if (info /= 0) then
-    call psb_errpush(4010,name,a_err='mld_prec_aply')
+    call psb_errpush(4010,name,a_err='mld_precaply')
     goto 9999
   end if
 
