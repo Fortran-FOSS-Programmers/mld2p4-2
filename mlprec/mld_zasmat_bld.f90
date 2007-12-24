@@ -242,12 +242,11 @@ subroutine mld_zasmat_bld(ptype,novr,a,blk,desc_data,upd,desc_p,info,outfmt)
          & 'After psb_sphalo ',&
          & blk%fida,blk%m,psb_nnz_,blk%infoa(psb_nnz_)
   case default
-    if(info /= 0) then
-      info=4001
-      ch_err='Invalid ptype'
-      call psb_errpush(info,name,a_err=ch_err)
-      goto 9999
-    end if
+
+    info=4001
+    ch_err='Invalid ptype'
+    call psb_errpush(info,name,a_err=ch_err)
+    goto 9999
     
   End select
   if (debug_level >= psb_debug_outer_) &
