@@ -296,6 +296,16 @@ contains
     if(psb_get_errstatus().ne.0) return 
     info=0
     call psb_erractionsave(err_act)
+
+    select case(ialg)
+    case(mld_ilu_n_,mld_milu_n_)
+      ! Ok 
+    case default
+      info=35
+      call psb_errpush(info,name,i_err=(/1,ialg,0,0,0/))
+      goto 9999
+    end select
+
     call psb_nullify_sp(trw)
     trw%m=0
     trw%k=0

@@ -81,7 +81,7 @@ subroutine mld_zasmat_bld(ptype,novr,a,blk,desc_data,upd,desc_p,info,outfmt)
   ! Arguments
   integer, intent(in)                  :: ptype,novr
   Type(psb_zspmat_type), Intent(in)    :: a
-  Type(psb_zspmat_type), Intent(inout) :: blk
+  Type(psb_zspmat_type), Intent(out)   :: blk
   integer, intent(out)                 :: info
   Type(psb_desc_type), Intent(inout)   :: desc_p
   Type(psb_desc_type), Intent(in)      :: desc_data 
