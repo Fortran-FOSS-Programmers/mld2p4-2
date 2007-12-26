@@ -172,7 +172,7 @@ subroutine mld_dilu_fct(ialg,a,l,u,d,info,blck)
   u%k = m
 
   !
-  !     Nullify pointer / deallocate memory
+  ! Nullify pointer / deallocate memory
   !
   if (present(blck)) then 
     blck_ => null() 
@@ -479,7 +479,7 @@ contains
   !  according to the CSR format; the corresponding column indices are stored in
   !  the arrays lia1 and uia1.
   !
-  !  If the sparse matrix is in CSR format, a 'straight' copy   is performed;
+  !  If the sparse matrix is in CSR format, a 'straight' copy is performed;
   !  otherwise psb_sp_getblk is used to extract a block of rows, which is then
   !  copied into laspk, dia, uaspk row by row, through successive calls to
   !  ilu_copyin.

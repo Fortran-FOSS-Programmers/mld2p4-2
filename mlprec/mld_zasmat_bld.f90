@@ -93,7 +93,7 @@ subroutine mld_zasmat_bld(ptype,novr,a,blk,desc_data,upd,desc_p,info,outfmt)
   Integer ::  np,me,nnzero,&
        &  ictxt, n_col,int_err(5),&
        &  tot_recv, n_row,nhalo, nrow_a,err_act
-  integer             :: debug_level, debug_unit
+  integer           :: debug_level, debug_unit
   character(len=20) :: name, ch_err
 
   name='mld_zasmat_bld'
@@ -241,8 +241,8 @@ subroutine mld_zasmat_bld(ptype,novr,a,blk,desc_data,upd,desc_p,info,outfmt)
          & write(debug_unit,*) me,' ',trim(name),&
          & 'After psb_sphalo ',&
          & blk%fida,blk%m,psb_nnz_,blk%infoa(psb_nnz_)
-  case default
 
+  case default
     info=4001
     ch_err='Invalid ptype'
     call psb_errpush(info,name,a_err=ch_err)
