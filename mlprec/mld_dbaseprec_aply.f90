@@ -83,7 +83,7 @@ subroutine mld_dbaseprec_aply(alpha,prec,x,beta,y,desc_data,trans,work,info)
 
   implicit none 
 
-! Arguments
+  ! Arguments
   type(psb_desc_type),intent(in)      :: desc_data
   type(mld_dbaseprc_type), intent(in) :: prec
   real(kind(0.d0)),intent(in)         :: x(:)
@@ -124,17 +124,17 @@ subroutine mld_dbaseprec_aply(alpha,prec,x,beta,y,desc_data,trans,work,info)
   select case(prec%iprcparm(mld_prec_type_))
 
   case(mld_noprec_)
-  !
-  ! No preconditioner
-  !
+    !
+    ! No preconditioner
+    !
 
     call psb_geaxpby(alpha,x,beta,y,desc_data,info)
 
   case(mld_diag_)
-  !
-  ! Diagonal preconditioner
-  !
-    
+    !
+    ! Diagonal preconditioner
+    !
+
     if (size(work) >= size(x)) then 
       ww => work
     else
@@ -158,9 +158,9 @@ subroutine mld_dbaseprec_aply(alpha,prec,x,beta,y,desc_data,trans,work,info)
     end if
 
   case(mld_bjac_)
-  !
-  ! Block-Jacobi preconditioner
-  !
+    !
+    ! Block-Jacobi preconditioner
+    !
 
     call mld_bjac_aply(alpha,prec,x,beta,y,desc_data,trans,work,info)
     if(info /= 0) then
@@ -170,9 +170,9 @@ subroutine mld_dbaseprec_aply(alpha,prec,x,beta,y,desc_data,trans,work,info)
     end if
 
   case(mld_as_)
-  !
-  ! Additive Schwarz preconditioner
-  !
+    !
+    ! Additive Schwarz preconditioner
+    !
 
     if (prec%iprcparm(mld_n_ovr_)==0) then
       ! 
@@ -235,7 +235,7 @@ subroutine mld_dbaseprec_aply(alpha,prec,x,beta,y,desc_data,trans,work,info)
       !
       ! Get the overlap entries of tx (tx==x)
       ! 
-        if (prec%iprcparm(mld_sub_restr_)==psb_halo_) then 
+      if (prec%iprcparm(mld_sub_restr_)==psb_halo_) then 
         call psb_halo(tx,prec%desc_data,info,work=aux,data=psb_comm_ext_)
         if(info /=0) then
           info=4010
@@ -289,8 +289,9 @@ subroutine mld_dbaseprec_aply(alpha,prec,x,beta,y,desc_data,trans,work,info)
       case(psb_none_)
         ! 
         ! Would work anyway, but since it is supposed to do nothing ...
-        ! call f90_psovrl(ty,prec%desc_data,update=prec%a_restrict)
-        !
+        !        call psb_ovrl(ty,prec%desc_data,info,&
+        !             & update=prec%iprcparm(mld_sub_prol_),work=aux)
+
 
       case(psb_sum_,psb_avg_) 
         !
