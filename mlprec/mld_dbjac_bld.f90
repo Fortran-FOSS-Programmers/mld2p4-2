@@ -463,7 +463,8 @@ subroutine mld_dbjac_bld(a,desc_a,p,upd,info)
       !
       ! Compute the LU factorization.
       !
-      if (info == 0) call psb_ipcoo2csc(atmp,info,clshr=.true.)
+      !if (info == 0) call psb_ipcoo2csc(atmp,info,clshr=.true.)
+      if (info == 0) call psb_spcnv(atmp,info,afmt='csc',dupl=psb_dupl_add_)
       if (info == 0) call mld_umf_bld(atmp,p%desc_data,p,info)
       if (debug_level >= psb_debug_outer_) &
            & write(debug_unit,*) me,' ',trim(name),&

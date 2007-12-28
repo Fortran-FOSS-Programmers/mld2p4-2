@@ -269,6 +269,33 @@ module mld_prec_mod
     end subroutine mld_zbaseprec_aply
   end interface
 
+  interface mld_as_aply
+    subroutine mld_das_aply(alpha,prec,x,beta,y,desc_data,trans,work,info)
+      use psb_base_mod
+      use mld_prec_type
+      type(psb_desc_type),intent(in)      :: desc_data
+      type(mld_dbaseprc_type), intent(in) :: prec
+      real(kind(0.d0)),intent(in)         :: x(:)
+      real(kind(0.d0)),intent(inout)      :: y(:)
+      real(kind(0.d0)),intent(in)         :: alpha,beta
+      character(len=1)                    :: trans
+      real(kind(0.d0)),target             :: work(:)
+      integer, intent(out)                :: info
+    end subroutine mld_das_aply
+    subroutine mld_zas_aply(alpha,prec,x,beta,y,desc_data,trans,work,info)
+      use psb_base_mod
+      use mld_prec_type
+      type(psb_desc_type),intent(in)      :: desc_data
+      type(mld_zbaseprc_type), intent(in) :: prec
+      complex(kind(1.d0)),intent(in)      :: x(:)
+      complex(kind(1.d0)),intent(inout)   :: y(:)
+      complex(kind(1.d0)),intent(in)      :: alpha,beta
+      character(len=1)                    :: trans
+      complex(kind(1.d0)),target          :: work(:)
+      integer, intent(out)                :: info
+    end subroutine mld_zas_aply
+  end interface
+
   interface mld_mlprec_aply
      subroutine mld_dmlprec_aply(alpha,baseprecv,x,beta,y,desc_data,trans,work,info)
        use psb_base_mod
