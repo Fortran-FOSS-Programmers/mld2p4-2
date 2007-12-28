@@ -393,22 +393,20 @@ module mld_prec_mod
   end interface
 
   interface mld_ilu_bld
-    subroutine mld_dilu_bld(a,desc_data,p,upd,info,blck)
+    subroutine mld_dilu_bld(a,p,upd,info,blck)
       use psb_base_mod
       use mld_prec_type
       integer, intent(out) :: info
       type(psb_dspmat_type), intent(in), target :: a
-      type(psb_desc_type),intent(in)            :: desc_data
       type(mld_dbaseprc_type), intent(inout)    :: p
       character, intent(in)                     :: upd
       type(psb_dspmat_type), intent(in), optional :: blck
     end subroutine mld_dilu_bld
-    subroutine mld_zilu_bld(a,desc_data,p,upd,info,blck)
+    subroutine mld_zilu_bld(a,p,upd,info,blck)
       use psb_base_mod
       use mld_prec_type
       integer, intent(out) :: info
       type(psb_zspmat_type), intent(in), target :: a
-      type(psb_desc_type),intent(in)            :: desc_data
       type(mld_zbaseprc_type), intent(inout)    :: p
       character, intent(in)                     :: upd
       type(psb_zspmat_type), intent(in), optional :: blck

@@ -233,7 +233,7 @@ subroutine mld_dbjac_bld(a,desc_a,p,upd,info)
       ! ILU(k)/MILU(k)/ILU(k,t) factorization.
       !      
       call psb_spcnv(atmp,info,afmt='csr',dupl=psb_dupl_add_)
-      if (info == 0) call mld_ilu_bld(atmp,p%desc_data,p,upd,info)
+      if (info == 0) call mld_ilu_bld(atmp,p,upd,info)
       if (info/=0) then
         call psb_errpush(4010,name,a_err='mld_ilu_bld')
         goto 9999
@@ -338,7 +338,7 @@ subroutine mld_dbjac_bld(a,desc_a,p,upd,info)
       !
       ! Compute the incomplete LU factorization.
       !
-      call mld_ilu_bld(a,desc_a,p,upd,info,blck=blck)
+      call mld_ilu_bld(a,p,upd,info,blck=blck)
       if (info/=0) then
         call psb_errpush(4010,name,a_err='mld_ilu_bld')
         goto 9999
