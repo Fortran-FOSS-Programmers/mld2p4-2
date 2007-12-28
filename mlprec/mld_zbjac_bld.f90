@@ -187,7 +187,7 @@ subroutine mld_zbjac_bld(a,desc_a,p,upd,info)
     ! according to the value of p%iprcparm(sub_ren_). The reordered 
     ! matrix is stored into atmp, using the COO format.
     !
-    call  mld_sp_renum(a,desc_a,blck,p,atmp,info)
+    call  mld_sp_renum(a,blck,p,atmp,info)
     if (info/=0) then
       call psb_errpush(4010,name,a_err='mld_sp_renum')
       goto 9999

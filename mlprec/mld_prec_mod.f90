@@ -563,22 +563,20 @@ module mld_prec_mod
   end interface
 
   interface mld_sp_renum
-    subroutine mld_dsp_renum(a,desc_a,blck,p,atmp,info)
+    subroutine mld_dsp_renum(a,blck,p,atmp,info)
       use psb_base_mod
       use mld_prec_type
       type(psb_dspmat_type), intent(in)      :: a,blck
       type(psb_dspmat_type), intent(inout)   :: atmp
       type(mld_dbaseprc_type), intent(inout) :: p
-      type(psb_desc_type), intent(in)        :: desc_a
       integer, intent(out)   :: info
     end subroutine mld_dsp_renum
-    subroutine mld_zsp_renum(a,desc_a,blck,p,atmp,info)
+    subroutine mld_zsp_renum(a,blck,p,atmp,info)
       use psb_base_mod
       use mld_prec_type
       type(psb_zspmat_type), intent(in)      :: a,blck
       type(psb_zspmat_type), intent(inout)   :: atmp
       type(mld_zbaseprc_type), intent(inout) :: p
-      type(psb_desc_type), intent(in)        :: desc_a
       integer, intent(out)   :: info
     end subroutine mld_zsp_renum
   end interface
