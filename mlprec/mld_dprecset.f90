@@ -139,7 +139,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
       select case(what) 
       case(mld_smoother_type_,mld_sub_solve_,mld_sub_restr_,mld_sub_prol_,&
            & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_,mld_smoother_sweeps_)
-        p%precv(ilev_)%iprcparm(what)  = val
+        p%precv(ilev_)%prec%iprcparm(what)  = val
       case default
         write(0,*) name,': Error: invalid WHAT'
         info = -2
@@ -149,7 +149,9 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
       select case(what) 
       case(mld_smoother_type_,mld_sub_solve_,mld_sub_restr_,mld_sub_prol_,&
            & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_,&
-           & mld_smoother_sweeps_,mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
+           & mld_smoother_sweeps_)
+        p%precv(ilev_)%prec%iprcparm(what)  = val
+      case(mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
            & mld_smoother_pos_,mld_aggr_omega_alg_,mld_aggr_eig_)
         p%precv(ilev_)%iprcparm(what)  = val
       case(mld_coarse_mat_)
@@ -175,14 +177,14 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
 
         if (nlev_ > 1) then 
           p%precv(nlev_)%iprcparm(mld_coarse_solve_)  = val
-          p%precv(nlev_)%iprcparm(mld_smoother_type_) = mld_bjac_
+          p%precv(nlev_)%prec%iprcparm(mld_smoother_type_) = mld_bjac_
           p%precv(nlev_)%iprcparm(mld_coarse_mat_)    = mld_distr_mat_
           select case (val) 
           case(mld_umf_, mld_slu_)
             p%precv(nlev_)%iprcparm(mld_coarse_mat_)  = mld_repl_mat_
-            p%precv(nlev_)%iprcparm(mld_sub_solve_)   = val
+            p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
           case(mld_sludist_)
-            p%precv(nlev_)%iprcparm(mld_sub_solve_)   = val
+            p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
           end select
         endif
       case(mld_coarse_sweeps_)
@@ -191,21 +193,21 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
           info = -2
           return
         end if
-        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)  = val
+        p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_)  = val
       case(mld_coarse_fillin_)
         if (ilev_ /= nlev_) then 
           write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
           info = -2
           return
         end if
-        p%precv(ilev_)%iprcparm(mld_sub_fillin_)  = val
+        p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)  = val
       case default
         write(0,*) name,': Error: invalid WHAT'
         info = -2
       end select
 
     endif
-    p%precv(ilev_)%prec%iprcparm(:) = p%precv(ilev_)%iprcparm(:)  
+!!$    p%precv(ilev_)%prec%iprcparm(:) = p%precv(ilev_)%iprcparm(:)  
 
   else if (.not.present(ilev)) then 
     !
@@ -223,7 +225,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
           info = -1 
           return 
         endif
-        p%precv(ilev_)%iprcparm(what)  = val
+        p%precv(ilev_)%prec%iprcparm(what)  = val
       end do
     case(mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
          & mld_smoother_pos_,mld_aggr_omega_alg_,mld_aggr_eig_)
@@ -254,14 +256,14 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
 
       if (nlev_ > 1) then 
         p%precv(nlev_)%iprcparm(mld_coarse_solve_)  = val
-        p%precv(nlev_)%iprcparm(mld_smoother_type_) = mld_bjac_
+        p%precv(nlev_)%prec%iprcparm(mld_smoother_type_) = mld_bjac_
         p%precv(nlev_)%iprcparm(mld_coarse_mat_)    = mld_distr_mat_
         select case (val) 
         case(mld_umf_, mld_slu_)
           p%precv(nlev_)%iprcparm(mld_coarse_mat_)  = mld_repl_mat_
-          p%precv(nlev_)%iprcparm(mld_sub_solve_)   = val
+          p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
         case(mld_sludist_)
-          p%precv(nlev_)%iprcparm(mld_sub_solve_)   = val
+          p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
         end select
       endif
     case(mld_coarse_subsolve_)
@@ -271,7 +273,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         info = -1 
         return 
       end if
-      if (nlev_ > 1) p%precv(nlev_)%iprcparm(mld_sub_solve_)  = val
+      if (nlev_ > 1) p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)  = val
 
     case(mld_coarse_sweeps_)
       if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
@@ -280,7 +282,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         info = -1 
         return 
       endif
-      if (nlev_ > 1) p%precv(nlev_)%iprcparm(mld_smoother_sweeps_)  = val
+      if (nlev_ > 1) p%precv(nlev_)%prec%iprcparm(mld_smoother_sweeps_)  = val
     case(mld_coarse_fillin_)
       if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
         write(0,*) name,&
@@ -288,15 +290,15 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         info = -1 
         return 
       endif
-      if (nlev_ > 1) p%precv(nlev_)%iprcparm(mld_sub_fillin_)  = val
+      if (nlev_ > 1) p%precv(nlev_)%prec%iprcparm(mld_sub_fillin_)  = val
     case default
       write(0,*) name,': Error: invalid WHAT'
       info = -2
     end select
 
-    do ilev_=1,nlev_
-      p%precv(ilev_)%prec%iprcparm(:) = p%precv(ilev_)%iprcparm(:)  
-    end do
+!!$    do ilev_=1,nlev_
+!!$      p%precv(ilev_)%prec%iprcparm(:) = p%precv(ilev_)%iprcparm(:)  
+!!$    end do
 
   endif
 
@@ -486,7 +488,7 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
         !
         select case(what) 
         case(mld_sub_iluthrs_)
-          p%precv(ilev_)%rprcparm(what)  = val
+          p%precv(ilev_)%prec%rprcparm(what)  = val
         case default
           write(0,*) name,': Error: invalid WHAT'
           info = -2
@@ -494,14 +496,16 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
 
       else if (ilev_ > 1) then 
         select case(what) 
-        case(mld_aggr_omega_val_,mld_aggr_thresh_,mld_sub_iluthrs_)
+        case(mld_sub_iluthrs_)
+          p%precv(ilev_)%prec%rprcparm(what)  = val
+        case(mld_aggr_omega_val_,mld_aggr_thresh_)
           p%precv(ilev_)%rprcparm(what)  = val
         case default
           write(0,*) name,': Error: invalid WHAT'
           info = -2
         end select
       endif
-      p%precv(ilev_)%prec%rprcparm(:) = p%precv(ilev_)%rprcparm(:)  
+!!$      p%precv(ilev_)%prec%rprcparm(:) = p%precv(ilev_)%rprcparm(:)  
 
   else if (.not.present(ilev)) then 
       !
@@ -516,7 +520,7 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
             info = -1 
             return 
           endif
-          p%precv(ilev_)%rprcparm(what)  = val
+          p%precv(ilev_)%prec%rprcparm(what)  = val
         end do
       case(mld_coarse_iluthrs_)
         ilev_=nlev_
@@ -525,7 +529,7 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
           info = -1 
           return 
         endif
-        p%precv(ilev_)%rprcparm(mld_sub_iluthrs_)  = val
+        p%precv(ilev_)%prec%rprcparm(mld_sub_iluthrs_)  = val
       case(mld_aggr_omega_val_)
         do ilev_=2,nlev_
           if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
@@ -549,9 +553,9 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
         info = -2
       end select
 
-    do ilev_=1,nlev_
-      p%precv(ilev_)%prec%rprcparm(:) = p%precv(ilev_)%rprcparm(:)  
-    end do
+!!$    do ilev_=1,nlev_
+!!$      p%precv(ilev_)%prec%rprcparm(:) = p%precv(ilev_)%rprcparm(:)  
+!!$    end do
 
   endif
 

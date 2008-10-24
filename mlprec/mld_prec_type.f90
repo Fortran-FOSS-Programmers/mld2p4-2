@@ -893,13 +893,15 @@ contains
     return
   end subroutine mld_ml_level_descr
 
-  subroutine mld_ml_coarse_descr(iout,ilev,iprcparm,nlaggr, info,rprcparm,dprcparm)
+  subroutine mld_ml_coarse_descr(iout,ilev,iprcparm,nlaggr, info,&
+       & rprcparm,dprcparm, iprcparm2,rprcparm2,dprcparm2)
     implicit none 
     integer, intent(in) :: iprcparm(:),iout,ilev
     integer, intent(in), allocatable :: nlaggr(:)
     integer, intent(out) :: info
-    real(psb_spk_), intent(in), optional :: rprcparm(:)
-    real(psb_dpk_), intent(in), optional :: dprcparm(:)
+    integer, intent(in), optional :: iprcparm2(:)
+    real(psb_spk_), intent(in), optional :: rprcparm(:), rprcparm2(:)
+    real(psb_dpk_), intent(in), optional :: dprcparm(:), dprcparm2(:)
 
     info = 0
     if (count((/ present(rprcparm),present(dprcparm) /)) /= 1) then 
@@ -932,28 +934,29 @@ contains
       if (iprcparm(mld_coarse_mat_) == mld_distr_mat_ .and. &
            & iprcparm(mld_sub_solve_) /= mld_sludist_) then
         write(iout,*) '  Coarsest matrix solver: block Jacobi with ', &
-             &  fact_names(iprcparm(mld_sub_solve_))
+             &  fact_names(iprcparm2(mld_sub_solve_))
         write(iout,*) '  Number of Jacobi sweeps: ', &
-             &   (iprcparm(mld_smoother_sweeps_))
+             &   (iprcparm2(mld_smoother_sweeps_))
       else
         write(iout,*) '  Coarsest matrix solver: ', &
-             &  fact_names(iprcparm(mld_sub_solve_))
+             &  fact_names(iprcparm2(mld_sub_solve_))
       end if
-      select case(iprcparm(mld_sub_solve_))
-      case(mld_ilu_n_,mld_milu_n_)      
-        write(iout,*) '  Fill level:',iprcparm(mld_sub_fillin_)
-      case(mld_ilu_t_)
-        write(iout,*) '  Fill level:',iprcparm(mld_sub_fillin_)
-        if (present(rprcparm)) then 
-          write(iout,*) '  Fill threshold :',rprcparm(mld_sub_iluthrs_)
-        else
-          write(iout,*) '  Fill threshold :',dprcparm(mld_sub_iluthrs_)
-        end if
-      case(mld_slu_,mld_umf_,mld_sludist_) 
-      case default
-        write(iout,*) '  Should never get here!'
-      end select
-
+      if (present(iprcparm2)) then 
+        select case(iprcparm2(mld_sub_solve_))
+        case(mld_ilu_n_,mld_milu_n_)      
+          write(iout,*) '  Fill level:',iprcparm2(mld_sub_fillin_)
+        case(mld_ilu_t_)
+          write(iout,*) '  Fill level:',iprcparm2(mld_sub_fillin_)
+          if (present(rprcparm2)) then 
+            write(iout,*) '  Fill threshold :',rprcparm2(mld_sub_iluthrs_)
+          else if (present(dprcparm2)) then 
+            write(iout,*) '  Fill threshold :',dprcparm2(mld_sub_iluthrs_)
+          end if
+        case(mld_slu_,mld_umf_,mld_sludist_) 
+        case default
+          write(iout,*) '  Should never get here!'
+        end select
+      end if
     end if
 
 
@@ -1081,8 +1084,9 @@ contains
           write(iout_,*) 
           call mld_ml_coarse_descr(iout_,ilev,p%precv(ilev)%iprcparm,&
                & p%precv(ilev)%nlaggr,info,&
-               & dprcparm=p%precv(ilev)%rprcparm)
-          
+               & dprcparm=p%precv(ilev)%rprcparm,&
+               & iprcparm2=p%precv(ilev)%prec%iprcparm,&
+               & dprcparm2=p%precv(ilev)%prec%rprcparm)
         end if
         
       endif

@@ -106,16 +106,16 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
        &   mld_max_norm_,is_legal_ml_aggr_eig)
   
 
-  select case(p%iprcparm(mld_sub_solve_))
+  select case(p%prec%iprcparm(mld_sub_solve_))
   case(mld_ilu_n_,mld_milu_n_)      
-    call mld_check_def(p%iprcparm(mld_sub_fillin_),'Level',0,is_legal_ml_lev)
+    call mld_check_def(p%prec%iprcparm(mld_sub_fillin_),'Level',0,is_legal_ml_lev)
   case(mld_ilu_t_)                 
-    call mld_check_def(p%rprcparm(mld_sub_iluthrs_),'Eps',dzero,is_legal_fact_thrs)
+    call mld_check_def(p%prec%rprcparm(mld_sub_iluthrs_),'Eps',dzero,is_legal_fact_thrs)
   end select
+  call mld_check_def(p%prec%iprcparm(mld_smoother_sweeps_),'Jacobi sweeps',&
+       & 1,is_legal_jac_sweeps)
   call mld_check_def(p%rprcparm(mld_aggr_omega_val_),'Omega',dzero,is_legal_omega)
   call mld_check_def(p%rprcparm(mld_aggr_thresh_),'Aggr_Thresh',dzero,is_legal_aggr_thrs)
-  call mld_check_def(p%iprcparm(mld_smoother_sweeps_),'Jacobi sweeps',&
-       & 1,is_legal_jac_sweeps)
 
   !
   !  Build a mapping between the row indices of the fine-level matrix 
