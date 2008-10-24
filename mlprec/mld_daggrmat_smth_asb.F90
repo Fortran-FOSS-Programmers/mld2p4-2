@@ -110,7 +110,7 @@ subroutine mld_daggrmat_smth_asb(a,desc_a,p,info)
 
 ! Local variables
   type(psb_dspmat_type)  :: b
-  integer, pointer :: nzbr(:), idisp(:)
+  integer, allocatable :: nzbr(:), idisp(:)
   integer :: nrow, nglob, ncol, ntaggr, nzac, ip, ndx,&
        & naggr, nzl,naggrm1,naggrp1, i, j, k
   integer ::ictxt,np,me, err_act, icomm

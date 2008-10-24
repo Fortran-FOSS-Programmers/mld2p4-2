@@ -442,7 +442,6 @@ contains
         goto 9999
       end if
 
-
       !
       ! Apply the base preconditioner
       !

@@ -133,7 +133,7 @@ subroutine mld_dprecbld(a,desc_a,p,info)
   call psb_bcast(ictxt,iszv)
   if (iszv /= size(p%precv)) then 
     info=4001
-    call psb_errpush(info,name,a_err='Inconsistent size of baseprecv')
+    call psb_errpush(info,name,a_err='Inconsistent size of precv')
     goto 9999
   end if
 

@@ -207,7 +207,6 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
       end select
 
     endif
-!!$    p%precv(ilev_)%prec%iprcparm(:) = p%precv(ilev_)%iprcparm(:)  
 
   else if (.not.present(ilev)) then 
     !
@@ -295,10 +294,6 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
       write(0,*) name,': Error: invalid WHAT'
       info = -2
     end select
-
-!!$    do ilev_=1,nlev_
-!!$      p%precv(ilev_)%prec%iprcparm(:) = p%precv(ilev_)%iprcparm(:)  
-!!$    end do
 
   endif
 
@@ -505,7 +500,6 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
           info = -2
         end select
       endif
-!!$      p%precv(ilev_)%prec%rprcparm(:) = p%precv(ilev_)%rprcparm(:)  
 
   else if (.not.present(ilev)) then 
       !
@@ -552,10 +546,6 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
         write(0,*) name,': Error: invalid WHAT'
         info = -2
       end select
-
-!!$    do ilev_=1,nlev_
-!!$      p%precv(ilev_)%prec%rprcparm(:) = p%precv(ilev_)%rprcparm(:)  
-!!$    end do
 
   endif
 
