@@ -95,7 +95,7 @@ subroutine mld_saggrmat_raw_asb(a,desc_a,p,info)
   integer ::ictxt,np,me, err_act, icomm
   character(len=20) :: name
   type(psb_sspmat_type)  :: b
-  integer, allocatable :: nzbr(:), idisp(:)
+  integer, allocatable   :: nzbr(:), idisp(:)
   type(psb_sspmat_type)  :: am1,am2
   integer :: nrow, nglob, ncol, ntaggr, nzac, ip, ndx,&
        & naggr, nzt, naggrm1, i

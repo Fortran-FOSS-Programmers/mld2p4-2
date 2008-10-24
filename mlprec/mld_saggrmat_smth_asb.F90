@@ -109,8 +109,8 @@ subroutine mld_saggrmat_smth_asb(a,desc_a,p,info)
   integer, intent(out)                           :: info
 
   ! Local variables
-  type(psb_sspmat_type)  :: b
-  integer, allocatable :: nzbr(:), idisp(:)
+  type(psb_sspmat_type) :: b
+  integer, allocatable  :: nzbr(:), idisp(:)
   integer :: nrow, nglob, ncol, ntaggr, nzac, ip, ndx,&
        & naggr, nzl,naggrm1,naggrp1, i, j, k
   integer ::ictxt,np,me, err_act, icomm
