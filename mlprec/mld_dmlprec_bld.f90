@@ -69,7 +69,7 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
   ! Arguments
   type(psb_dspmat_type), intent(in), target :: a
   type(psb_desc_type), intent(in), target   :: desc_a
-  type(mld_dbaseprc_type), intent(inout),target    :: p
+  type(mld_d_onelev_prec_type), intent(inout),target    :: p
   integer, intent(out)                      :: info
 
   ! Local variables
@@ -135,7 +135,7 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
   ! the mapping defined by mld_aggrmap_bld and applying the aggregation
   ! algorithm specified by p%iprcparm(mld_aggr_kind_)
   !
-  call mld_aggrmat_asb(a,desc_a,ac,desc_ac,p,info)
+  call mld_aggrmat_asb(a,desc_a,p,info)
   if(info /= 0) then
     call psb_errpush(4010,name,a_err='mld_aggrmat_asb')
     goto 9999
@@ -144,33 +144,35 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
   !
   !  Build the 'base preconditioner' corresponding to the coarse level
   !
-  call mld_baseprc_bld(ac,desc_ac,p,info)
+  call mld_baseprc_bld(p%ac,p%desc_ac,p%prec,info)
   if (info /= 0) then
     call psb_errpush(4010,name,a_err='mld_baseprc_bld')
     goto 9999
   end if
-  
-  !
-  ! We have used a separate ac because
-  ! 1. we want to reuse the same routines mld_ilu_bld, etc.,
-  ! 2. we do NOT want to pass an argument twice to them (p%av(mld_ac_) and p),
-  !    as this would violate the Fortran standard.
-  ! Hence a separate AC and a TRANSFER function at the end. 
-  !
-  call psb_sp_transfer(ac,p%av(mld_ac_),info)
-  p%base_a => p%av(mld_ac_)
-  if (info==0) call psb_cdtransfer(desc_ac,p%desc_ac,info)
-
-  p%map_desc = psb_inter_desc(psb_map_aggr_,desc_a,&
-       & p%desc_ac,p%av(mld_sm_pr_t_),p%av(mld_sm_pr_))
-  ! The two matrices from p%av() have been copied, may free them.
-  if (info == 0) call psb_sp_free(p%av(mld_sm_pr_t_),info)
-  if (info == 0) call psb_sp_free(p%av(mld_sm_pr_),info)
-  if (info /= 0) then 
-    call psb_errpush(4010,name,a_err='psb_cdtransfer')
-    goto 9999
-  end if
+  p%base_a    => p%ac
   p%base_desc => p%desc_ac
+  
+!!$  !
+!!$  ! We have used a separate ac because
+!!$  ! 1. we want to reuse the same routines mld_ilu_bld, etc.,
+!!$  ! 2. we do NOT want to pass an argument twice to them (p%av(mld_ac_) and p),
+!!$  !    as this would violate the Fortran standard.
+!!$  ! Hence a separate AC and a TRANSFER function at the end. 
+!!$  !
+!!$  call psb_sp_transfer(ac,p%ac,info)
+!!$  p%base_a => p%ac
+!!$  if (info==0) call psb_cdtransfer(desc_ac,p%desc_ac,info)
+!!$  p%base_desc => p%desc_ac
+!!$
+!!$  p%map_desc = psb_inter_desc(psb_map_aggr_,desc_a,&
+!!$       & p%desc_ac,p%prec%av(mld_sm_pr_t_),p%prec%av(mld_sm_pr_))
+!!$  ! The two matrices from p%av() have been copied, may free them.
+!!$  if (info == 0) call psb_sp_free(p%prec%av(mld_sm_pr_t_),info)
+!!$  if (info == 0) call psb_sp_free(p%prec%av(mld_sm_pr_),info)
+!!$  if (info /= 0) then 
+!!$    call psb_errpush(4010,name,a_err='psb_cdtransfer')
+!!$    goto 9999
+!!$  end if
 
   call psb_erractionrestore(err_act)
   return

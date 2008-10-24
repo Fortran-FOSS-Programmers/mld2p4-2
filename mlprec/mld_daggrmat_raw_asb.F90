@@ -76,7 +76,7 @@
 !    info       -  integer, output.
 !                  Error code.
 !
-subroutine mld_daggrmat_raw_asb(a,desc_a,ac,desc_ac,p,info)
+subroutine mld_daggrmat_raw_asb(a,desc_a,p,info)
   use psb_base_mod
   use mld_inner_mod, mld_protect_name => mld_daggrmat_raw_asb
 
@@ -91,9 +91,9 @@ subroutine mld_daggrmat_raw_asb(a,desc_a,ac,desc_ac,p,info)
 ! Arguments
   type(psb_dspmat_type), intent(in)               :: a
   type(psb_desc_type), intent(in)                 :: desc_a
-  type(psb_dspmat_type), intent(out)              :: ac    
-  type(psb_desc_type), intent(out)                :: desc_ac 
-  type(mld_dbaseprc_type), intent(inout), target  :: p
+!!$  type(psb_dspmat_type), intent(out)              :: ac    
+!!$  type(psb_desc_type), intent(out)                :: desc_ac 
+  type(mld_d_onelev_prec_type), intent(inout), target  :: p
   integer, intent(out)                       :: info
 
 ! Local variables
@@ -101,7 +101,7 @@ subroutine mld_daggrmat_raw_asb(a,desc_a,ac,desc_ac,p,info)
   character(len=20) :: name
   type(psb_dspmat_type)  :: b
   integer, pointer :: nzbr(:), idisp(:)
-  type(psb_dspmat_type), pointer  :: am1,am2
+  type(psb_dspmat_type) :: am1,am2
   integer :: nrow, nglob, ncol, ntaggr, nzac, ip, ndx,&
        & naggr, nzt, naggrm1, i
 
@@ -120,8 +120,8 @@ subroutine mld_daggrmat_raw_asb(a,desc_a,ac,desc_ac,p,info)
   ncol  = psb_cd_get_local_cols(desc_a)
 
 
-  am2 => p%av(mld_sm_pr_t_)
-  am1 => p%av(mld_sm_pr_)
+!!$  am2 => p%av(mld_sm_pr_t_)
+!!$  am1 => p%av(mld_sm_pr_)
   call psb_nullify_sp(am1)
   call psb_nullify_sp(am2)
 
@@ -195,7 +195,7 @@ subroutine mld_daggrmat_raw_asb(a,desc_a,ac,desc_ac,p,info)
 
   if (p%iprcparm(mld_coarse_mat_) == mld_repl_mat_) then 
 
-    call psb_cdall(ictxt,desc_ac,info,mg=ntaggr,repl=.true.)
+    call psb_cdall(ictxt,p%desc_ac,info,mg=ntaggr,repl=.true.)
     if(info /= 0) then
       call psb_errpush(4010,name,a_err='psb_cdall')
       goto 9999
@@ -206,7 +206,7 @@ subroutine mld_daggrmat_raw_asb(a,desc_a,ac,desc_ac,p,info)
     call psb_sum(ictxt,nzbr(1:np))
     nzac = sum(nzbr)
     
-    call psb_sp_all(ntaggr,ntaggr,ac,nzac,info)
+    call psb_sp_all(ntaggr,ntaggr,p%ac,nzac,info)
     if(info /= 0) then
       call psb_errpush(4010,name,a_err='sp_all')
       goto 9999
@@ -217,11 +217,11 @@ subroutine mld_daggrmat_raw_asb(a,desc_a,ac,desc_ac,p,info)
     enddo
     ndx = nzbr(me+1) 
 
-    call mpi_allgatherv(b%aspk,ndx,mpi_double_precision,ac%aspk,nzbr,idisp,&
+    call mpi_allgatherv(b%aspk,ndx,mpi_double_precision,p%ac%aspk,nzbr,idisp,&
          & mpi_double_precision,icomm,info)
-    call mpi_allgatherv(b%ia1,ndx,mpi_integer,ac%ia1,nzbr,idisp,&
+    call mpi_allgatherv(b%ia1,ndx,mpi_integer,p%ac%ia1,nzbr,idisp,&
          & mpi_integer,icomm,info)
-    call mpi_allgatherv(b%ia2,ndx,mpi_integer,ac%ia2,nzbr,idisp,&
+    call mpi_allgatherv(b%ia2,ndx,mpi_integer,p%ac%ia2,nzbr,idisp,&
          & mpi_integer,icomm,info)
     if(info /= 0) then
       info=-1
@@ -229,12 +229,12 @@ subroutine mld_daggrmat_raw_asb(a,desc_a,ac,desc_ac,p,info)
       goto 9999
     end if
 
-    ac%m = ntaggr
-    ac%k = ntaggr
-    ac%infoa(psb_nnz_) = nzac
-    ac%fida='COO'
-    ac%descra='GUN'
-    call psb_spcnv(ac,info,afmt='coo',dupl=psb_dupl_add_)
+    p%ac%m = ntaggr
+    p%ac%k = ntaggr
+    p%ac%infoa(psb_nnz_) = nzac
+    p%ac%fida='COO'
+    p%ac%descra='GUN'
+    call psb_spcnv(p%ac,info,afmt='coo',dupl=psb_dupl_add_)
     if(info /= 0) then
       call psb_errpush(4010,name,a_err='sp_free')
       goto 9999
@@ -242,9 +242,9 @@ subroutine mld_daggrmat_raw_asb(a,desc_a,ac,desc_ac,p,info)
 
   else if (p%iprcparm(mld_coarse_mat_) == mld_distr_mat_) then 
 
-    call psb_cdall(ictxt,desc_ac,info,nl=naggr)
-    if (info == 0) call psb_cdasb(desc_ac,info)
-    if (info == 0) call psb_sp_clone(b,ac,info)
+    call psb_cdall(ictxt,p%desc_ac,info,nl=naggr)
+    if (info == 0) call psb_cdasb(p%desc_ac,info)
+    if (info == 0) call psb_sp_clone(b,p%ac,info)
     if(info /= 0) then
       call psb_errpush(4001,name,a_err='Build ac, desc_ac')
       goto 9999
@@ -263,9 +263,18 @@ subroutine mld_daggrmat_raw_asb(a,desc_a,ac,desc_ac,p,info)
 
   deallocate(nzbr,idisp)
   
-  call psb_spcnv(ac,info,afmt='csr',dupl=psb_dupl_add_)
+  call psb_spcnv(p%ac,info,afmt='csr',dupl=psb_dupl_add_)
   if(info /= 0) then
-    call psb_errpush(4010,name,a_err='ipcoo2csr')
+    call psb_errpush(4010,name,a_err='spcnv')
+    goto 9999
+  end if
+
+  p%map_desc = psb_inter_desc(psb_map_aggr_,desc_a,&
+       & p%desc_ac,am2,am1)
+  if (info == 0) call psb_sp_free(am1,info)
+  if (info == 0) call psb_sp_free(am2,info)
+  if(info /= 0) then
+    call psb_errpush(4010,name,a_err='sp_Free')
     goto 9999
   end if
 

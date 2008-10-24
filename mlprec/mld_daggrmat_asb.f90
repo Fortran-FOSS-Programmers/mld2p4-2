@@ -93,7 +93,7 @@
 !    info       -  integer, output.
 !                  Error code.
 !
-subroutine mld_daggrmat_asb(a,desc_a,ac,desc_ac,p,info)
+subroutine mld_daggrmat_asb(a,desc_a,p,info)
 
   use psb_base_mod
   use mld_inner_mod, mld_protect_name => mld_daggrmat_asb
@@ -103,9 +103,9 @@ subroutine mld_daggrmat_asb(a,desc_a,ac,desc_ac,p,info)
 ! Arguments
   type(psb_dspmat_type), intent(in)               :: a
   type(psb_desc_type), intent(in)                 :: desc_a
-  type(psb_dspmat_type), intent(out)              :: ac    
-  type(psb_desc_type), intent(out)                :: desc_ac 
-  type(mld_dbaseprc_type), intent(inout), target  :: p
+!!$  type(psb_dspmat_type), intent(out)              :: ac    
+!!$  type(psb_desc_type), intent(out)                :: desc_ac 
+  type(mld_d_onelev_prec_type), intent(inout), target  :: p
   integer, intent(out)                            :: info
 
 ! Local variables
@@ -125,7 +125,7 @@ subroutine mld_daggrmat_asb(a,desc_a,ac,desc_ac,p,info)
   select case (p%iprcparm(mld_aggr_kind_))
   case (mld_no_smooth_) 
 
-    call mld_aggrmat_raw_asb(a,desc_a,ac,desc_ac,p,info)
+    call mld_aggrmat_raw_asb(a,desc_a,p,info)
     if(info /= 0) then
       call psb_errpush(4010,name,a_err='mld_aggrmat_raw_asb')
       goto 9999
@@ -133,7 +133,7 @@ subroutine mld_daggrmat_asb(a,desc_a,ac,desc_ac,p,info)
 
   case(mld_smooth_prol_,mld_biz_prol_) 
 
-    call mld_aggrmat_smth_asb(a,desc_a,ac,desc_ac,p,info)
+    call mld_aggrmat_smth_asb(a,desc_a,p,info)
     if(info /= 0) then
       call psb_errpush(4010,name,a_err='mld_aggrmat_smth_asb')
       goto 9999

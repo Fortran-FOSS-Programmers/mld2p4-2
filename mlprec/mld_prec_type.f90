@@ -184,21 +184,28 @@ module mld_prec_type
   end type mld_sprec_type
 
   type mld_dbaseprc_type
-
     type(psb_dspmat_type), allocatable :: av(:) 
     real(psb_dpk_), allocatable        :: d(:)  
-    type(psb_desc_type)                :: desc_data , desc_ac
+    type(psb_desc_type)                :: desc_data
     integer, allocatable               :: iprcparm(:) 
     real(psb_dpk_), allocatable        :: rprcparm(:) 
     integer, allocatable               :: perm(:),  invperm(:) 
+  end type mld_dbaseprc_type
+
+  type mld_d_onelev_prec_type
+    type(mld_dbaseprc_type)            :: prec
+    integer, allocatable               :: iprcparm(:) 
+    real(psb_dpk_), allocatable        :: rprcparm(:) 
+    type(psb_dspmat_type)              :: ac
+    type(psb_desc_type)                :: desc_ac
     integer, allocatable               :: mlia(:), nlaggr(:) 
     type(psb_dspmat_type), pointer     :: base_a    => null() 
     type(psb_desc_type), pointer       :: base_desc => null() 
     type(psb_inter_desc_type)          :: map_desc
-  end type mld_dbaseprc_type
+  end type mld_d_onelev_prec_type
 
   type mld_dprec_type
-    type(mld_dbaseprc_type), allocatable  :: baseprecv(:) 
+    type(mld_d_onelev_prec_type), allocatable :: precv(:) 
   end type mld_dprec_type
 
   type mld_cbaseprc_type
@@ -380,9 +387,17 @@ module mld_prec_type
          &  mld_dbase_precfree, mld_zbase_precfree
   end interface
 
+  interface mld_onelev_precfree
+    module procedure mld_d_onelev_precfree
+  end interface
+
   interface mld_nullify_baseprec
     module procedure mld_nullify_sbaseprec, mld_nullify_cbaseprec,&
          &  mld_nullify_dbaseprec, mld_nullify_zbaseprec
+  end interface
+
+  interface mld_nullify_onelevprec
+    module procedure  mld_nullify_d_onelevprec
   end interface
 
   interface mld_check_def
@@ -404,7 +419,8 @@ module mld_prec_type
     module procedure mld_sprec_sizeof, mld_cprec_sizeof, &
          & mld_dprec_sizeof, mld_zprec_sizeof, &
          & mld_sbaseprc_sizeof, mld_cbaseprc_sizeof,&
-         & mld_dbaseprc_sizeof, mld_zbaseprc_sizeof
+         & mld_dbaseprc_sizeof, mld_zbaseprc_sizeof, &
+         & mld_d_onelev_prec_sizeof
   end interface
 
 contains
@@ -531,9 +547,9 @@ contains
     integer(psb_long_int_k_) :: val
     integer             :: i
     val = 0
-    if (allocated(prec%baseprecv)) then 
-      do i=1, size(prec%baseprecv)
-        val = val + mld_sizeof(prec%baseprecv(i))
+    if (allocated(prec%precv)) then 
+      do i=1, size(prec%precv)
+        val = val + mld_sizeof(prec%precv(i))
       end do
     end if
   end function mld_dprec_sizeof
@@ -634,7 +650,7 @@ contains
         val = val + psb_sizeof(prec%av(i))
       end do
     end if
-    val = val + psb_sizeof(prec%map_desc) 
+
 
   end function mld_dbaseprc_sizeof
 
@@ -707,6 +723,24 @@ contains
     val = val + psb_sizeof(prec%map_desc) 
     
   end function mld_zbaseprc_sizeof
+
+  function mld_d_onelev_prec_sizeof(prec) result(val)
+    implicit none 
+    type(mld_d_onelev_prec_type), intent(in) :: prec
+    integer(psb_long_int_k_) :: val
+    integer             :: i
+    
+    val = mld_sizeof(prec%prec)
+    if (allocated(prec%iprcparm)) then 
+      val = val + psb_sizeof_int * size(prec%iprcparm)
+    end if
+    if (allocated(prec%rprcparm)) val = val + psb_sizeof_dp * size(prec%rprcparm)
+    val = val + psb_sizeof(prec%desc_ac)
+    val = val + psb_sizeof(prec%ac)
+    val = val + psb_sizeof(prec%map_desc) 
+
+  end function mld_d_onelev_prec_sizeof
+
     
   !
   ! Routines printing out a description of the preconditioner
@@ -966,8 +1000,8 @@ contains
     end if
     if (iout_ < 0) iout_ = 6 
 
-    if (allocated(p%baseprecv)) then
-      ictxt = psb_cd_get_context(p%baseprecv(1)%desc_data)
+    if (allocated(p%precv)) then
+      ictxt = psb_cd_get_context(p%precv(1)%prec%desc_data)
       
       call psb_info(ictxt,me,np)
       
@@ -981,7 +1015,7 @@ contains
         
         write(iout_,*) 
         write(iout_,'(a)') 'Preconditioner description'
-        nlev = size(p%baseprecv)
+        nlev = size(p%precv)
         if (nlev >= 1) then
           !
           ! Print description of base preconditioner
@@ -996,8 +1030,8 @@ contains
           endif
 
           ilev = 1 
-          call mld_base_prec_descr(iout_,p%baseprecv(ilev)%iprcparm,info,&
-               & dprcparm=p%baseprecv(ilev)%rprcparm)
+          call mld_base_prec_descr(iout_,p%precv(ilev)%prec%iprcparm,info,&
+               & dprcparm=p%precv(ilev)%prec%rprcparm)
 
         end if
 
@@ -1010,7 +1044,7 @@ contains
           write(iout_,*) 'Multilevel details'
 
           do ilev = 2, nlev 
-            if (.not.allocated(p%baseprecv(ilev)%iprcparm)) then 
+            if (.not.allocated(p%precv(ilev)%iprcparm)) then 
               info = 3111
               write(iout_,*) ' ',name,': error: inconsistent MLPREC part, should call MLD_PRECINIT'
               return
@@ -1025,8 +1059,8 @@ contains
           !
 
           ilev=2
-          call mld_ml_alg_descr(iout_,ilev,p%baseprecv(ilev)%iprcparm, info,&
-               & dprcparm=p%baseprecv(ilev)%rprcparm)
+          call mld_ml_alg_descr(iout_,ilev,p%precv(ilev)%iprcparm, info,&
+               & dprcparm=p%precv(ilev)%rprcparm)
 
           !
           ! Coarse matrices are different at levels 2,...,nlev-1, hence related
@@ -1034,9 +1068,9 @@ contains
           !
           write(iout_,*) 
           do ilev = 2, nlev-1
-            call mld_ml_level_descr(iout_,ilev,p%baseprecv(ilev)%iprcparm,&
-                 & p%baseprecv(ilev)%nlaggr,info,&
-                 & dprcparm=p%baseprecv(ilev)%rprcparm)
+            call mld_ml_level_descr(iout_,ilev,p%precv(ilev)%iprcparm,&
+                 & p%precv(ilev)%nlaggr,info,&
+                 & dprcparm=p%precv(ilev)%rprcparm)
           end do
 
           !
@@ -1045,9 +1079,9 @@ contains
 
           ilev = nlev
           write(iout_,*) 
-          call mld_ml_coarse_descr(iout_,ilev,p%baseprecv(ilev)%iprcparm,&
-               & p%baseprecv(ilev)%nlaggr,info,&
-               & dprcparm=p%baseprecv(ilev)%rprcparm)
+          call mld_ml_coarse_descr(iout_,ilev,p%precv(ilev)%iprcparm,&
+               & p%precv(ilev)%nlaggr,info,&
+               & dprcparm=p%precv(ilev)%rprcparm)
           
         end if
         
@@ -1803,24 +1837,10 @@ contains
 
     if (allocated(p%desc_data%matrix_data)) &
          & call psb_cdfree(p%desc_data,info)
-    if (allocated(p%desc_ac%matrix_data)) &
-         & call psb_cdfree(p%desc_ac,info)
     
     if (allocated(p%rprcparm)) then 
       deallocate(p%rprcparm,stat=info)
     end if
-    ! This is a pointer to something else, must not free it here. 
-    nullify(p%base_a) 
-    ! This is a pointer to something else, must not free it here. 
-    nullify(p%base_desc) 
-
-    if (allocated(p%mlia)) then 
-      deallocate(p%mlia,stat=info)
-    endif
-
-    if (allocated(p%nlaggr)) then 
-      deallocate(p%nlaggr,stat=info)
-    endif
 
     if (allocated(p%perm)) then 
       deallocate(p%perm,stat=info)
@@ -1846,15 +1866,67 @@ contains
     call mld_nullify_baseprec(p)
   end subroutine mld_dbase_precfree
 
+  subroutine mld_d_onelev_precfree(p,info)
+    implicit none 
+
+    type(mld_d_onelev_prec_type), intent(inout) :: p
+    integer, intent(out)                :: info
+    integer :: i
+
+    info = 0
+
+    ! Actually we might just deallocate the top level array, except 
+    ! for the inner UMFPACK or SLU stuff
+    call mld_base_precfree(p%prec,info)
+    
+    call psb_sp_free(p%ac,info)
+    if (allocated(p%desc_ac%matrix_data)) &
+         & call psb_cdfree(p%desc_ac,info)
+    
+    if (allocated(p%rprcparm)) then 
+      deallocate(p%rprcparm,stat=info)
+    end if
+    ! This is a pointer to something else, must not free it here. 
+    nullify(p%base_a) 
+    ! This is a pointer to something else, must not free it here. 
+    nullify(p%base_desc) 
+
+    if (allocated(p%mlia)) then 
+      deallocate(p%mlia,stat=info)
+    endif
+
+    if (allocated(p%nlaggr)) then 
+      deallocate(p%nlaggr,stat=info)
+    endif
+
+    !
+    ! free explicitly map_desc???
+    ! For now thanks to allocatable semantics
+    ! works anyway. 
+    !
+
+    call mld_nullify_onelevprec(p)
+  end subroutine mld_d_onelev_precfree
+
   subroutine mld_nullify_dbaseprec(p)
     implicit none 
 
     type(mld_dbaseprc_type), intent(inout) :: p
+!!$
+!!$    nullify(p%base_a) 
+!!$    nullify(p%base_desc) 
+
+  end subroutine mld_nullify_dbaseprec
+
+  subroutine mld_nullify_d_onelevprec(p)
+    implicit none 
+
+    type(mld_d_onelev_prec_type), intent(inout) :: p
 
     nullify(p%base_a) 
     nullify(p%base_desc) 
 
-  end subroutine mld_nullify_dbaseprec
+  end subroutine mld_nullify_d_onelevprec
 
   subroutine mld_cbase_precfree(p,info)
     implicit none 
