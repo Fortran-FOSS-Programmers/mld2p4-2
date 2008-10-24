@@ -57,7 +57,7 @@
 !
 !  The multilevel preconditioner M is regarded as an array of 'base preconditioners',
 !  each representing the part of the preconditioner associated to a certain level.
-!  For each level ilev, the base preconditioner K(ilev) is stored in baseprecv(ilev)
+!  For each level ilev, the base preconditioner K(ilev) is stored in precv(ilev)
 !  and is associated to a matrix A(ilev), obtained by 'tranferring' the original
 !  matrix A (i.e. the matrix to be preconditioned) to the level ilev, through smoothed
 !  aggregation.
@@ -1283,7 +1283,6 @@ contains
         call psb_errpush(4001,name,a_err='Error during restriction')
         goto 9999
       end if
-
 
       call psb_geaxpby(cone,mlprec_wrk(ilev)%x2l,czero,mlprec_wrk(ilev)%tx,&
            & precv(ilev)%base_desc,info)

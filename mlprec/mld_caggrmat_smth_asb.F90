@@ -182,7 +182,7 @@ subroutine mld_caggrmat_smth_asb(a,desc_a,p,info)
   if (info /= 0) then 
     info=4025
     call psb_errpush(info,name,i_err=(/nrow,0,0,0,0/),&
-         & a_err='real(psb_spk_)')
+         & a_err='complex(psb_spk_)')
     goto 9999      
   end if
 
