@@ -150,7 +150,7 @@ subroutine mld_dprecbld(a,desc_a,p,info)
       p%precv(1)%iprcparm(:) = ipv(:) 
     end if
     !
-    ! Allocate and build the fine level preconditioner
+    ! Finest level first; remember to fix base_a and base_desc
     ! 
     call init_baseprc_av(p%precv(1)%prec,info)
     if (info == 0) call mld_baseprc_bld(a,desc_a,p%precv(1)%prec,info,upd_)
@@ -189,8 +189,7 @@ subroutine mld_dprecbld(a,desc_a,p,info)
       end if
       
       !
-      ! Allocate the av component of the preconditioner data type
-      ! at level i
+      ! Sanity checks on the parameters
       !
       if (i<iszv) then 
         !
@@ -198,6 +197,7 @@ subroutine mld_dprecbld(a,desc_a,p,info)
         !
         call mld_check_def(p%precv(i)%iprcparm(mld_coarse_mat_),'Coarse matrix',&
              &   mld_distr_mat_,is_distr_ml_coarse_mat)
+
       else if (i == iszv) then 
         !
         ! At the coarsest level, check mld_coarse_solve_ 
@@ -206,43 +206,43 @@ subroutine mld_dprecbld(a,desc_a,p,info)
         select case (val) 
         case(mld_umf_, mld_slu_)
           if ((p%precv(i)%iprcparm(mld_coarse_mat_)  /= mld_repl_mat_).or.&
-               & (p%precv(i)%iprcparm(mld_sub_solve_)  /= val)) then 
+               & (p%precv(i)%prec%iprcparm(mld_sub_solve_)  /= val)) then 
             if (me == 0) write(debug_unit,*)&
                  & 'Warning: inconsistent coarse level specification.'
             if (me == 0) write(debug_unit,*)&
                  & '         Resetting according to the value specified for mld_coarse_solve_.'
             p%precv(i)%iprcparm(mld_coarse_mat_)    = mld_repl_mat_
-            p%precv(i)%iprcparm(mld_sub_solve_)     = val
-            p%precv(i)%iprcparm(mld_smoother_type_) = mld_bjac_          
+            p%precv(i)%prec%iprcparm(mld_sub_solve_)     = val
+            p%precv(i)%prec%iprcparm(mld_smoother_type_) = mld_bjac_          
           end if
         case(mld_sludist_)
           if ((p%precv(i)%iprcparm(mld_coarse_mat_)  /= mld_distr_mat_).or.&
-               & (p%precv(i)%iprcparm(mld_sub_solve_)  /= val)) then 
+               & (p%precv(i)%prec%iprcparm(mld_sub_solve_)  /= val)) then 
             if (me == 0) write(debug_unit,*)&
                  & 'Warning: inconsistent coarse level specification.'
             if (me == 0) write(debug_unit,*)&
                  & '         Resetting according to the value specified for mld_coarse_solve_.'
             p%precv(i)%iprcparm(mld_coarse_mat_)      = mld_distr_mat_
-            p%precv(i)%iprcparm(mld_sub_solve_)       = val
-            p%precv(i)%iprcparm(mld_smoother_type_)   = mld_bjac_          
-            p%precv(i)%iprcparm(mld_smoother_sweeps_) = 1
+            p%precv(i)%prec%iprcparm(mld_sub_solve_)       = val
+            p%precv(i)%prec%iprcparm(mld_smoother_type_)   = mld_bjac_          
+            p%precv(i)%prec%iprcparm(mld_smoother_sweeps_) = 1
           end if
 
         end select
 
       end if
 
-      call init_baseprc_av(p%precv(i)%prec,info)
-
       if (debug_level >= psb_debug_outer_) &
            & write(debug_unit,*) me,' ',trim(name),&
            & 'Calling mlprcbld at level  ',i
-
       !
-      ! Build the base preconditioner corresponding to level i
-      !
+      ! Allocate and build the preconditioner at level i.
+      ! baseprec_bld is called inside mlprec_bld.
+      ! 
+      call init_baseprc_av(p%precv(i)%prec,info)
       if (info == 0) call mld_mlprec_bld(p%precv(i-1)%base_a,&
            & p%precv(i-1)%base_desc, p%precv(i),info)
+
       if (info /= 0) then 
         call psb_errpush(4001,name,a_err='Init & build upper level preconditioner')
         goto 9999
@@ -252,7 +252,10 @@ subroutine mld_dprecbld(a,desc_a,p,info)
            & write(debug_unit,*) me,' ',trim(name),&
            & 'Return from ',i,' call to mlprcbld ',info      
     end do
+
+    !
     ! Check on sizes from level 2 onwards
+    ! 
     if (me==0) then 
       k = iszv+1
       do i=iszv,3,-1

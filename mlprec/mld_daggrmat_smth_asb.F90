@@ -83,14 +83,10 @@
 !                  the fine-level matrix.
 !    desc_a     -  type(psb_desc_type), input.
 !                  The communication descriptor of the fine-level matrix.
-!    ac         -  type(psb_dspmat_type), output.
-!                  The sparse matrix structure containing the local part of
-!                  the coarse-level matrix.
-!    desc_ac    -  type(psb_desc_type), output.
-!                  The communication descriptor of the coarse-level matrix.
-!    p          -  type(mld_dbaseprc_type), input/output.
-!                  The base preconditioner data structure containing the local
-!                  part of the base preconditioner to be built.
+!    p          -  type(mld_d_onelev_prec_type), input/output.
+!                  The one-level preconditioner data structure containing the local
+!                  part of the base preconditioner to be built as well as the
+!                  aggregate matrices.
 !    info       -  integer, output.
 !                  Error code.
 !
@@ -144,9 +140,6 @@ subroutine mld_daggrmat_smth_asb(a,desc_a,p,info)
   call psb_nullify_sp(b)
   call psb_nullify_sp(am3)
   call psb_nullify_sp(am4)
-
-!!$  am2 => p%av(mld_sm_pr_t_)
-!!$  am1 => p%av(mld_sm_pr_)
   call psb_nullify_sp(am1)
   call psb_nullify_sp(am2)
 
@@ -655,6 +648,11 @@ subroutine mld_daggrmat_smth_asb(a,desc_a,p,info)
     goto 9999
   end if
 
+  !
+  ! Copy the prolongation/restriction matrices into the descriptor map.
+  !  am2 => PR^T   i.e. restriction  operator
+  !  am1 => PR     i.e. prolongation operator
+  !  
   p%map_desc = psb_inter_desc(psb_map_aggr_,desc_a,&
        & p%desc_ac,am2,am1)
   if (info == 0) call psb_sp_free(am1,info)

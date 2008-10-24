@@ -73,13 +73,14 @@ module mld_prec_type
        & psb_cd_get_context, psb_info
 
   !
-  ! Type: mld_dprec_type, mld_zprec_type
+  ! Type: mld_dprec_type, mld_zprec_type, mld_sprec_type, mld_cprec_type
   !
-  !  mld_dprec_type and mld_zprec_type are the real and complex preconditioner
-  !  data structures. In the following description 'd' and 'z' are omitted.
+  !  mld_dprec_type and friends are  the real and complex preconditioner
+  !  data structures. In the following description 'd', 's', 'c'  and 'z'
+  !  are mostly  omitted.
   !
   ! The multilevel preconditioner data structure, mld_prec_type, consists
-  ! of an array of 'base preconditioner' data structures, mld_dbaseprc_type,
+  ! of an array of 'one-level preconditioner' data structures, mld_X_onelev_type,
   ! each containing the local part of the preconditioner associated to a
   ! certain level. For each level ilev, the base preconditioner K(ilev) is 
   ! built from a matrix A(ilev), which is obtained by 'tranferring' the 
@@ -89,58 +90,27 @@ module mld_prec_type
   ! The levels are numbered in increasing order starting from the finest
   ! one, i.e. level 1 is the finest level and A(1) is the matrix A.
   !
-  !|  type mld_dprec_type
-  !|    type(mld_dbaseprc_type), allocatable  :: baseprecv(:) 
-  !|  end type mld_dprec_type
+  !|  type mld_Xprec_type
+  !|    type(mld_X_onelev_prec_type), allocatable :: precv(:) 
+  !|  end type mld_Xprec_type
   !|
-  !|  type mld_zprec_type
-  !|    type(mld_zbaseprc_type), allocatable  :: baseprecv(:) 
-  !|  end type mld_zprec_type
   ! 
-  !   baseprecv(ilev) is the base preconditioner at level ilev.
-  !   The number of levels is given by size(baseprecv(:)).
-  !                 
-  ! Type: mld_dbaseprc_type, mld_zbaseprc_type.
+  !   precv(ilev) is the preconditioner at level ilev.
+  !   The number of levels is given by size(precv(:)).
   !
-  !    av         -  type(psb_dspmat_type), dimension(:), allocatable(:).
-  !                  The sparse matrices needed to apply the preconditioner at
-  !                  the current level ilev. 
-  !      av(mld_l_pr_)     -  The L factor of the ILU factorization of the local
-  !                           diagonal block of A(ilev).
-  !      av(mld_u_pr_)     -  The U factor of the ILU factorization of the local
-  !                           diagonal block of A(ilev), except its diagonal entries
-  !                           (stored in d).
-  !      av(mld_ap_nd_)    -  The entries of the local part of A(ilev) outside
-  !                           the diagonal block, for block-Jacobi sweeps.
-  !      av(mld_ac_)       -  The local part of the matrix A(ilev).
-  !      av(mld_sm_pr_)    -  The smoothed prolongator.   
-  !                           It maps vectors (ilev) ---> (ilev-1).
-  !      av(mld_sm_pr_t_)  -  The smoothed prolongator transpose.   
-  !                           It maps vectors (ilev-1) ---> (ilev).
-  !      Shouldn't we keep just one of the last two items and handle the transpose
-  !      in the Sparse BLAS? Maybe.
+  ! Type: mld_X_onelev_prec_type.
+  !       The data type containing necessary items for the current level.
   !
-  !   d            -  real(psb_dpk_), dimension(:), allocatable.
-  !                   The diagonal entries of the U factor in the ILU factorization
-  !                   of A(ilev).
-  !   desc_data    -  type(psb_desc_type).
-  !                   The communication descriptor associated to the base preconditioner,
-  !                   i.e. to the sparse matrices needed to apply the base preconditioner
-  !                   at the current level.
+  !   type(mld_Xbaseprc_type) -  prec
+  !                   The current level preconditioner (aka smoother).
+  !   ac           -  The local part of the matrix A(ilev).
   !   desc_ac      -  type(psb_desc_type).
   !                   The communication descriptor associated to the sparse matrix
-  !                   A(ilev), stored in av(mld_ac_).
+  !                   A(ilev), stored in ac.
   !   iprcparm     -  integer, dimension(:), allocatable.
-  !                   The integer parameters defining the base preconditioner K(ilev)
-  !                   (the iprcparm entries and values are specified below).
-  !   rprcparm     -  real(psb_dpk_), dimension(:), allocatable.
-  !                   The real parameters defining the base preconditioner K(ilev)
-  !                   (the rprcparm entries and values are specified below).
-  !   perm         -  integer, dimension(:), allocatable.
-  !                   The row and column permutations applied to the local part of
-  !                   A(ilev) (defined only if iprcparm(mld_sub_ren_)>0). 
-  !   invperm      -  integer, dimension(:), allocatable.
-  !                   The inverse of the permutation stored in perm.
+  !                   The integer parameters defining the multilevel strategy
+  !   rprcparm     -  real(psb_Ypk_), dimension(:), allocatable.
+  !                   The real parameters defining the multilevel strategy
   !   mlia         -  integer, dimension(:), allocatable.
   !                   The aggregation map (ilev-1) --> (ilev).
   !                   In case of non-smoothed aggregation, it is used instead of
@@ -158,11 +128,42 @@ module mld_prec_type
   !   base_desc    -  type(psb_desc_type), pointer.
   !                   Pointer to the communication descriptor associated to the sparse
   !                   matrix pointed by base_a. 
+  ! Type: mld_Xbaseprc_type  
+  !       The smoother. 
+  !
+  !    av         -  type(psb_Xspmat_type), dimension(:), allocatable(:).
+  !                  The sparse matrices needed to apply the preconditioner at
+  !                  the current level ilev. 
+  !      av(mld_l_pr_)     -  The L factor of the ILU factorization of the local
+  !                           diagonal block of A(ilev).
+  !      av(mld_u_pr_)     -  The U factor of the ILU factorization of the local
+  !                           diagonal block of A(ilev), except its diagonal entries
+  !                           (stored in d).
+  !      av(mld_ap_nd_)    -  The entries of the local part of A(ilev) outside
+  !                           the diagonal block, for block-Jacobi sweeps.
+  !   d            -  real/complex(psb_Ypk_), dimension(:), allocatable.
+  !                   The diagonal entries of the U factor in the ILU factorization
+  !                   of A(ilev).
+  !   desc_data    -  type(psb_desc_type).
+  !                   The communication descriptor associated to the base preconditioner,
+  !                   i.e. to the sparse matrices needed to apply the base preconditioner
+  !                   at the current level.
+  !   iprcparm     -  integer, dimension(:), allocatable.
+  !                   The integer parameters defining the base preconditioner K(ilev)
+  !                   (the iprcparm entries and values are specified below).
+  !   rprcparm     -  real(psb_Ypk_), dimension(:), allocatable.
+  !                   The real parameters defining the base preconditioner K(ilev)
+  !                   (the rprcparm entries and values are specified below).
+  !   perm         -  integer, dimension(:), allocatable.
+  !                   The row and column permutations applied to the local part of
+  !                   A(ilev) (defined only if iprcparm(mld_sub_ren_)>0). 
+  !   invperm      -  integer, dimension(:), allocatable.
+  !                   The inverse of the permutation stored in perm.
   !
   !   Note that when the LU factorization of the matrix A(ilev) is computed instead of
   !   the ILU one, by using UMFPACK or SuperLU_dist, the corresponding L and U factors
   !   are stored in data structures provided by UMFPACK or SuperLU_dist and pointed by
-  !   iprcparm(mld_umf_ptr) or iprcparm(mld_slu_ptr), respectively.
+  !   prec%iprcparm(mld_umf_ptr) or prec%iprcparm(mld_slu_ptr), respectively.
   !
 
   type mld_sbaseprc_type

@@ -76,20 +76,17 @@
 !    1181-1196.
 !
 !
+!
 ! Arguments:
 !    a          -  type(psb_dspmat_type), input.     
 !                  The sparse matrix structure containing the local part of
 !                  the fine-level matrix.
 !    desc_a     -  type(psb_desc_type), input.
 !                  The communication descriptor of the fine-level matrix.
-!    ac         -  type(psb_dspmat_type), output.
-!                  The sparse matrix structure containing the local part of
-!                  the coarse-level matrix.
-!    desc_ac    -  type(psb_desc_type), output.
-!                  The communication descriptor of the coarse-level matrix.
-!    p          -  type(mld_dbaseprc_type), input/output.
-!                  The base preconditioner data structure containing the local
-!                  part of the base preconditioner to be built.
+!    p          -  type(mld_d_onelev_prec_type), input/output.
+!                  The one-level preconditioner data structure containing the local
+!                  part of the base preconditioner to be built as well as the
+!                  aggregate matrices.
 !    info       -  integer, output.
 !                  Error code.
 !
@@ -103,8 +100,6 @@ subroutine mld_daggrmat_asb(a,desc_a,p,info)
 ! Arguments
   type(psb_dspmat_type), intent(in)               :: a
   type(psb_desc_type), intent(in)                 :: desc_a
-!!$  type(psb_dspmat_type), intent(out)              :: ac    
-!!$  type(psb_desc_type), intent(out)                :: desc_ac 
   type(mld_d_onelev_prec_type), intent(inout), target  :: p
   integer, intent(out)                            :: info
 

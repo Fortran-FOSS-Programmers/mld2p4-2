@@ -41,10 +41,11 @@
 ! Subroutine: mld_dmlprec_bld
 ! Version:    real
 !
-!  This routine builds the base preconditioner corresponding to the current
+!  This routine builds the preconditioner corresponding to the current
 !  level of the multilevel preconditioner. The routine first builds the
 !  (coarse) matrix associated to the current level from the (fine) matrix
 !  associated to the previous level, then builds the related base preconditioner.
+!  Note that this routine is only ever called on levels >= 2. 
 !
 ! 
 ! Arguments:
@@ -53,9 +54,9 @@
 !               matrix to be preconditioned.
 !    desc_a  -  type(psb_desc_type), input.
 !               The communication descriptor of a.
-!    p       -  type(mld_dbaseprc_type), input/output.
-!               The base preconditioner data structure containing the local
-!               part of the base preconditioner to be built.
+!    p       -  type(mld_d_onelev_type), input/output.
+!               The preconditioner data structure containing the local
+!               part of the one-level preconditioner to be built.
 !    info    -  integer, output.
 !               Error code.         
 !  
@@ -149,31 +150,13 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
     call psb_errpush(4010,name,a_err='mld_baseprc_bld')
     goto 9999
   end if
+  !
+  ! Fix the base_a and base_desc pointers for handling of residuals.
+  ! This is correct because this routine is only called at levels >=2.
+  !
   p%base_a    => p%ac
   p%base_desc => p%desc_ac
   
-!!$  !
-!!$  ! We have used a separate ac because
-!!$  ! 1. we want to reuse the same routines mld_ilu_bld, etc.,
-!!$  ! 2. we do NOT want to pass an argument twice to them (p%av(mld_ac_) and p),
-!!$  !    as this would violate the Fortran standard.
-!!$  ! Hence a separate AC and a TRANSFER function at the end. 
-!!$  !
-!!$  call psb_sp_transfer(ac,p%ac,info)
-!!$  p%base_a => p%ac
-!!$  if (info==0) call psb_cdtransfer(desc_ac,p%desc_ac,info)
-!!$  p%base_desc => p%desc_ac
-!!$
-!!$  p%map_desc = psb_inter_desc(psb_map_aggr_,desc_a,&
-!!$       & p%desc_ac,p%prec%av(mld_sm_pr_t_),p%prec%av(mld_sm_pr_))
-!!$  ! The two matrices from p%av() have been copied, may free them.
-!!$  if (info == 0) call psb_sp_free(p%prec%av(mld_sm_pr_t_),info)
-!!$  if (info == 0) call psb_sp_free(p%prec%av(mld_sm_pr_),info)
-!!$  if (info /= 0) then 
-!!$    call psb_errpush(4010,name,a_err='psb_cdtransfer')
-!!$    goto 9999
-!!$  end if
-
   call psb_erractionrestore(err_act)
   return
 

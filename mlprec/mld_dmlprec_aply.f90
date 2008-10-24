@@ -46,7 +46,7 @@
 !                        Y = beta*Y + alpha*op(M^(-1))*X,
 !  where 
 !  - M is a multilevel domain decomposition (Schwarz) preconditioner associated
-!    to a certain matrix A and stored in the array baseprecv,
+!    to a certain matrix A and stored in the array precv,
 !  - op(M^(-1)) is M^(-1) or its transpose, according to the value of trans,
 !  - X and Y are vectors,
 !  - alpha and beta are scalars.
@@ -78,66 +78,50 @@
 ! Arguments:
 !   alpha      -   real(psb_dpk_), input.
 !                  The scalar alpha.
-!   baseprecv  -   type(mld_dbaseprc_type), dimension(:), input.
-!                  The array of base preconditioner data structures containing the
+!   precv      -   type(mld_d_onelev_prec_type), dimension(:), input.
+!                  The array of one-level preconditioner data structures containing the
 !                  local parts of the preconditioners to be applied at each level.
-!      Note that nlev = size(baseprecv) = number of levels.
-!      baseprecv(ilev)%av  -  type(psb_dspmat_type), dimension(:), allocatable(:).
-!                             The sparse matrices needed to apply the preconditioner 
-!                             at level ilev. 
-!         baseprecv(ilev)%av(mld_l_pr_)    -  The L factor of the ILU factorization of
-!                                             the local diagonal block of A(ilev).
-!         baseprecv(ilev)%av(mld_u_pr_)    -  The U factor of the ILU factorization of the
-!                                             local diagonal block of A(ilev), except its
-!                                             diagonal entries (stored in baseprecv(ilev)%d).
-!         baseprecv(ilev)%av(mld_ap_nd_)   -  The entries of the local part of A(ilev)
-!                                             outside the diagonal block, for block-Jacobi
-!                                             sweeps.
-!         baseprecv(ilev)%av(mld_ac_)      -  The local part of the matrix A(ilev).
-!         baseprecv(ilev)%av(mld_sm_pr_)   -  The smoothed prolongator.   
-!                                             It maps vectors (ilev) ---> (ilev-1).
-!         baseprecv(ilev)%av(mld_sm_pr_t_) -  The smoothed prolongator transpose.   
-!                                             It maps vectors (ilev-1) ---> (ilev).
-!      baseprecv(ilev)%d         -  real(psb_dpk_), dimension(:), allocatable.
-!                                   The diagonal entries of the U factor in the ILU
-!                                   factorization of A(ilev).
-!      baseprecv(ilev)%desc_data -  type(psb_desc_type).
-!                                   The communication descriptor associated to the base
-!                                   preconditioner, i.e. to the sparse matrices needed
-!                                   to apply the base preconditioner at the current level.
-!      baseprecv(ilev)%desc_ac   -  type(psb_desc_type).
-!                                   The communication descriptor associated to the sparse
-!                                   matrix A(ilev), stored in baseprecv(ilev)%av(mld_ac_).
-!      baseprecv(ilev)%iprcparm  -  integer, dimension(:), allocatable.
-!                                   The integer parameters defining the base
-!                                   preconditioner K(ilev).
-!      baseprecv(ilev)%rprcparm  -  real(psb_dpk_), dimension(:), allocatable.
-!                                   The real parameters defining the base preconditioner
-!                                   K(ilev).
-!      baseprecv(ilev)%perm      -  integer, dimension(:), allocatable.
-!                                   The row and column permutations applied to the local
-!                                   part of A(ilev) (defined only if baseprecv(ilev)%
-!                                   iprcparm(mld_sub_ren_)>0). 
-!      baseprecv(ilev)%invperm   -  integer, dimension(:), allocatable.
-!                                   The inverse of the permutation stored in
-!                                   baseprecv(ilev)%perm.
-!      baseprecv(ilev)%mlia      -  integer, dimension(:), allocatable.
-!                                   The aggregation map (ilev-1) --> (ilev).
-!                                   In case of non-smoothed aggregation, it is used
-!                                   instead of mld_sm_pr_.
-!      baseprecv(ilev)%nlaggr    -  integer, dimension(:), allocatable.
-!                                   The number of aggregates (rows of A(ilev)) on the
-!                                   various processes. 
-!      baseprecv(ilev)%base_a    -  type(psb_dspmat_type), pointer.
-!                                   Pointer (really a pointer!) to the base matrix of
-!                                   the current level, i.e. the local part of A(ilev);
-!                                   so we have a unified treatment of residuals. We
-!                                   need this to avoid passing explicitly the matrix
-!                                   A(ilev) to the routine which applies the
-!                                   preconditioner.
-!      baseprecv(ilev)%base_desc -  type(psb_desc_type), pointer.
-!                                   Pointer to the communication descriptor associated
-!                                   to the sparse matrix pointed by base_a.  
+!      Note that nlev = size(precv) = number of levels.
+!      precv(ilev)%prec  -  type(psb_dbaseprc_type)
+!                           The "base" preconditioner for the current level
+!      precv(ilev)%ac        -  type(psb_dspmat_type) 
+!                                The local part of the matrix A(ilev).
+!      precv(ilev)%desc_ac   -  type(psb_desc_type).
+!                               The communication descriptor associated to the sparse
+!                               matrix A(ilev)
+!      precv(ilev)%map_desc  -  type(psb_inter_desc_type)
+!                               Stores the linear operators mapping between levels
+!                               (ilev-1) and (ilev). These are the restriction and
+!                               prolongation operators described in the sequel. 
+!      precv(ilev)%iprcparm  -  integer, dimension(:), allocatable.
+!                               The integer parameters defining the multilevel
+!                               strategy
+!      precv(ilev)%rprcparm  -  real(psb_dpk_), dimension(:), allocatable.
+!                               The real parameters defining the multilevel strategy
+!      precv(ilev)%perm      -  integer, dimension(:), allocatable.
+!                               The row and column permutations applied to the local
+!                               part of A(ilev) (defined only if precv(ilev)%
+!                               iprcparm(mld_sub_ren_)>0). 
+!      precv(ilev)%invperm   -  integer, dimension(:), allocatable.
+!                               The inverse of the permutation stored in
+!                               precv(ilev)%perm.
+!      precv(ilev)%mlia      -  integer, dimension(:), allocatable.
+!                               The aggregation map (ilev-1) --> (ilev).
+!                               In case of non-smoothed aggregation, it is used
+!                               instead of mld_sm_pr_.
+!      precv(ilev)%nlaggr    -  integer, dimension(:), allocatable.
+!                               The number of aggregates (rows of A(ilev)) on the
+!                               various processes. 
+!      precv(ilev)%base_a    -  type(psb_dspmat_type), pointer.
+!                               Pointer (really a pointer!) to the base matrix of
+!                               the current level, i.e. the local part of A(ilev);
+!                               so we have a unified treatment of residuals. We
+!                               need this to avoid passing explicitly the matrix
+!                               A(ilev) to the routine which applies the
+!                               preconditioner.
+!      precv(ilev)%base_desc -  type(psb_desc_type), pointer.
+!                               Pointer to the communication descriptor associated
+!                               to the sparse matrix pointed by base_a.  
 !                  
 !   x          -  real(psb_dpk_), dimension(:), input.
 !                 The local part of the vector X.
@@ -159,7 +143,7 @@
 !   Note that when the LU factorization of the matrix A(ilev) is computed instead of
 !   the ILU one, by using UMFPACK or SuperLU, the corresponding L and U factors
 !   are stored in data structures provided by UMFPACK or SuperLU and pointed by
-!   baseprecv(ilev)%iprcparm(mld_umf_ptr) or baseprecv(ilev)%iprcparm(mld_slu_ptr),
+!   precv(ilev)%prec%iprcparm(mld_umf_ptr) or precv(ilev)%prec%iprcparm(mld_slu_ptr),
 !   respectively.
 !  
 subroutine mld_dmlprec_aply(alpha,precv,x,beta,y,desc_data,trans,work,info)
@@ -307,7 +291,7 @@ contains
   !  level where we might have a replicated index space) and each process takes care
   !  of one submatrix. 
   !
-  !  The multilevel preconditioner M is regarded as an array of 'base preconditioners',
+  !  The multilevel preconditioner M is regarded as an array of 'one-level preconditioners',
   !  each representing the part of the preconditioner associated to a certain level.
   !  For each level ilev, the base preconditioner K(ilev) is stored in precv(ilev)
   !  and is associated to a matrix A(ilev), obtained by 'tranferring' the original
@@ -546,7 +530,7 @@ contains
   !  level where we might have a replicated index space) and each process takes care
   !  of one submatrix. 
   !
-  !  The multilevel preconditioner M is regarded as an array of 'base preconditioners',
+  !  The multilevel preconditioner M is regarded as an array of 'one-level preconditioners',
   !  each representing the part of the preconditioner associated to a certain level.
   !  For each level ilev, the base preconditioner K(ilev) is stored in precv(ilev)
   !  and is associated to a matrix A(ilev), obtained by 'tranferring' the original
@@ -824,7 +808,7 @@ contains
   !  level where we might have a replicated index space) and each process takes care
   !  of one submatrix. 
   !
-  !  The multilevel preconditioner M is regarded as an array of 'base preconditioners',
+  !  The multilevel preconditioner M is regarded as an array of 'one-level preconditioners',
   !  each representing the part of the preconditioner associated to a certain level.
   !  For each level ilev, the base preconditioner K(ilev) is stored in precv(ilev)
   !  and is associated to a matrix A(ilev), obtained by 'tranferring' the original
@@ -1115,7 +1099,7 @@ contains
   !  level where we might have a replicated index space) and each process takes care
   !  of one submatrix.   
   !
-  !  The multilevel preconditioner M is regarded as an array of 'base preconditioners',
+  !  The multilevel preconditioner M is regarded as an array of 'one-level preconditioners',
   !  each representing the part of the preconditioner associated to a certain level.
   !  For each level ilev, the base preconditioner K(ilev) is stored in precv(ilev)
   !  and is associated to a matrix A(ilev), obtained by 'tranferring' the original
