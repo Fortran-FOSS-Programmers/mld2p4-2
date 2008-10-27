@@ -271,6 +271,8 @@ module mld_prec_type
   !
   ! Entries in iprcparm
   !
+  ! These are in baseprec
+  ! 
   integer, parameter :: mld_smoother_type_   =  1         
   integer, parameter :: mld_sub_solve_       =  2
   integer, parameter :: mld_sub_restr_       =  3
@@ -279,23 +281,26 @@ module mld_prec_type
   integer, parameter :: mld_sub_ovr_         =  6
   integer, parameter :: mld_sub_fillin_      =  8
   integer, parameter :: mld_smoother_sweeps_ =  9
-  integer, parameter :: mld_ml_type_         = 10
-  integer, parameter :: mld_smoother_pos_    = 11
-  integer, parameter :: mld_aggr_kind_       = 12
-  integer, parameter :: mld_aggr_alg_        = 13
-  integer, parameter :: mld_aggr_omega_alg_  = 14
-  integer, parameter :: mld_aggr_eig_        = 15
-  integer, parameter :: mld_coarse_mat_      = 16
   !! 2 ints for 64 bit versions
-  integer, parameter :: mld_slu_ptr_         = 17
-  integer, parameter :: mld_umf_symptr_      = 17
-  integer, parameter :: mld_umf_numptr_      = 19
-  integer, parameter :: mld_slud_ptr_        = 21
-  integer, parameter :: mld_prec_status_     = 24
-  integer, parameter :: mld_coarse_solve_    = 25 
-  integer, parameter :: mld_coarse_sweeps_   = 26
-  integer, parameter :: mld_coarse_fillin_   = 27
-  integer, parameter :: mld_coarse_subsolve_ = 28
+  integer, parameter :: mld_slu_ptr_         = 10
+  integer, parameter :: mld_umf_symptr_      = 12
+  integer, parameter :: mld_umf_numptr_      = 14
+  integer, parameter :: mld_slud_ptr_        = 16
+  integer, parameter :: mld_prec_status_     = 18 
+  !
+  ! These are in onelev_prec
+  ! 
+  integer, parameter :: mld_ml_type_         = 20
+  integer, parameter :: mld_smoother_pos_    = 21
+  integer, parameter :: mld_aggr_kind_       = 22
+  integer, parameter :: mld_aggr_alg_        = 23
+  integer, parameter :: mld_aggr_omega_alg_  = 24
+  integer, parameter :: mld_aggr_eig_        = 25
+  integer, parameter :: mld_coarse_mat_      = 26
+  integer, parameter :: mld_coarse_solve_    = 27 
+  integer, parameter :: mld_coarse_sweeps_   = 28
+  integer, parameter :: mld_coarse_fillin_   = 29
+  integer, parameter :: mld_coarse_subsolve_ = 30
   integer, parameter :: mld_ifpsz_           = 32
 
   !
@@ -967,18 +972,22 @@ contains
     return
   end subroutine mld_ml_level_descr
 
-  subroutine mld_ml_coarse_descr(iout,ilev,iprcparm,nlaggr, info,&
-       & rprcparm,dprcparm, iprcparm2,rprcparm2,dprcparm2)
+  subroutine mld_ml_coarse_descr(iout,ilev,iprcparm,iprcparm2,nlaggr,info,&
+       & rprcparm,dprcparm, rprcparm2,dprcparm2)
     implicit none 
-    integer, intent(in) :: iprcparm(:),iout,ilev
+    integer, intent(in) :: iprcparm(:),iprcparm2(:),iout,ilev
     integer, intent(in), allocatable :: nlaggr(:)
     integer, intent(out) :: info
-    integer, intent(in), optional :: iprcparm2(:)
     real(psb_spk_), intent(in), optional :: rprcparm(:), rprcparm2(:)
     real(psb_dpk_), intent(in), optional :: dprcparm(:), dprcparm2(:)
 
     info = 0
     if (count((/ present(rprcparm),present(dprcparm) /)) /= 1) then 
+      info=581
+!!$      call psb_errpush(info,name,a_err=" rprcparm, dprcparm")
+      return
+    endif
+    if (count((/ present(rprcparm2),present(dprcparm2) /)) /= 1) then 
       info=581
 !!$      call psb_errpush(info,name,a_err=" rprcparm, dprcparm")
       return
@@ -1015,22 +1024,20 @@ contains
         write(iout,*) '  Coarsest matrix solver: ', &
              &  fact_names(iprcparm2(mld_sub_solve_))
       end if
-      if (present(iprcparm2)) then 
-        select case(iprcparm2(mld_sub_solve_))
-        case(mld_ilu_n_,mld_milu_n_)      
-          write(iout,*) '  Fill level:',iprcparm2(mld_sub_fillin_)
-        case(mld_ilu_t_)
-          write(iout,*) '  Fill level:',iprcparm2(mld_sub_fillin_)
-          if (present(rprcparm2)) then 
-            write(iout,*) '  Fill threshold :',rprcparm2(mld_sub_iluthrs_)
-          else if (present(dprcparm2)) then 
-            write(iout,*) '  Fill threshold :',dprcparm2(mld_sub_iluthrs_)
-          end if
-        case(mld_slu_,mld_umf_,mld_sludist_) 
-        case default
-          write(iout,*) '  Should never get here!'
-        end select
-      end if
+      select case(iprcparm2(mld_sub_solve_))
+      case(mld_ilu_n_,mld_milu_n_)      
+        write(iout,*) '  Fill level:',iprcparm2(mld_sub_fillin_)
+      case(mld_ilu_t_)
+        write(iout,*) '  Fill level:',iprcparm2(mld_sub_fillin_)
+        if (present(rprcparm2)) then 
+          write(iout,*) '  Fill threshold :',rprcparm2(mld_sub_iluthrs_)
+        else if (present(dprcparm2)) then 
+          write(iout,*) '  Fill threshold :',dprcparm2(mld_sub_iluthrs_)
+        end if
+      case(mld_slu_,mld_umf_,mld_sludist_) 
+      case default
+        write(iout,*) '  Should never get here!'
+      end select
     end if
 
 
@@ -1156,10 +1163,10 @@ contains
 
           ilev = nlev
           write(iout_,*) 
-          call mld_ml_coarse_descr(iout_,ilev,p%precv(ilev)%iprcparm,&
+          call mld_ml_coarse_descr(iout_,ilev,&
+               & p%precv(ilev)%iprcparm,p%precv(ilev)%prec%iprcparm,&
                & p%precv(ilev)%nlaggr,info,&
                & dprcparm=p%precv(ilev)%rprcparm,&
-               & iprcparm2=p%precv(ilev)%prec%iprcparm,&
                & dprcparm2=p%precv(ilev)%prec%rprcparm)
         end if
         
@@ -1276,10 +1283,10 @@ contains
 
           ilev = nlev
           write(iout_,*) 
-          call mld_ml_coarse_descr(iout_,ilev,p%precv(ilev)%iprcparm,&
+          call mld_ml_coarse_descr(iout_,ilev,&
+               & p%precv(ilev)%iprcparm,p%precv(ilev)%prec%iprcparm,&
                & p%precv(ilev)%nlaggr,info,&
                & rprcparm=p%precv(ilev)%rprcparm,  &
-               & iprcparm2=p%precv(ilev)%prec%iprcparm,&
                & rprcparm2=p%precv(ilev)%prec%rprcparm)
 
         end if
@@ -1420,10 +1427,10 @@ contains
 
           ilev = nlev
           write(iout_,*) 
-          call mld_ml_coarse_descr(iout_,ilev,p%precv(ilev)%iprcparm,&
+          call mld_ml_coarse_descr(iout_,ilev,&
+               & p%precv(ilev)%iprcparm,p%precv(ilev)%prec%iprcparm,&
                & p%precv(ilev)%nlaggr,info,&
                & dprcparm=p%precv(ilev)%rprcparm,&
-               & iprcparm2=p%precv(ilev)%prec%iprcparm,&
                & dprcparm2=p%precv(ilev)%prec%rprcparm)
         end if
         
@@ -1539,10 +1546,10 @@ contains
 
           ilev = nlev
           write(iout_,*) 
-          call mld_ml_coarse_descr(iout_,ilev,p%precv(ilev)%iprcparm,&
+          call mld_ml_coarse_descr(iout_,ilev,&
+               & p%precv(ilev)%iprcparm,p%precv(ilev)%prec%iprcparm,&
                & p%precv(ilev)%nlaggr,info,&
                & rprcparm=p%precv(ilev)%rprcparm,&
-               & iprcparm2=p%precv(ilev)%prec%iprcparm,&
                & rprcparm2=p%precv(ilev)%prec%rprcparm)
         end if
         
