@@ -84,7 +84,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
   use mld_d_as_smoother
   use mld_d_diag_solver
   use mld_d_ilu_solver
-
+  use mld_d_id_solver
 
   implicit none
 
