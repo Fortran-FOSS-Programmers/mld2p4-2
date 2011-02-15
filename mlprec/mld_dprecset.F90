@@ -242,13 +242,16 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         endif
         p%precv(ilev_)%iprcparm(what)  = val
         p%precv(ilev_)%prec%iprcparm(what)  = val
+        call p%precv(ilev_)%set(what,val,info)
       end do
+      
     case(mld_smoother_sweeps_)
       do ilev_=1,max(1,nlev_-1)
         p%precv(ilev_)%iprcparm(what)  = val
         p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = val
         p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = val
         p%precv(ilev_)%prec%iprcparm(what)  = val
+        call p%precv(ilev_)%set(what,val,info)
       end do
 
     case(mld_smoother_type_)
@@ -261,6 +264,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         endif
         p%precv(ilev_)%iprcparm(what)  = val
         p%precv(ilev_)%prec%iprcparm(what)  = val
+        call p%precv(ilev_)%set(what,val,info)
       end do
     case(mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
          & mld_smoother_sweeps_pre_,mld_smoother_sweeps_post_,&
@@ -274,6 +278,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
           return 
         endif
         p%precv(ilev_)%iprcparm(what)  = val
+        call p%precv(ilev_)%set(what,val,info)
       end do
 
     case(mld_coarse_mat_)
@@ -353,7 +358,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
 
 end subroutine mld_dprecseti
 
-subroutine mld_dprecsetsm(p,what,val,info,ilev)
+subroutine mld_dprecsetsm(p,val,info,ilev)
 
   use psb_sparse_mod
   use mld_prec_mod, mld_protect_name => mld_dprecsetsm
@@ -367,7 +372,6 @@ subroutine mld_dprecsetsm(p,what,val,info,ilev)
 
   ! Arguments
   type(mld_dprec_type), intent(inout)    :: p
-  integer, intent(in)                    :: what 
   class(mld_d_base_smoother_type), intent(in) :: val
   integer, intent(out)                   :: info
   integer, optional, intent(in)          :: ilev
@@ -433,7 +437,7 @@ subroutine mld_dprecsetsm(p,what,val,info,ilev)
 
 end subroutine mld_dprecsetsm
 
-subroutine mld_dprecsetsv(p,what,val,info,ilev)
+subroutine mld_dprecsetsv(p,val,info,ilev)
 
   use psb_sparse_mod
   use mld_prec_mod, mld_protect_name => mld_dprecsetsv
@@ -445,7 +449,6 @@ subroutine mld_dprecsetsv(p,what,val,info,ilev)
 
   ! Arguments
   type(mld_dprec_type), intent(inout)    :: p
-  integer, intent(in)                    :: what 
   class(mld_d_base_solver_type), intent(in) :: val
   integer, intent(out)                   :: info
   integer, optional, intent(in)          :: ilev
@@ -740,6 +743,7 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
             return 
           endif
           p%precv(ilev_)%prec%rprcparm(what)  = val
+          call p%precv(ilev_)%set(what,val,info)
         end do
       case(mld_coarse_iluthrs_)
         ilev_=nlev_

@@ -84,6 +84,7 @@ module mld_prec_mod
 
   interface mld_precset
     module procedure mld_i_sprecseti, mld_i_sprecsetc, mld_i_sprecsetr,&
+         & mld_i_dprecsetsm, mld_i_dprecsetsv, &
          & mld_i_dprecseti, mld_i_dprecsetc, mld_i_dprecsetr,&
          & mld_i_cprecseti, mld_i_cprecsetc, mld_i_cprecsetr,&
          & mld_i_zprecseti, mld_i_zprecsetc, mld_i_zprecsetr
@@ -135,20 +136,18 @@ module mld_prec_mod
       integer, intent(out)                   :: info
       integer, optional, intent(in)          :: ilev
     end subroutine mld_sprecsetc
-    subroutine mld_dprecsetsm(p,what,val,info,ilev)
+    subroutine mld_dprecsetsm(p,val,info,ilev)
       use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
       use mld_prec_type, only : mld_dprec_type, mld_d_base_smoother_type
       type(mld_dprec_type), intent(inout)    :: p
-      integer, intent(in)                    :: what 
       class(mld_d_base_smoother_type), intent(in) :: val
       integer, intent(out)                   :: info
       integer, optional, intent(in)          :: ilev
     end subroutine mld_dprecsetsm
-    subroutine mld_dprecsetsv(p,what,val,info,ilev)
+    subroutine mld_dprecsetsv(p,val,info,ilev)
       use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
       use mld_prec_type, only : mld_dprec_type, mld_d_base_solver_type
       type(mld_dprec_type), intent(inout)    :: p
-      integer, intent(in)                    :: what 
       class(mld_d_base_solver_type), intent(in) :: val
       integer, intent(out)                   :: info
       integer, optional, intent(in)          :: ilev
@@ -396,6 +395,26 @@ contains
 
     call mld_inner_precset(p,what,val,info)
   end subroutine mld_i_sprecsetc
+
+  subroutine mld_i_dprecsetsm(p,val,info)
+    use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
+    use mld_prec_type, only : mld_dprec_type, mld_d_base_smoother_type
+    type(mld_dprec_type), intent(inout)    :: p
+    class(mld_d_base_smoother_type), intent(in)   :: val
+    integer, intent(out)                   :: info
+
+    call mld_inner_precset(p,val,info)
+  end subroutine mld_i_dprecsetsm
+
+  subroutine mld_i_dprecsetsv(p,val,info)
+    use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
+    use mld_prec_type, only : mld_dprec_type, mld_d_base_solver_type
+    type(mld_dprec_type), intent(inout)    :: p
+    class(mld_d_base_solver_type), intent(in)   :: val
+    integer, intent(out)                   :: info
+
+    call mld_inner_precset(p,val,info)
+  end subroutine mld_i_dprecsetsv
 
   subroutine mld_i_dprecseti(p,what,val,info)
     use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
