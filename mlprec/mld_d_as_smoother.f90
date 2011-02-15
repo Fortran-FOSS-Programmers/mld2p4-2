@@ -55,6 +55,7 @@ module mld_d_as_smoother
     type(psb_desc_type)   :: desc_data 
     integer               :: novr, restr, prol
   contains
+    procedure, pass(sm) :: check => d_as_smoother_check
     procedure, pass(sm) :: build => d_as_smoother_bld
     procedure, pass(sm) :: apply => d_as_smoother_apply
     procedure, pass(sm) :: free  => d_as_smoother_free
@@ -69,7 +70,8 @@ module mld_d_as_smoother
   private :: d_as_smoother_bld, d_as_smoother_apply, &
        &  d_as_smoother_free,   d_as_smoother_seti, &
        &  d_as_smoother_setc,   d_as_smoother_setr,&
-       &  d_as_smoother_descr,  d_as_smoother_sizeof
+       &  d_as_smoother_descr,  d_as_smoother_sizeof, &
+       &  d_as_smoother_check
   
   character(len=6), parameter, private :: &
        &  restrict_names(0:4)=(/'none ','halo ','     ','     ','     '/)
@@ -78,6 +80,51 @@ module mld_d_as_smoother
 
 
 contains
+
+  subroutine d_as_smoother_check(sm,info)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_d_as_smoother_type), intent(inout) :: sm 
+    integer, intent(out)                   :: info
+    Integer           :: err_act
+    character(len=20) :: name='d_as_smoother_check'
+
+    call psb_erractionsave(err_act)
+    info = psb_success_
+
+    call mld_check_def(sm%restr,&
+         & 'Restrictor',psb_halo_,is_legal_restrict)
+    call mld_check_def(sm%prol,&
+         & 'Prolongator',psb_none_,is_legal_prolong)
+    call mld_check_def(sm%novr,&
+         & 'Overlap layers ',0,is_legal_n_ovr)
+
+    
+    if (allocated(sm%sv)) then 
+      call sm%sv%check(info)
+    else 
+      info=3111
+      call psb_errpush(info,name)
+      goto 9999
+    end if
+
+    if (info /= psb_success_) goto 9999
+    
+    call psb_erractionrestore(err_act)
+    return
+
+9999 continue
+    call psb_erractionrestore(err_act)
+    if (err_act == psb_act_abort_) then
+      call psb_error()
+      return
+    end if
+    return
+  end subroutine d_as_smoother_check
 
   subroutine d_as_smoother_apply(alpha,sm,x,beta,y,desc_data,trans,sweeps,work,info)
     use psb_sparse_mod
@@ -677,9 +724,9 @@ contains
     case default
       if (allocated(sm%sv)) then 
         call sm%sv%set(what,val,info)
-!!$      else
-!!$        write(0,*) trim(name),' Missing component, not setting!'
-!!$        info = 1121
+      else
+        write(0,*) trim(name),' Missing component, not setting!'
+        info = 1121
       end if
     end select
 

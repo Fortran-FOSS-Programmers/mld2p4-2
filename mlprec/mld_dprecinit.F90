@@ -208,6 +208,7 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     allocate(mld_d_jac_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return
     allocate(mld_d_ilu_solver_type :: p%precv(ilev_)%sm%sv, stat=info) 
+    call p%precv(ilev_)%set(mld_smoother_sweeps_,1,info)
     call p%precv(ilev_)%set(mld_sub_solve_,mld_ilu_n_,info)
     call p%precv(ilev_)%set(mld_sub_fillin_,0,info)
     

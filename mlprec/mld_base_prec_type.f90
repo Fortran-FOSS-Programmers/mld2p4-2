@@ -818,6 +818,15 @@ contains
     is_legal_ml_fact = ((ip>=1).and.(ip<=mld_max_sub_solve_))
     return
   end function is_legal_ml_fact
+  function is_legal_ilu_fact(ip)
+    implicit none 
+    integer, intent(in) :: ip
+    logical             :: is_legal_ilu_fact
+
+    is_legal_ilu_fact = ((ip==mld_ilu_n_).or.&
+         & (ip==mld_milu_n_).or.(ip==mld_ilu_t_))
+    return
+  end function is_legal_ilu_fact
   function is_legal_ml_lev(ip)
     implicit none 
     integer, intent(in) :: ip

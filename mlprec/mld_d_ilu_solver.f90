@@ -116,6 +116,48 @@ module mld_d_ilu_solver
 
 contains
 
+  subroutine d_ilu_solver_check(sv,info)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_d_ilu_solver_type), intent(inout) :: sv
+    integer, intent(out)                   :: info
+    Integer           :: err_act
+    character(len=20) :: name='d_ilu_solver_check'
+
+    call psb_erractionsave(err_act)
+    info = psb_success_
+
+    call mld_check_def(sv%fact_type,&
+         & 'Factorization',mld_ilu_n_,is_legal_ilu_fact)
+
+    select case(sv%fact_type)
+    case(mld_ilu_n_,mld_milu_n_)      
+      call mld_check_def(sv%fill_in,&
+           & 'Level',0,is_legal_ml_lev)
+    case(mld_ilu_t_)                 
+      call mld_check_def(sv%thresh,&
+           & 'Eps',dzero,is_legal_fact_thrs)
+    end select
+    
+    if (info /= psb_success_) goto 9999
+    
+    call psb_erractionrestore(err_act)
+    return
+
+9999 continue
+    call psb_erractionrestore(err_act)
+    if (err_act == psb_act_abort_) then
+      call psb_error()
+      return
+    end if
+    return
+  end subroutine d_ilu_solver_check
+
+
   subroutine d_ilu_solver_apply(alpha,sv,x,beta,y,desc_data,trans,work,info)
     use psb_sparse_mod
     type(psb_desc_type), intent(in)      :: desc_data

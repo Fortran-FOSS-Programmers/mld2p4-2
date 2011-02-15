@@ -177,6 +177,7 @@ module mld_d_prec_type
 
   type mld_d_base_solver_type
   contains
+    procedure, pass(sv) :: check => d_base_solver_check
     procedure, pass(sv) :: build => d_base_solver_bld
     procedure, pass(sv) :: apply => d_base_solver_apply
     procedure, pass(sv) :: free  => d_base_solver_free
@@ -192,6 +193,7 @@ module mld_d_prec_type
   type  mld_d_base_smoother_type
     class(mld_d_base_solver_type), allocatable :: sv
   contains
+    procedure, pass(sm) :: check => d_base_smoother_check
     procedure, pass(sm) :: build => d_base_smoother_bld
     procedure, pass(sm) :: apply => d_base_smoother_apply
     procedure, pass(sm) :: free  => d_base_smoother_free
@@ -221,6 +223,7 @@ module mld_d_prec_type
     type(psb_desc_type), pointer    :: base_desc => null() 
     type(psb_dlinmap_type)          :: map
   contains
+    procedure, pass(lv) :: check => d_base_onelev_check
     procedure, pass(lv) :: seti  => d_base_onelev_seti
     procedure, pass(lv) :: setr  => d_base_onelev_setr
     procedure, pass(lv) :: setc  => d_base_onelev_setc
@@ -239,12 +242,14 @@ module mld_d_prec_type
        &  d_base_solver_free,    d_base_solver_seti, &
        &  d_base_solver_setc,    d_base_solver_setr, &
        &  d_base_solver_descr,   d_base_solver_sizeof, &
-       &  d_base_solver_default, &
+       &  d_base_solver_default, d_base_solver_check, &
        &  d_base_smoother_bld,   d_base_smoother_apply, &
        &  d_base_smoother_free,  d_base_smoother_seti, &
        &  d_base_smoother_setc,  d_base_smoother_setr,&
        &  d_base_smoother_descr, d_base_smoother_sizeof, &
-       &  d_base_smoother_default
+       &  d_base_smoother_default, d_base_smoother_check, &
+       &  d_base_onelev_seti, d_base_onelev_setc, &
+       &  d_base_onelev_setr, d_base_onelev_check
 
 
   !
@@ -716,6 +721,44 @@ contains
     
   end subroutine d_base_smoother_apply
 
+  subroutine d_base_smoother_check(sm,info)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_d_base_smoother_type), intent(inout) :: sm 
+    integer, intent(out)                   :: info
+    Integer           :: err_act
+    character(len=20) :: name='d_base_smoother_check'
+
+    call psb_erractionsave(err_act)
+    info = psb_success_
+
+    if (allocated(sm%sv)) then 
+      call sm%sv%check(info)
+    else 
+      info=3111
+      call psb_errpush(info,name)
+      goto 9999
+    end if
+
+    if (info /= psb_success_) goto 9999
+    
+    call psb_erractionrestore(err_act)
+    return
+
+9999 continue
+    call psb_erractionrestore(err_act)
+    if (err_act == psb_act_abort_) then
+      call psb_error()
+      return
+    end if
+    return
+  end subroutine d_base_smoother_check
+
+
   subroutine d_base_smoother_seti(sm,what,val,info)
 
     use psb_sparse_mod
@@ -1036,6 +1079,35 @@ contains
     return
   end subroutine d_base_solver_bld
 
+  subroutine d_base_solver_check(sv,info)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_d_base_solver_type), intent(inout) :: sv
+    integer, intent(out)                   :: info
+    Integer           :: err_act
+    character(len=20) :: name='d_base_solver_check'
+
+    call psb_erractionsave(err_act)
+    info = psb_success_
+
+
+    if (info /= psb_success_) goto 9999
+    
+    call psb_erractionrestore(err_act)
+    return
+
+9999 continue
+    call psb_erractionrestore(err_act)
+    if (err_act == psb_act_abort_) then
+      call psb_error()
+      return
+    end if
+    return
+  end subroutine d_base_solver_check
 
   subroutine d_base_solver_seti(sv,what,val,info)
 
@@ -1289,6 +1361,52 @@ contains
     return
 
   end subroutine mld_d_apply1v
+
+  subroutine d_base_onelev_check(lv,info)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_donelev_type), intent(inout) :: lv 
+    integer, intent(out)                   :: info
+    Integer           :: err_act
+    character(len=20) :: name='d_base_onelev_check'
+
+    call psb_erractionsave(err_act)
+    info = psb_success_
+
+    call mld_check_def(lv%sweeps,&
+         & 'Jacobi sweeps',1,is_legal_jac_sweeps)
+    call mld_check_def(lv%sweeps_pre,&
+         & 'Jacobi sweeps',1,is_legal_jac_sweeps)
+    call mld_check_def(lv%sweeps_post,&
+         & 'Jacobi sweeps',1,is_legal_jac_sweeps)
+
+    
+    if (allocated(lv%sm)) then 
+      call lv%sm%check(info)
+    else 
+      info=3111
+      call psb_errpush(info,name)
+      goto 9999
+    end if
+
+    if (info /= psb_success_) goto 9999
+    
+    call psb_erractionrestore(err_act)
+    return
+
+9999 continue
+    call psb_erractionrestore(err_act)
+    if (err_act == psb_act_abort_) then
+      call psb_error()
+      return
+    end if
+    return
+  end subroutine d_base_onelev_check
+
 
   subroutine d_base_onelev_seti(lv,what,val,info)
 
