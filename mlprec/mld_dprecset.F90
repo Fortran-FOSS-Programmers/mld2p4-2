@@ -253,7 +253,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         case (mld_f_none_)
           if (allocated(p%precv(ilev_)%sm%sv)) then 
             select type (sv => p%precv(ilev_)%sm%sv)
-            class is (mld_d_id_solver) 
+            class is (mld_d_id_solver_type) 
               ! do nothing
             class default
               call p%precv(ilev_)%sm%sv%free(info)
@@ -267,7 +267,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         case (mld_diag_scale_)
           if (allocated(p%precv(ilev_)%sm%sv)) then 
             select type (sv => p%precv(ilev_)%sm%sv)
-            class is (mld_d_diag_solver) 
+            class is (mld_d_diag_solver_type) 
               ! do nothing
             class default
               call p%precv(ilev_)%sm%sv%free(info)
@@ -282,7 +282,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         case (mld_ilu_n_,mld_milu_n_,mld_ilu_t_)
           if (allocated(p%precv(ilev_)%sm%sv)) then 
             select type (sv => p%precv(ilev_)%sm%sv)
-            class is (mld_d_ilu_solver) 
+            class is (mld_d_ilu_solver_type) 
               ! do nothing
             class default
               call p%precv(ilev_)%sm%sv%free(info)
@@ -297,7 +297,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         case (mld_d_umf_solver) 
           if (allocated(p%precv(ilev_)%sm%sv)) then 
             select type (sv => p%precv(ilev_)%sm%sv)
-            class is (mld_d_umf_solver) 
+            class is (mld_d_umf_solver_type) 
               ! do nothing
             class default
               call p%precv(ilev_)%sm%sv%free(info)
@@ -358,7 +358,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         case (mld_noprec_)
           if (allocated(p%precv(ilev_)%sm)) then 
             select type (sm => p%precv(ilev_)%sm)
-            type is (mld_d_base_smoother) 
+            type is (mld_d_base_smoother_type) 
               ! do nothing
             class default
               call p%precv(ilev_)%sm%free(info)
@@ -379,7 +379,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         case (mld_jac_)
           if (allocated(p%precv(ilev_)%sm)) then 
             select type (sm => p%precv(ilev_)%sm)
-            class is (mld_d_jac_smoother) 
+            class is (mld_d_jac_smoother_type) 
               ! do nothing
             class default
               call p%precv(ilev_)%sm%free(info)
@@ -400,7 +400,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         case (mld_bjac_)
           if (allocated(p%precv(ilev_)%sm)) then 
             select type (sm => p%precv(ilev_)%sm)
-            class is (mld_d_jac_smoother) 
+            class is (mld_d_jac_smoother_type) 
               ! do nothing
             class default
               call p%precv(ilev_)%sm%free(info)
@@ -421,7 +421,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         case (mld_as_)
           if (allocated(p%precv(ilev_)%sm)) then 
             select type (sm => p%precv(ilev_)%sm)
-            class is (mld_d_as_smoother) 
+            class is (mld_d_as_smoother_type) 
               ! do nothing
             class default
               call p%precv(ilev_)%sm%free(info)
