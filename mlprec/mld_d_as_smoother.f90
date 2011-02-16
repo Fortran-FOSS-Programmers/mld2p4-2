@@ -64,6 +64,7 @@ module mld_d_as_smoother
     procedure, pass(sm) :: setr  => d_as_smoother_setr
     procedure, pass(sm) :: descr => d_as_smoother_descr
     procedure, pass(sm) :: sizeof => d_as_smoother_sizeof
+    procedure, pass(sm) :: default => d_as_smoother_default
   end type mld_d_as_smoother_type
   
   
@@ -71,7 +72,7 @@ module mld_d_as_smoother
        &  d_as_smoother_free,   d_as_smoother_seti, &
        &  d_as_smoother_setc,   d_as_smoother_setr,&
        &  d_as_smoother_descr,  d_as_smoother_sizeof, &
-       &  d_as_smoother_check
+       &  d_as_smoother_check,  d_as_smoother_default
   
   character(len=6), parameter, private :: &
        &  restrict_names(0:4)=(/'none ','halo ','     ','     ','     '/)
@@ -80,6 +81,28 @@ module mld_d_as_smoother
 
 
 contains
+
+  subroutine d_as_smoother_default(sm)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_d_as_smoother_type), intent(inout) :: sm 
+
+    
+    sm%restr = psb_halo_
+    sm%prol  = psb_none_
+    sm%novr  = 1
+
+    
+    if (allocated(sm%sv)) then 
+      call sm%sv%default()
+    end if
+
+    return
+  end subroutine d_as_smoother_default
 
   subroutine d_as_smoother_check(sm,info)
 

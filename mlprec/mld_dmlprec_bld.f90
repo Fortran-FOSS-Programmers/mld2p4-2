@@ -40,7 +40,6 @@
 !
 ! Subroutine: mld_dmlprec_bld
 ! Version:    real
-! Contains:   subroutine init_baseprec_av
 !
 !  This routine builds the preconditioner according to the requirements made by
 !  the user trough the subroutines mld_precinit and mld_precset.
@@ -173,7 +172,6 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
     !
     ! Finest level first; remember to fix base_a and base_desc
     ! 
-    call init_baseprec_av(p%precv(1)%prec,info)
     p%precv(1)%base_a    => a
     p%precv(1)%base_desc => desc_a
 
@@ -219,7 +217,6 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
       ! Build the mapping between levels i-1 and i and the matrix
       ! at level i
       ! 
-      call init_baseprec_av(p%precv(i)%prec,info)
       if (info == psb_success_) call mld_coarse_bld(p%precv(i-1)%base_a,&
            & p%precv(i-1)%base_desc, p%precv(i),info)
 
@@ -285,7 +282,6 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
 
       i    = iszv 
       call check_coarse_lev(p%precv(i)) 
-      call init_baseprec_av(p%precv(i)%prec,info)
       if (info == psb_success_) call mld_coarse_bld(p%precv(i-1)%base_a,&
            & p%precv(i-1)%base_desc, p%precv(i),info)
       if (info /= psb_success_) then 
@@ -399,25 +395,6 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
   return
 
 contains
-
-  subroutine init_baseprec_av(p,info)
-    type(mld_dbaseprec_type), intent(inout) :: p
-    integer                                :: info
-!!$    if (allocated(p%av)) then
-!!$      if (size(p%av) /= mld_max_avsz_) then 
-!!$        deallocate(p%av,stat=info)
-!!$        if (info /= psb_success_) return 
-!!$      endif
-!!$    end if
-!!$    if (.not.(allocated(p%av))) then 
-!!$      allocate(p%av(mld_max_avsz_),stat=info)
-!!$      if (info /= psb_success_) return
-!!$    end if
-!!$    do k=1,size(p%av)
-!!$      call psb_nullify_sp(p%av(k))
-!!$    end do
-
-  end subroutine init_baseprec_av
 
   subroutine check_coarse_lev(prec)
     type(mld_donelev_type) :: prec

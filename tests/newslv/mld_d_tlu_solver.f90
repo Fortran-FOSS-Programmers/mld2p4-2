@@ -61,13 +61,15 @@ module mld_d_tlu_solver
     procedure, pass(sv) :: setr  => d_tlu_solver_setr
     procedure, pass(sv) :: descr => d_tlu_solver_descr
     procedure, pass(sv) :: sizeof => d_tlu_solver_sizeof
+    procedure, pass(sv) :: default => d_tlu_solver_default
   end type mld_d_tlu_solver_type
 
 
   private :: d_tlu_solver_bld, d_tlu_solver_apply, &
        &  d_tlu_solver_free,   d_tlu_solver_seti, &
        &  d_tlu_solver_setc,   d_tlu_solver_setr,&
-       &  d_tlu_solver_descr,  d_tlu_solver_sizeof
+       &  d_tlu_solver_descr,  d_tlu_solver_sizeof, &
+       &  d_tlu_solver_default
 
 
   interface mld_ilu0_fact
@@ -115,6 +117,22 @@ module mld_d_tlu_solver
 
 
 contains
+
+  subroutine d_tlu_solver_default(sv)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_d_tlu_solver_type), intent(inout) :: sv
+
+    sv%fact_type = mld_ilu_n_
+    sv%fill_in   = 0
+    sv%thresh    = dzero
+
+    return
+  end subroutine d_tlu_solver_default
 
   subroutine d_tlu_solver_check(sv,info)
 

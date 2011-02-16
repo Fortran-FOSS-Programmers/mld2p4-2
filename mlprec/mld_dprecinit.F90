@@ -123,7 +123,7 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
   endif
 
   select case(psb_toupper(ptype(1:len_trim(ptype))))
-  case ('NOPREC') 
+  case ('NOPREC','NONE') 
     nlev_ = 1
     ilev_ = 1
     allocate(p%precv(nlev_),stat=info) 
@@ -146,10 +146,11 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
     p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
     p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
+
     allocate(mld_d_base_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return
     allocate(mld_d_id_solver_type :: p%precv(ilev_)%sm%sv, stat=info) 
-    call p%precv(ilev_)%set(mld_smoother_sweeps_,1,info)
+    call p%precv(ilev_)%default()
     
   case ('JAC','DIAG','JACOBI') 
     nlev_ = 1
@@ -175,10 +176,11 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
     p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
     p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
+
     allocate(mld_d_jac_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return
     allocate(mld_d_diag_solver_type :: p%precv(ilev_)%sm%sv, stat=info) 
-    call p%precv(ilev_)%set(mld_smoother_sweeps_,1,info)    
+    call p%precv(ilev_)%default()
 
   case ('BJAC') 
     nlev_ = 1
@@ -208,9 +210,7 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     allocate(mld_d_jac_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return
     allocate(mld_d_ilu_solver_type :: p%precv(ilev_)%sm%sv, stat=info) 
-    call p%precv(ilev_)%set(mld_smoother_sweeps_,1,info)
-    call p%precv(ilev_)%set(mld_sub_solve_,mld_ilu_n_,info)
-    call p%precv(ilev_)%set(mld_sub_fillin_,0,info)
+    call p%precv(ilev_)%default()
     
   case ('AS')
     nlev_ = 1
@@ -240,13 +240,7 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     allocate(mld_d_as_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return
     allocate(mld_d_ilu_solver_type :: p%precv(ilev_)%sm%sv, stat=info) 
-
-    call p%precv(ilev_)%set(mld_smoother_sweeps_,1,info)
-    call p%precv(ilev_)%set(mld_sub_restr_,psb_halo_,info)
-    call p%precv(ilev_)%set(mld_sub_prol_,psb_none_,info)
-    call p%precv(ilev_)%set(mld_sub_ovr_,1,info)
-    call p%precv(ilev_)%set(mld_sub_solve_,mld_ilu_n_,info)
-    call p%precv(ilev_)%set(mld_sub_fillin_,0,info)
+    call p%precv(ilev_)%default()
 
 
   case ('ML')
@@ -293,13 +287,7 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     allocate(mld_d_as_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return
     allocate(mld_d_ilu_solver_type :: p%precv(ilev_)%sm%sv, stat=info) 
-
-    call p%precv(ilev_)%set(mld_smoother_sweeps_,1,info)
-    call p%precv(ilev_)%set(mld_sub_restr_,psb_halo_,info)
-    call p%precv(ilev_)%set(mld_sub_prol_,psb_none_,info)
-    call p%precv(ilev_)%set(mld_sub_ovr_,1,info)
-    call p%precv(ilev_)%set(mld_sub_solve_,mld_ilu_n_,info)
-    call p%precv(ilev_)%set(mld_sub_fillin_,0,info)
+    call p%precv(ilev_)%default()
 
 
 !!$    write(0,*) 'Check 4: ',allocated(p%precv(1)%sm)
@@ -339,14 +327,7 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
       allocate(mld_d_as_smoother_type :: p%precv(ilev_)%sm, stat=info) 
       if (info /= psb_success_) return
       allocate(mld_d_ilu_solver_type :: p%precv(ilev_)%sm%sv, stat=info)       
-      call p%precv(ilev_)%set(mld_smoother_sweeps_,1,info)
-      call p%precv(ilev_)%set(mld_sub_restr_,psb_halo_,info)
-      call p%precv(ilev_)%set(mld_sub_prol_,psb_none_,info)
-      call p%precv(ilev_)%set(mld_sub_ovr_,1,info)
-      call p%precv(ilev_)%set(mld_sub_solve_,mld_ilu_n_,info)
-      call p%precv(ilev_)%set(mld_sub_fillin_,0,info)
-      
-
+      call p%precv(ilev_)%default()
 
     end do
     ilev_ = nlev_
@@ -393,9 +374,8 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     allocate(mld_d_umf_solver_type :: p%precv(ilev_)%sm%sv, stat=info)       
 #else 
     allocate(mld_d_ilu_solver_type :: p%precv(ilev_)%sm%sv, stat=info)       
-    call p%precv(ilev_)%set(mld_sub_solve_,mld_ilu_n_,info)
-    call p%precv(ilev_)%set(mld_sub_fillin_,0,info)
 #endif
+    call p%precv(ilev_)%default()
     call p%precv(ilev_)%set(mld_smoother_sweeps_,4,info)
     call p%precv(ilev_)%set(mld_sub_restr_,psb_none_,info)
     call p%precv(ilev_)%set(mld_sub_prol_,psb_none_,info)

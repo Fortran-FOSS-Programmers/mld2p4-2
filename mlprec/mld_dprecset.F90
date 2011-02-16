@@ -85,6 +85,9 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
   use mld_d_diag_solver
   use mld_d_ilu_solver
   use mld_d_id_solver
+#ifdef HAVE_UMF_
+  use mld_d_umf_solver
+#endif
 
   implicit none
 
@@ -231,7 +234,86 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
     ! levels
     !
     select case(what) 
-    case(mld_sub_solve_,mld_sub_restr_,mld_sub_prol_,&
+    case(mld_sub_solve_)
+      do ilev_=1,max(1,nlev_-1)
+        if ((.not.allocated(p%precv(ilev_)%iprcparm)).or.&
+             & (.not.allocated(p%precv(ilev_)%sm)) then 
+          write(0,*) name,&
+               &': Error: uninitialized preconditioner component, should call MLD_PRECINIT' 
+          info = -1 
+          return 
+        endif
+        p%precv(ilev_)%iprcparm(what)  = val
+        p%precv(ilev_)%prec%iprcparm(what)  = val
+
+        !
+        ! This here requires a bit more attention.
+        !
+        select case (val) 
+        case (mld_f_none_)
+          if (allocated(p%precv(ilev_)%sm%sv)) then 
+            select type (sv => p%precv(ilev_)%sm%sv)
+            class is (mld_d_id_solver) 
+              ! do nothing
+            class default
+              call p%precv(ilev_)%sm%sv%free(info)
+              if (info == 0) deallocate(p%precv(ilev_)%sm%sv)
+              if (info == 0) allocate(mld_d_id_solver :: p%precv(ilev_)%sm%sv, stat=info)
+            end select
+          else 
+            allocate(mld_d_id_solver :: p%precv(ilev_)%sm%sv, stat=info)
+          endif
+        case (mld_diag_scale_)
+          if (allocated(p%precv(ilev_)%sm%sv)) then 
+            select type (sv => p%precv(ilev_)%sm%sv)
+            class is (mld_d_diag_solver) 
+              ! do nothing
+            class default
+              call p%precv(ilev_)%sm%sv%free(info)
+              if (info == 0) deallocate(p%precv(ilev_)%sm%sv)
+              if (info == 0) allocate(mld_d_diag_solver :: p%precv(ilev_)%sm%sv, stat=info)
+            end select
+          else 
+            allocate(mld_d_diag_solver :: p%precv(ilev_)%sm%sv, stat=info)
+          endif
+
+        case (mld_ilu_n_,mld_milu_n_,mld_ilu_t_)
+          if (allocated(p%precv(ilev_)%sm%sv)) then 
+            select type (sv => p%precv(ilev_)%sm%sv)
+            class is (mld_d_ilu_solver) 
+              ! do nothing
+            class default
+              call p%precv(ilev_)%sm%sv%free(info)
+              if (info == 0) deallocate(p%precv(ilev_)%sm%sv)
+              if (info == 0) allocate(mld_d_ilu_solver :: p%precv(ilev_)%sm%sv, stat=info)
+            end select
+          else 
+            allocate(mld_d_ilu_solver :: p%precv(ilev_)%sm%sv, stat=info)
+          endif
+#ifdef HAVE_UMF_
+        case (mld_d_umf_solver) 
+          if (allocated(p%precv(ilev_)%sm%sv)) then 
+            select type (sv => p%precv(ilev_)%sm%sv)
+            class is (mld_d_umf_solver) 
+              ! do nothing
+            class default
+              call p%precv(ilev_)%sm%sv%free(info)
+              if (info == 0) deallocate(p%precv(ilev_)%sm%sv)
+              if (info == 0) allocate(mld_d_umf_solver :: p%precv(ilev_)%sm%sv, stat=info)
+            end select
+          else 
+            allocate(mld_d_umf_solver :: p%precv(ilev_)%sm%sv, stat=info)
+          endif
+#endif
+        case default
+          !
+          ! Do nothing and hope for the best :) 
+          !
+        end select
+        call p%precv(ilev_)%set(what,val,info)
+      end do
+
+    case(mld_sub_restr_,mld_sub_prol_,&
          & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_)
       do ilev_=1,max(1,nlev_-1)
         if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
@@ -264,8 +346,91 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         endif
         p%precv(ilev_)%iprcparm(what)  = val
         p%precv(ilev_)%prec%iprcparm(what)  = val
+
+        !
+        ! This here requires a bit more attention.
+        !
+        select case (val) 
+        case (mld_noprec_)
+          if (allocated(p%precv(ilev_)%sm)) then 
+            select type (sm => p%precv(ilev_)%sm)
+            type is (mld_d_base_smoother) 
+              ! do nothing
+            class default
+              call p%precv(ilev_)%sm%free(info)
+              if (info == 0) deallocate(p%precv(ilev_)%sm)
+              if (info == 0) allocate(mld_d_base_smoother :: p%precv(ilev_)%sm, stat=info)
+              if (info == 0) allocate(mld_d_id_solver_type :: p%precv(ilev_)%sm%sv, stat=info) 
+              call p%precv(ilev_)%sm%default()
+            end select
+          else 
+            allocate(mld_d_base_smoother :: p%precv(ilev_)%sm, stat=info)
+            if (info ==0) allocate(mld_d_id_solver_type :: p%precv(ilev_)%sm%sv, stat=info) 
+            call p%precv(ilev_)%sm%default()
+          endif
+
+        case (mld_jac_)
+          if (allocated(p%precv(ilev_)%sm)) then 
+            select type (sm => p%precv(ilev_)%sm)
+            class is (mld_d_jac_smoother) 
+              ! do nothing
+            class default
+              call p%precv(ilev_)%sm%free(info)
+              if (info == 0) deallocate(p%precv(ilev_)%sm)
+              if (info == 0) allocate(mld_d_jac_smoother :: p%precv(ilev_)%sm, stat=info)
+              if (info == 0) allocate(mld_d_diag_solver :: p%precv(ilev_)%sm%sv, stat=info)
+              call p%precv(ilev_)%sm%default()
+            end select
+          else 
+            allocate(mld_d_jac_smoother :: p%precv(ilev_)%sm, stat=info)
+            if (info == 0) allocate(mld_d_diag_solver :: p%precv(ilev_)%sm%sv, stat=info)
+            call p%precv(ilev_)%sm%default()
+          endif
+
+        case (mld_bjac_)
+          if (allocated(p%precv(ilev_)%sm)) then 
+            select type (sm => p%precv(ilev_)%sm)
+            class is (mld_d_jac_smoother) 
+              ! do nothing
+            class default
+              call p%precv(ilev_)%sm%free(info)
+              if (info == 0) deallocate(p%precv(ilev_)%sm)
+              if (info == 0) allocate(mld_d_jac_smoother :: p%precv(ilev_)%sm, stat=info)
+              if (info == 0) allocate(mld_d_ilu_solver :: p%precv(ilev_)%sm%sv, stat=info)
+              call p%precv(ilev_)%sm%default()
+            end select
+          else 
+            allocate(mld_d_jac_smoother :: p%precv(ilev_)%sm, stat=info)
+            if (info == 0) allocate(mld_d_ilu_solver :: p%precv(ilev_)%sm%sv, stat=info)
+            call p%precv(ilev_)%sm%default()
+          endif
+
+        case (mld_as_)
+          if (allocated(p%precv(ilev_)%sm)) then 
+            select type (sm => p%precv(ilev_)%sm)
+            class is (mld_d_as_smoother) 
+              ! do nothing
+            class default
+              call p%precv(ilev_)%sm%free(info)
+              if (info == 0) deallocate(p%precv(ilev_)%sm)
+              if (info == 0) allocate(mld_d_as_smoother :: p%precv(ilev_)%sm, stat=info)
+              if (info == 0) allocate(mld_d_ilu_solver :: p%precv(ilev_)%sm%sv, stat=info)
+              call p%precv(ilev_)%sm%default()
+            end select
+          else 
+            allocate(mld_d_as_smoother :: p%precv(ilev_)%sm, stat=info)
+            if (info == 0) allocate(mld_d_ilu_solver :: p%precv(ilev_)%sm%sv, stat=info)
+            call p%precv(ilev_)%sm%default()
+          endif
+
+        case default
+          !
+          ! Do nothing and hope for the best :) 
+          !
+        end select
         call p%precv(ilev_)%set(what,val,info)
       end do
+
     case(mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
          & mld_smoother_sweeps_pre_,mld_smoother_sweeps_post_,&
          & mld_smoother_pos_,mld_aggr_omega_alg_,&
@@ -289,7 +454,11 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         info = -1 
         return 
       endif
-      if (nlev_ > 1) p%precv(nlev_)%iprcparm(mld_coarse_mat_)  = val
+      if (nlev_ > 1) then 
+        p%precv(nlev_)%iprcparm(mld_coarse_mat_)  = val
+        call p%precv(nlev_)%set(mld_coarse_mat_,val,info)
+      end if
+                
     case(mld_coarse_solve_)
       if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
         write(0,*) name,&
@@ -433,6 +602,7 @@ subroutine mld_dprecsetsm(p,val,info,ilev)
 #else
     allocate(p%precv(ilev_)%sm,source=val) 
 #endif
+    call p%precv(ilev_)%sm%default()
   end do
 
 end subroutine mld_dprecsetsm
@@ -508,6 +678,7 @@ subroutine mld_dprecsetsv(p,val,info,ilev)
 #else
       allocate(p%precv(ilev_)%sm%sv,source=val) 
 #endif
+      call p%precv(ilev_)%sm%sv%default()
     else
       info = 3111
       write(0,*) name,&

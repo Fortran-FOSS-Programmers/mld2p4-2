@@ -210,8 +210,8 @@ program ppde
   else
     call mld_precinit(prec,'BJAC',       info)
     call mld_precset(prec,tlusv,info) 
-    call mld_precset(prec,mld_sub_solve_,      prectype%solve,   info)
-    call mld_precset(prec,mld_sub_fillin_,     prectype%fill1,   info)
+!!$    call mld_precset(prec,mld_sub_solve_,      prectype%solve,   info)
+!!$    call mld_precset(prec,mld_sub_fillin_,     prectype%fill1,   info)
   end if  
   call psb_barrier(ictxt)
   t1 = psb_wtime()

@@ -211,9 +211,18 @@ module mld_d_prec_type
     real(psb_dpk_), allocatable         :: rprcparm(:) 
   end type mld_dbaseprec_type
 
+  type mld_dml_parms
+    integer :: sweeps, sweeps_pre, sweeps_post
+    integer :: ml_type, smoother_pos, coarse_mat
+    integer :: aggr_alg, aggr_kind
+    integer :: aggr_omega_alg, aggr_eig, aggr_filter
+    real(psb_dpk_) :: aggr_omega_val,  aggr_thresh
+  end type mld_dml_parms
+
+         
   type mld_donelev_type
     class(mld_d_base_smoother_type), allocatable :: sm
-    integer                         :: sweeps, sweeps_pre, sweeps_post
+    type(mld_dml_parms)             :: parms 
     type(mld_dbaseprec_type)        :: prec
     integer, allocatable            :: iprcparm(:) 
     real(psb_dpk_), allocatable     :: rprcparm(:) 
@@ -223,6 +232,7 @@ module mld_d_prec_type
     type(psb_desc_type), pointer    :: base_desc => null() 
     type(psb_dlinmap_type)          :: map
   contains
+    procedure, pass(lv) :: default => d_base_onelev_default
     procedure, pass(lv) :: check => d_base_onelev_check
     procedure, pass(lv) :: seti  => d_base_onelev_seti
     procedure, pass(lv) :: setr  => d_base_onelev_setr
@@ -249,7 +259,8 @@ module mld_d_prec_type
        &  d_base_smoother_descr, d_base_smoother_sizeof, &
        &  d_base_smoother_default, d_base_smoother_check, &
        &  d_base_onelev_seti, d_base_onelev_setc, &
-       &  d_base_onelev_setr, d_base_onelev_check
+       &  d_base_onelev_setr, d_base_onelev_check, &
+       &  d_base_onelev_default
 
 
   !
@@ -1007,6 +1018,8 @@ contains
     class(mld_d_base_smoother_type), intent(inout) :: sm
     ! Do nothing for base version
 
+    if (allocated(sm%sv)) call sm%sv%default()
+
     return
   end subroutine d_base_smoother_default
 
@@ -1028,7 +1041,7 @@ contains
 
     call psb_erractionsave(err_act)
     
-    info = 700
+    info = psb_err_missing_override_method_
     call psb_errpush(info,name)
     goto 9999 
     
@@ -1063,7 +1076,7 @@ contains
 
     call psb_erractionsave(err_act)
 
-    info = 700
+    info = psb_err_missing_override_method_
     call psb_errpush(info,name)
     goto 9999 
 
@@ -1122,22 +1135,10 @@ contains
     integer, intent(out)                         :: info
     Integer           :: err_act
     character(len=20) :: name='d_base_solver_seti'
-
-    call psb_erractionsave(err_act)
-
-    info = 700
-    call psb_errpush(info,name)
-    goto 9999 
-
-    call psb_erractionrestore(err_act)
-    return
-
-9999 continue
-    call psb_erractionrestore(err_act)
-    if (err_act == psb_act_abort_) then
-      call psb_error()
-      return
-    end if
+    
+    ! Correct action here is doing nothing. 
+    info = 0
+    
     return
   end subroutine d_base_solver_seti
 
@@ -1152,14 +1153,18 @@ contains
     integer, intent(in)                          :: what 
     character(len=*), intent(in)                 :: val
     integer, intent(out)                         :: info
-    Integer           :: err_act
+    Integer           :: err_act, ival 
     character(len=20) :: name='d_base_solver_setc'
 
     call psb_erractionsave(err_act)
 
-    info = 700
-    call psb_errpush(info,name)
-    goto 9999 
+    info = psb_success_
+
+    call mld_stringval(val,ival,info)
+    if (info == psb_success_) call sv%set(what,ival,info)
+
+    if (info /= psb_success_) goto 9999
+
 
     call psb_erractionrestore(err_act)
     return
@@ -1187,21 +1192,10 @@ contains
     Integer           :: err_act
     character(len=20) :: name='d_base_solver_setr'
 
-    call psb_erractionsave(err_act)
-
-    info = 700
-    call psb_errpush(info,name)
-    goto 9999 
-
-    call psb_erractionrestore(err_act)
-    return
-
-9999 continue
-    call psb_erractionrestore(err_act)
-    if (err_act == psb_act_abort_) then
-      call psb_error()
-      return
-    end if
+    
+    ! Correct action here is doing nothing. 
+    info = 0
+    
     return
   end subroutine d_base_solver_setr
 
@@ -1219,7 +1213,7 @@ contains
 
     call psb_erractionsave(err_act)
 
-    info = 700
+    info = psb_err_missing_override_method_
     call psb_errpush(info,name)
     goto 9999 
 
@@ -1255,7 +1249,7 @@ contains
 
     call psb_erractionsave(err_act)
 
-    info = 700
+    info = psb_err_missing_override_method_
     call psb_errpush(info,name)
     goto 9999 
 
@@ -1310,7 +1304,7 @@ contains
     type is (mld_dprec_type)
       call mld_precaply(prec,x,y,desc_data,info,trans,work)
     class default
-      info = 700
+      info = psb_err_missing_override_method_
       call psb_errpush(info,name)
       goto 9999 
     end select
@@ -1344,7 +1338,7 @@ contains
     type is (mld_dprec_type)
       call mld_precaply(prec,x,desc_data,info,trans)
     class default
-      info = 700
+      info = psb_err_missing_override_method_
       call psb_errpush(info,name)
       goto 9999 
     end select
@@ -1377,11 +1371,11 @@ contains
     call psb_erractionsave(err_act)
     info = psb_success_
 
-    call mld_check_def(lv%sweeps,&
+    call mld_check_def(lv%parms%sweeps,&
          & 'Jacobi sweeps',1,is_legal_jac_sweeps)
-    call mld_check_def(lv%sweeps_pre,&
+    call mld_check_def(lv%parms%sweeps_pre,&
          & 'Jacobi sweeps',1,is_legal_jac_sweeps)
-    call mld_check_def(lv%sweeps_post,&
+    call mld_check_def(lv%parms%sweeps_post,&
          & 'Jacobi sweeps',1,is_legal_jac_sweeps)
 
     
@@ -1408,6 +1402,36 @@ contains
   end subroutine d_base_onelev_check
 
 
+  subroutine d_base_onelev_default(lv)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_donelev_type), intent(inout) :: lv 
+
+    lv%parms%sweeps          = 1
+    lv%parms%sweeps_pre      = 1
+    lv%parms%sweeps_post     = 1
+    lv%parms%ml_type         = mld_mult_ml_
+    lv%parms%aggr_alg        = mld_dec_aggr_
+    lv%parms%aggr_kind       = mld_smooth_prol_
+    lv%parms%coarse_mat      = mld_distr_mat_
+    lv%parms%smoother_pos    = mld_twoside_smooth_
+    lv%parms%aggr_omega_alg  = mld_eig_est_
+    lv%parms%aggr_eig        = mld_max_norm_
+    lv%parms%aggr_filter     = mld_no_filter_mat_
+    lv%parms%aggr_omega_val  = dzero
+    lv%parms%aggr_thresh     = dzero
+    
+    if (allocated(lv%sm)) call lv%sm%default()
+
+    return
+
+  end subroutine d_base_onelev_default
+
+
   subroutine d_base_onelev_seti(lv,what,val,info)
 
     use psb_sparse_mod
@@ -1426,14 +1450,42 @@ contains
     info = psb_success_
 
     select case (what) 
+
     case (mld_smoother_sweeps_)
-      lv%sweeps      = val
-      lv%sweeps_pre  = val
-      lv%sweeps_post = val
+      lv%parms%sweeps      = val
+      lv%parms%sweeps_pre  = val
+      lv%parms%sweeps_post = val
+
     case (mld_smoother_sweeps_pre_)
-      lv%sweeps_pre  = val
+      lv%parms%sweeps_pre  = val
+
     case (mld_smoother_sweeps_post_)
-      lv%sweeps_post = val
+      lv%parms%sweeps_post = val
+
+    case (mld_ml_type_)
+      lv%parms%ml_type       = val
+
+    case (mld_aggr_alg_)
+      lv%parms%aggr_alg      = val
+
+    case (mld_aggr_kind_)
+      lv%parms%aggr_kind     = val
+
+    case (mld_coarse_mat_)
+      lv%parms%coarse_mat    = val
+
+    case (mld_smoother_pos_)
+      lv%parms%smoother_pos  = val
+
+    case (mld_aggr_omega_alg_)
+      lv%parms%aggr_omega_alg= val
+
+    case (mld_aggr_eig_)
+      lv%parms%aggr_eig      = val
+
+    case (mld_aggr_filter_)
+      lv%parms%aggr_filter   = val
+
     case default
       if (allocated(lv%sm)) then 
         call lv%sm%set(what,val,info)
@@ -1465,14 +1517,15 @@ contains
     integer, intent(out)                           :: info
     Integer           :: err_act
     character(len=20) :: name='d_base_onelev_setc'
+    integer :: ival 
 
     call psb_erractionsave(err_act)
 
     info = psb_success_
 
-    if (allocated(lv%sm)) then 
-      call lv%sm%set(what,val,info)
-    end if
+    call mld_stringval(val,ival,info)
+    if (info == psb_success_) call lv%set(what,ival,info)
+
     if (info /= psb_success_) goto 9999
 
     call psb_erractionrestore(err_act)
@@ -1505,11 +1558,21 @@ contains
 
 
     info = psb_success_
+    
+    select case (what) 
 
-    if (allocated(lv%sm)) then 
-      call lv%sm%set(what,val,info)
-    end if
-    if (info /= psb_success_) goto 9999
+    case (mld_aggr_omega_val_)
+      lv%parms%aggr_omega_val= val
+   
+    case (mld_aggr_thresh_)
+      lv%parms%aggr_thresh   = val
+
+    case default
+      if (allocated(lv%sm)) then 
+        call lv%sm%set(what,val,info)
+      end if
+      if (info /= psb_success_) goto 9999
+    end select
 
     call psb_erractionrestore(err_act)
     return
