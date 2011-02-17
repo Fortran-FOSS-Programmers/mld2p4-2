@@ -237,7 +237,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
     case(mld_sub_solve_)
       do ilev_=1,max(1,nlev_-1)
         if ((.not.allocated(p%precv(ilev_)%iprcparm)).or.&
-             & (.not.allocated(p%precv(ilev_)%sm)) then 
+             & (.not.allocated(p%precv(ilev_)%sm))) then 
           write(0,*) name,&
                &': Error: uninitialized preconditioner component, should call MLD_PRECINIT' 
           info = -1 
@@ -294,7 +294,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
             allocate(mld_d_ilu_solver_type :: p%precv(ilev_)%sm%sv, stat=info)
           endif
 #ifdef HAVE_UMF_
-        case (mld_d_umf_solver) 
+        case (mld_umf_) 
           if (allocated(p%precv(ilev_)%sm%sv)) then 
             select type (sv => p%precv(ilev_)%sm%sv)
             class is (mld_d_umf_solver_type) 
@@ -370,7 +370,8 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
               call p%precv(ilev_)%sm%default()
             end select
           else 
-            allocate(mld_d_base_smoother :: p%precv(ilev_)%sm, stat=info)
+            allocate(mld_d_base_smoother_type ::&
+                 &  p%precv(ilev_)%sm, stat=info)
             if (info ==0) allocate(mld_d_id_solver_type ::&
                  & p%precv(ilev_)%sm%sv, stat=info) 
             call p%precv(ilev_)%sm%default()
