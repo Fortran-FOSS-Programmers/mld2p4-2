@@ -87,6 +87,21 @@ module mld_base_prec_type
     type(mld_aux_onelev_map_type), allocatable :: mapv(:)
   end type mld_aux_map_type
     
+  type mld_ml_parms
+    integer :: sweeps, sweeps_pre, sweeps_post
+    integer :: ml_type, smoother_pos, coarse_mat
+    integer :: aggr_alg, aggr_kind
+    integer :: aggr_omega_alg, aggr_eig, aggr_filter
+  end type mld_ml_parms
+
+  type, extends(mld_ml_parms) :: mld_sml_parms
+    real(psb_spk_) :: aggr_omega_val,  aggr_thresh
+  end type mld_sml_parms
+
+  type, extends(mld_ml_parms) :: mld_dml_parms
+    real(psb_dpk_) :: aggr_omega_val,  aggr_thresh
+  end type mld_dml_parms
+
 
   !
   ! Entries in iprcparm

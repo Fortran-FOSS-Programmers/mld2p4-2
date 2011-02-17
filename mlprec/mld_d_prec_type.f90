@@ -210,15 +210,6 @@ module mld_d_prec_type
     integer, allocatable                :: iprcparm(:) 
     real(psb_dpk_), allocatable         :: rprcparm(:) 
   end type mld_dbaseprec_type
-
-  type mld_dml_parms
-    integer :: sweeps, sweeps_pre, sweeps_post
-    integer :: ml_type, smoother_pos, coarse_mat
-    integer :: aggr_alg, aggr_kind
-    integer :: aggr_omega_alg, aggr_eig, aggr_filter
-    real(psb_dpk_) :: aggr_omega_val,  aggr_thresh
-  end type mld_dml_parms
-
          
   type mld_donelev_type
     class(mld_d_base_smoother_type), allocatable :: sm
