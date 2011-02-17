@@ -89,9 +89,11 @@ module mld_base_prec_type
     
   type mld_ml_parms
     integer :: sweeps, sweeps_pre, sweeps_post
-    integer :: ml_type, smoother_pos, coarse_mat
+    integer :: ml_type, smoother_pos
     integer :: aggr_alg, aggr_kind
     integer :: aggr_omega_alg, aggr_eig, aggr_filter
+    integer :: coarse_mat, coarse_solve
+    integer :: coarse_subsolve
   end type mld_ml_parms
 
   type, extends(mld_ml_parms) :: mld_sml_parms
