@@ -246,75 +246,8 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         p%precv(ilev_)%iprcparm(what)  = val
         p%precv(ilev_)%prec%iprcparm(what)  = val
 
-        !
-        ! This here requires a bit more attention.
-        !
-        select case (val) 
-        case (mld_f_none_)
-          if (allocated(p%precv(ilev_)%sm%sv)) then 
-            select type (sv => p%precv(ilev_)%sm%sv)
-            class is (mld_d_id_solver_type) 
-              ! do nothing
-            class default
-              call p%precv(ilev_)%sm%sv%free(info)
-              if (info == 0) deallocate(p%precv(ilev_)%sm%sv)
-              if (info == 0) allocate(mld_d_id_solver_type ::&
-                   & p%precv(ilev_)%sm%sv, stat=info)
-            end select
-          else 
-            allocate(mld_d_id_solver_type :: p%precv(ilev_)%sm%sv, stat=info)
-          endif
-        case (mld_diag_scale_)
-          if (allocated(p%precv(ilev_)%sm%sv)) then 
-            select type (sv => p%precv(ilev_)%sm%sv)
-            class is (mld_d_diag_solver_type) 
-              ! do nothing
-            class default
-              call p%precv(ilev_)%sm%sv%free(info)
-              if (info == 0) deallocate(p%precv(ilev_)%sm%sv)
-              if (info == 0) allocate(mld_d_diag_solver_type ::&
-                   &  p%precv(ilev_)%sm%sv, stat=info)
-            end select
-          else 
-            allocate(mld_d_diag_solver_type :: p%precv(ilev_)%sm%sv, stat=info)
-          endif
-
-        case (mld_ilu_n_,mld_milu_n_,mld_ilu_t_)
-          if (allocated(p%precv(ilev_)%sm%sv)) then 
-            select type (sv => p%precv(ilev_)%sm%sv)
-            class is (mld_d_ilu_solver_type) 
-              ! do nothing
-            class default
-              call p%precv(ilev_)%sm%sv%free(info)
-              if (info == 0) deallocate(p%precv(ilev_)%sm%sv)
-              if (info == 0) allocate(mld_d_ilu_solver_type ::&
-                   & p%precv(ilev_)%sm%sv, stat=info)
-            end select
-          else 
-            allocate(mld_d_ilu_solver_type :: p%precv(ilev_)%sm%sv, stat=info)
-          endif
-#ifdef HAVE_UMF_
-        case (mld_umf_) 
-          if (allocated(p%precv(ilev_)%sm%sv)) then 
-            select type (sv => p%precv(ilev_)%sm%sv)
-            class is (mld_d_umf_solver_type) 
-              ! do nothing
-            class default
-              call p%precv(ilev_)%sm%sv%free(info)
-              if (info == 0) deallocate(p%precv(ilev_)%sm%sv)
-              if (info == 0) allocate(mld_d_umf_solver_type ::&
-                   & p%precv(ilev_)%sm%sv, stat=info)
-            end select
-          else 
-            allocate(mld_d_umf_solver_type :: p%precv(ilev_)%sm%sv, stat=info)
-          endif
-#endif
-        case default
-          !
-          ! Do nothing and hope for the best :) 
-          !
-        end select
-        call p%precv(ilev_)%set(what,val,info)
+        call onelev_set_solver(p%precv(ilev_),val,info)
+       
       end do
 
     case(mld_sub_restr_,mld_sub_prol_,&
@@ -351,101 +284,8 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         p%precv(ilev_)%iprcparm(what)  = val
         p%precv(ilev_)%prec%iprcparm(what)  = val
 
-        !
-        ! This here requires a bit more attention.
-        !
-        select case (val) 
-        case (mld_noprec_)
-          if (allocated(p%precv(ilev_)%sm)) then 
-            select type (sm => p%precv(ilev_)%sm)
-            type is (mld_d_base_smoother_type) 
-              ! do nothing
-            class default
-              call p%precv(ilev_)%sm%free(info)
-              if (info == 0) deallocate(p%precv(ilev_)%sm)
-              if (info == 0) allocate(mld_d_base_smoother_type ::&
-                   & p%precv(ilev_)%sm, stat=info)
-              if (info == 0) allocate(mld_d_id_solver_type ::&
-                   & p%precv(ilev_)%sm%sv, stat=info) 
-              call p%precv(ilev_)%sm%default()
-            end select
-          else 
-            allocate(mld_d_base_smoother_type ::&
-                 &  p%precv(ilev_)%sm, stat=info)
-            if (info ==0) allocate(mld_d_id_solver_type ::&
-                 & p%precv(ilev_)%sm%sv, stat=info) 
-            call p%precv(ilev_)%sm%default()
-          endif
+        call onelev_set_smoother(p%precv(ilev_),val,info)
 
-        case (mld_jac_)
-          if (allocated(p%precv(ilev_)%sm)) then 
-            select type (sm => p%precv(ilev_)%sm)
-            class is (mld_d_jac_smoother_type) 
-              ! do nothing
-            class default
-              call p%precv(ilev_)%sm%free(info)
-              if (info == 0) deallocate(p%precv(ilev_)%sm)
-              if (info == 0) allocate(mld_d_jac_smoother_type :: &
-                   & p%precv(ilev_)%sm, stat=info)
-              if (info == 0) allocate(mld_d_diag_solver_type :: &
-                   & p%precv(ilev_)%sm%sv, stat=info)
-              call p%precv(ilev_)%sm%default()
-            end select
-          else 
-            allocate(mld_d_jac_smoother_type :: p%precv(ilev_)%sm, stat=info)
-            if (info == 0) allocate(mld_d_diag_solver_type ::&
-                 & p%precv(ilev_)%sm%sv, stat=info)
-            call p%precv(ilev_)%sm%default()
-          endif
-
-        case (mld_bjac_)
-          if (allocated(p%precv(ilev_)%sm)) then 
-            select type (sm => p%precv(ilev_)%sm)
-            class is (mld_d_jac_smoother_type) 
-              ! do nothing
-            class default
-              call p%precv(ilev_)%sm%free(info)
-              if (info == 0) deallocate(p%precv(ilev_)%sm)
-              if (info == 0) allocate(mld_d_jac_smoother_type ::&
-                   & p%precv(ilev_)%sm, stat=info)
-              if (info == 0) allocate(mld_d_ilu_solver_type ::&
-                   & p%precv(ilev_)%sm%sv, stat=info)
-              call p%precv(ilev_)%sm%default()
-            end select
-          else 
-            allocate(mld_d_jac_smoother_type :: p%precv(ilev_)%sm, stat=info)
-            if (info == 0) allocate(mld_d_ilu_solver_type ::&
-                 & p%precv(ilev_)%sm%sv, stat=info)
-            call p%precv(ilev_)%sm%default()
-          endif
-
-        case (mld_as_)
-          if (allocated(p%precv(ilev_)%sm)) then 
-            select type (sm => p%precv(ilev_)%sm)
-            class is (mld_d_as_smoother_type) 
-              ! do nothing
-            class default
-              call p%precv(ilev_)%sm%free(info)
-              if (info == 0) deallocate(p%precv(ilev_)%sm)
-              if (info == 0) allocate(mld_d_as_smoother_type ::&
-                   & p%precv(ilev_)%sm, stat=info)
-              if (info == 0) allocate(mld_d_ilu_solver_type ::&
-                   & p%precv(ilev_)%sm%sv, stat=info)
-              call p%precv(ilev_)%sm%default()
-            end select
-          else 
-            allocate(mld_d_as_smoother_type :: p%precv(ilev_)%sm, stat=info)
-            if (info == 0) allocate(mld_d_ilu_solver_type ::&
-                 & p%precv(ilev_)%sm%sv, stat=info)
-            call p%precv(ilev_)%sm%default()
-          endif
-
-        case default
-          !
-          ! Do nothing and hope for the best :) 
-          !
-        end select
-        call p%precv(ilev_)%set(what,val,info)
       end do
 
     case(mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
@@ -487,19 +327,34 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
 
       if (nlev_ > 1) then 
         p%precv(nlev_)%iprcparm(mld_coarse_solve_)       = val
+        
+        
         p%precv(nlev_)%prec%iprcparm(mld_smoother_type_) = mld_bjac_
         p%precv(nlev_)%iprcparm(mld_coarse_mat_)         = mld_distr_mat_
+        
+        call p%precv(nlev_)%set(mld_coarse_solve_,val,info)
         select case (val) 
         case(mld_umf_, mld_slu_)
           p%precv(nlev_)%iprcparm(mld_coarse_mat_)       = mld_repl_mat_
           p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
+          call onelev_set_smoother(p%precv(nlev_),mld_bjac_,info)
+          call onelev_set_solver(p%precv(nlev_),val,info)
+          call p%precv(nlev_)%set(mld_coarse_mat_,mld_repl_mat_,info)
         case(mld_sludist_)
           p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
+          call onelev_set_smoother(p%precv(nlev_),mld_bjac_,info)
+          call onelev_set_solver(p%precv(nlev_),val,info)
+          call p%precv(nlev_)%set(mld_coarse_mat_,mld_distr_mat_,info)
         case(mld_jac_)
           p%precv(nlev_)%prec%iprcparm(mld_smoother_type_) = mld_jac_
           p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)     = mld_diag_scale_
+          call onelev_set_smoother(p%precv(nlev_),mld_jac_,info)
+          call onelev_set_solver(p%precv(nlev_),mld_diag_scale_,info)
+          call p%precv(nlev_)%set(mld_coarse_mat_,mld_distr_mat_,info)
         end select
+
       endif
+
     case(mld_coarse_subsolve_)
       if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
         write(0,*) name,&
@@ -508,7 +363,10 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         info = -1 
         return 
       end if
-      if (nlev_ > 1) p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)  = val
+      if (nlev_ > 1) then 
+        p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)  = val
+        call onelev_set_solver(p%precv(ilev_),val,info)
+      endif
 
     case(mld_coarse_sweeps_)
       if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
@@ -524,7 +382,9 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         p%precv(nlev_)%iprcparm(mld_smoother_sweeps_post_)      = val
         p%precv(nlev_)%prec%iprcparm(mld_smoother_sweeps_pre_)  = val
         p%precv(nlev_)%prec%iprcparm(mld_smoother_sweeps_post_) = val
+        call p%precv(nlev_)%set(mld_smoother_sweeps_,val,info)
       end if
+
     case(mld_coarse_fillin_)
       if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
         write(0,*) name,&
@@ -533,13 +393,200 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
         info = -1 
         return 
       endif
-      if (nlev_ > 1) p%precv(nlev_)%prec%iprcparm(mld_sub_fillin_)  = val
+      if (nlev_ > 1) then 
+        p%precv(nlev_)%prec%iprcparm(mld_sub_fillin_)  = val
+        call p%precv(nlev_)%set(mld_sub_fillin_,val,info)
+      end if
     case default
       write(0,*) name,': Error: invalid WHAT'
       info = -2
     end select
 
   endif
+
+contains
+
+  subroutine onelev_set_smoother(level,val,info)
+    type(mld_donelev_type), intent(inout) :: level
+    integer, intent(in)                   :: val
+    integer, intent(out)                  :: info
+    info = psb_success_
+
+    !
+    ! This here requires a bit more attention.
+    !
+    select case (val) 
+    case (mld_noprec_)
+      if (allocated(level%sm)) then 
+        select type (sm => level%sm)
+        type is (mld_d_base_smoother_type) 
+          ! do nothing
+          class default
+          call level%sm%free(info)
+          if (info == 0) deallocate(level%sm)
+          if (info == 0) allocate(mld_d_base_smoother_type ::&
+               & level%sm, stat=info)
+          if (info == 0) allocate(mld_d_id_solver_type ::&
+               & level%sm%sv, stat=info) 
+          call level%sm%default()
+        end select
+      else 
+        allocate(mld_d_base_smoother_type ::&
+             &  level%sm, stat=info)
+        if (info ==0) allocate(mld_d_id_solver_type ::&
+             & level%sm%sv, stat=info) 
+        call level%sm%default()
+      endif
+
+    case (mld_jac_)
+      if (allocated(level%sm)) then 
+        select type (sm => level%sm)
+          class is (mld_d_jac_smoother_type) 
+            ! do nothing
+          class default
+          call level%sm%free(info)
+          if (info == 0) deallocate(level%sm)
+          if (info == 0) allocate(mld_d_jac_smoother_type :: &
+               & level%sm, stat=info)
+          if (info == 0) allocate(mld_d_diag_solver_type :: &
+               & level%sm%sv, stat=info)
+          call level%sm%default()
+        end select
+      else 
+        allocate(mld_d_jac_smoother_type :: level%sm, stat=info)
+        if (info == 0) allocate(mld_d_diag_solver_type ::&
+             & level%sm%sv, stat=info)
+        call level%sm%default()
+      endif
+
+    case (mld_bjac_)
+      if (allocated(level%sm)) then 
+        select type (sm => level%sm)
+          class is (mld_d_jac_smoother_type) 
+            ! do nothing
+          class default
+          call level%sm%free(info)
+          if (info == 0) deallocate(level%sm)
+          if (info == 0) allocate(mld_d_jac_smoother_type ::&
+               & level%sm, stat=info)
+          if (info == 0) allocate(mld_d_ilu_solver_type ::&
+               & level%sm%sv, stat=info)
+          call level%sm%default()
+        end select
+      else 
+        allocate(mld_d_jac_smoother_type :: level%sm, stat=info)
+        if (info == 0) allocate(mld_d_ilu_solver_type ::&
+             & level%sm%sv, stat=info)
+        call level%sm%default()
+      endif
+
+    case (mld_as_)
+      if (allocated(level%sm)) then 
+        select type (sm => level%sm)
+          class is (mld_d_as_smoother_type) 
+            ! do nothing
+          class default
+          call level%sm%free(info)
+          if (info == 0) deallocate(level%sm)
+          if (info == 0) allocate(mld_d_as_smoother_type ::&
+               & level%sm, stat=info)
+          if (info == 0) allocate(mld_d_ilu_solver_type ::&
+               & level%sm%sv, stat=info)
+          call level%sm%default()
+        end select
+      else 
+        allocate(mld_d_as_smoother_type :: level%sm, stat=info)
+        if (info == 0) allocate(mld_d_ilu_solver_type ::&
+             & level%sm%sv, stat=info)
+        call level%sm%default()
+      endif
+
+    case default
+      !
+      ! Do nothing and hope for the best :) 
+      !
+    end select
+    call level%set(what,val,info)
+
+  end subroutine onelev_set_smoother
+
+  subroutine onelev_set_solver(level,val,info)
+    type(mld_donelev_type), intent(inout) :: level
+    integer, intent(in)                   :: val
+    integer, intent(out)                  :: info
+    info = psb_success_
+
+    !
+    ! This here requires a bit more attention.
+    !
+    select case (val) 
+    case (mld_f_none_)
+      if (allocated(level%sm%sv)) then 
+        select type (sv => level%sm%sv)
+          class is (mld_d_id_solver_type) 
+            ! do nothing
+          class default
+          call level%sm%sv%free(info)
+          if (info == 0) deallocate(level%sm%sv)
+          if (info == 0) allocate(mld_d_id_solver_type ::&
+               & level%sm%sv, stat=info)
+        end select
+      else 
+        allocate(mld_d_id_solver_type :: level%sm%sv, stat=info)
+      endif
+    case (mld_diag_scale_)
+      if (allocated(level%sm%sv)) then 
+        select type (sv => level%sm%sv)
+          class is (mld_d_diag_solver_type) 
+            ! do nothing
+          class default
+          call level%sm%sv%free(info)
+          if (info == 0) deallocate(level%sm%sv)
+          if (info == 0) allocate(mld_d_diag_solver_type ::&
+               &  level%sm%sv, stat=info)
+        end select
+      else 
+        allocate(mld_d_diag_solver_type :: level%sm%sv, stat=info)
+      endif
+
+    case (mld_ilu_n_,mld_milu_n_,mld_ilu_t_)
+      if (allocated(level%sm%sv)) then 
+        select type (sv => level%sm%sv)
+          class is (mld_d_ilu_solver_type) 
+            ! do nothing
+          class default
+          call level%sm%sv%free(info)
+          if (info == 0) deallocate(level%sm%sv)
+          if (info == 0) allocate(mld_d_ilu_solver_type ::&
+               & level%sm%sv, stat=info)
+        end select
+      else 
+        allocate(mld_d_ilu_solver_type :: level%sm%sv, stat=info)
+      endif
+#ifdef HAVE_UMF_
+    case (mld_umf_) 
+      if (allocated(level%sm%sv)) then 
+        select type (sv => level%sm%sv)
+          class is (mld_d_umf_solver_type) 
+            ! do nothing
+          class default
+          call level%sm%sv%free(info)
+          if (info == 0) deallocate(level%sm%sv)
+          if (info == 0) allocate(mld_d_umf_solver_type ::&
+               & level%sm%sv, stat=info)
+        end select
+      else 
+        allocate(mld_d_umf_solver_type :: level%sm%sv, stat=info)
+      endif
+#endif
+    case default
+      !
+      ! Do nothing and hope for the best :) 
+      !
+    end select
+    call level%set(what,val,info)
+
+  end subroutine onelev_set_solver
 
 
 end subroutine mld_dprecseti
@@ -899,6 +946,8 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
         select case(what) 
         case(mld_sub_iluthrs_)
           p%precv(ilev_)%prec%rprcparm(what)  = val
+          call p%precv(ilev_)%set(what,val,info)
+          
         case default
           write(0,*) name,': Error: invalid WHAT'
           info = -2
@@ -908,8 +957,10 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
         select case(what) 
         case(mld_sub_iluthrs_)
           p%precv(ilev_)%prec%rprcparm(what)  = val
+          call p%precv(ilev_)%set(what,val,info)
         case(mld_aggr_omega_val_,mld_aggr_thresh_)
           p%precv(ilev_)%rprcparm(what)  = val
+          call p%precv(ilev_)%set(what,val,info)
         case default
           write(0,*) name,': Error: invalid WHAT'
           info = -2
@@ -933,6 +984,7 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
           p%precv(ilev_)%prec%rprcparm(what)  = val
           call p%precv(ilev_)%set(what,val,info)
         end do
+
       case(mld_coarse_iluthrs_)
         ilev_=nlev_
         if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
@@ -942,6 +994,8 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
           return 
         endif
         p%precv(ilev_)%prec%rprcparm(mld_sub_iluthrs_)  = val
+        call p%precv(ilev_)%set(mld_sub_iluthrs_,val,info)
+
       case(mld_aggr_omega_val_)
         do ilev_=2,nlev_
           if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
@@ -951,6 +1005,7 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
             return 
           endif
           p%precv(ilev_)%rprcparm(what)  = val
+          call p%precv(ilev_)%set(what,val,info)
         end do
       case(mld_aggr_thresh_)
         do ilev_=2,nlev_
@@ -961,6 +1016,7 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
             return 
           endif
           p%precv(ilev_)%rprcparm(what)  = val
+          call p%precv(ilev_)%set(what,val,info)
         end do
       case default
         write(0,*) name,': Error: invalid WHAT'

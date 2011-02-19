@@ -93,7 +93,6 @@ module mld_base_prec_type
     integer :: aggr_alg, aggr_kind
     integer :: aggr_omega_alg, aggr_eig, aggr_filter
     integer :: coarse_mat, coarse_solve
-    integer :: coarse_subsolve
   end type mld_ml_parms
 
   type, extends(mld_ml_parms) :: mld_sml_parms
@@ -255,8 +254,8 @@ module mld_base_prec_type
   character(len=15), parameter, private :: &
        &  fact_names(0:7)=(/'none          ','Point Jacobi  ','ILU(n)        ',&
        &  'MILU(n)       ','ILU(t,n)      ',&
-       &  'UMFPACK LU    ',&
-       &  'SuperLU_Dist  ','SuperLU       '/)
+       &  'SuperLU       ','UMFPACK LU    ',&
+       &  'SuperLU_Dist  '/)
 
   interface mld_check_def
     module procedure mld_icheck_def, mld_scheck_def, mld_dcheck_def
