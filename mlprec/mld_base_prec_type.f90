@@ -93,14 +93,20 @@ module mld_base_prec_type
     integer :: aggr_alg, aggr_kind
     integer :: aggr_omega_alg, aggr_eig, aggr_filter
     integer :: coarse_mat, coarse_solve
+  contains
+    procedure, pass(pm) :: descr => ml_parms_descr
   end type mld_ml_parms
 
   type, extends(mld_ml_parms) :: mld_sml_parms
     real(psb_spk_) :: aggr_omega_val,  aggr_thresh
+  contains
+    procedure, pass(pm) :: descr => s_ml_parms_descr
   end type mld_sml_parms
 
   type, extends(mld_ml_parms) :: mld_dml_parms
     real(psb_dpk_) :: aggr_omega_val,  aggr_thresh
+  contains
+    procedure, pass(pm) :: descr => d_ml_parms_descr
   end type mld_dml_parms
 
 
@@ -375,6 +381,124 @@ contains
   !
   ! Routines printing out a description of the preconditioner
   !
+  
+  subroutine ml_parms_descr(pm,iout,info,coarse)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_ml_parms), intent(in) :: pm
+    integer, intent(in)             :: iout
+    integer, intent(out)            :: info
+    logical, intent(in), optional   :: coarse
+    logical :: coarse_
+
+    info = psb_success_
+    if (present(coarse)) then 
+      coarse_ = coarse
+    else
+      coarse_ = .false.
+    end if
+
+    if (coarse_) then 
+      write(iout,*) '  Coarsest matrix: ',&
+           & matrix_names(pm%coarse_mat)
+      write(iout,*) '  Number of sweeps : ',&
+           & pm%sweeps 
+    else
+      if (pm%ml_type>mld_no_ml_) then
+
+        write(iout,*) '  Multilevel type: ',&
+             &   ml_names(pm%ml_type)
+        write(iout,*) '  Smoother position: ',&
+             & smooth_pos_names(pm%smoother_pos)
+        if (pm%ml_type == mld_add_ml_) then
+          write(iout,*) '  Number of sweeps : ',&
+               & pm%sweeps 
+        else 
+          select case (pm%smoother_pos)
+          case (mld_pre_smooth_)
+            write(iout,*) '  Number of sweeps : ',&
+                 & pm%sweeps_pre
+          case (mld_post_smooth_)
+            write(iout,*) '  Number of sweeps : ',&
+                 &  pm%sweeps_post
+          case (mld_twoside_smooth_)
+            write(iout,*) '  Number of sweeps : pre: ',&
+                 &  pm%sweeps_pre ,&
+                 &  '  post: ',&
+                 &  pm%sweeps_post
+          end select
+        end if
+        if (pm%aggr_kind /= mld_no_smooth_) then
+          if (pm%aggr_omega_alg == mld_eig_est_) then 
+            write(iout,*) '  Damping omega computation: spectral radius estimate'
+            write(iout,*) '  Spectral radius estimate: ', &
+                 & eigen_estimates(pm%aggr_eig)
+          else if (pm%aggr_omega_alg == mld_user_choice_) then 
+            write(iout,*) '  Damping omega computation: user defined value.'
+          else 
+            write(iout,*) '  Damping omega computation: unknown value in iprcparm!!'
+          end if
+        end if
+        write(iout,*) '  Aggregation: ', &
+             &   aggr_names(pm%aggr_alg)
+        write(iout,*) '  Aggregation type: ', &
+             &  aggr_kinds(pm%aggr_kind)
+      end if
+    end if
+
+    return
+
+  end subroutine ml_parms_descr
+
+  subroutine s_ml_parms_descr(pm,iout,info,coarse)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_sml_parms), intent(in) :: pm
+    integer, intent(in)             :: iout
+    integer, intent(out)            :: info
+    logical, intent(in), optional   :: coarse
+
+    info = psb_success_
+
+    call pm%mld_ml_parms%descr(iout,info,coarse)
+    
+    write(iout,*) '  Aggregation threshold: ', &
+         &  pm%aggr_thresh
+    
+    return
+
+  end subroutine s_ml_parms_descr
+
+  subroutine d_ml_parms_descr(pm,iout,info,coarse)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_dml_parms), intent(in) :: pm
+    integer, intent(in)             :: iout
+    integer, intent(out)            :: info
+    logical, intent(in), optional   :: coarse
+
+    info = psb_success_
+
+    call pm%mld_ml_parms%descr(iout,info,coarse)
+    
+    write(iout,*) '  Aggregation threshold: ', &
+         &  pm%aggr_thresh
+    
+    return
+
+  end subroutine d_ml_parms_descr
 
   subroutine mld_base_prec_descr(iout,iprcparm, info,rprcparm,dprcparm)
     implicit none 

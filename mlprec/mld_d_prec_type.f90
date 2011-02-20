@@ -225,6 +225,7 @@ module mld_d_prec_type
     type(psb_desc_type), pointer    :: base_desc => null() 
     type(psb_dlinmap_type)          :: map
   contains
+    procedure, pass(lv) :: descr   => d_base_onelev_descr
     procedure, pass(lv) :: default => d_base_onelev_default
     procedure, pass(lv) :: check => d_base_onelev_check
     procedure, pass(lv) :: dump  => d_base_onelev_dump
@@ -257,7 +258,8 @@ module mld_d_prec_type
        &  d_base_smoother_dmp, &
        &  d_base_onelev_seti, d_base_onelev_setc, &
        &  d_base_onelev_setr, d_base_onelev_check, &
-       &  d_base_onelev_default, d_base_onelev_dump
+       &  d_base_onelev_default, d_base_onelev_dump, &
+       &  d_base_onelev_descr
 
 
   !
@@ -426,12 +428,12 @@ contains
     if (iout_ < 0) iout_ = 6 
 
     ictxt = p%ictxt
-    
+
     if (allocated(p%precv)) then
 !!$      ictxt = psb_cd_get_context(p%precv(1)%prec%desc_data)
-      
+
       call psb_info(ictxt,me,np)
-      
+
       !
       ! The preconditioner description is printed by processor psb_root_.
       ! This agrees with the fact that all the parameters defining the
@@ -439,10 +441,18 @@ contains
       ! ensured by mld_precbld).
       !
       if (me == psb_root_) then
-        
+        nlev = size(p%precv)
+        do ilev = 1, nlev 
+          if (.not.allocated(p%precv(ilev)%sm)) then 
+            info = 3111
+            write(iout_,*) ' ',name,&
+                 & ': error: inconsistent MLPREC part, should call MLD_PRECINIT'
+            return
+          endif
+        end do
+
         write(iout_,*) 
         write(iout_,'(a)') 'Preconditioner description'
-        nlev = size(p%precv)
         if (nlev >= 1) then
           !
           ! Print description of base preconditioner
@@ -462,16 +472,6 @@ contains
           !
           write(iout_,*) 
           write(iout_,*) 'Multilevel details'
-
-          do ilev = 2, nlev 
-            if (.not.allocated(p%precv(ilev)%iprcparm)) then 
-              info = 3111
-              write(iout_,*) ' ',name,&
-                   & ': error: inconsistent MLPREC part, should call MLD_PRECINIT'
-              return
-            endif
-          end do
-
           write(iout_,*) ' Number of levels: ',nlev
 
           !
@@ -481,20 +481,16 @@ contains
           !
 
           ilev=2
-          call mld_ml_alg_descr(iout_,ilev,p%precv(ilev)%iprcparm, info,&
-               & dprcparm=p%precv(ilev)%rprcparm)
-          
+          call p%precv(ilev)%parms%descr(iout_,info)
+
           !
           ! Coarse matrices are different at levels 2,...,nlev-1, hence related
           ! info is printed separately
           !
           write(iout_,*) 
           do ilev = 2, nlev-1
-            call mld_ml_level_descr(iout_,ilev,p%precv(ilev)%iprcparm,&
-                 & p%precv(ilev)%map%naggr,info,&
-                 & dprcparm=p%precv(ilev)%rprcparm)
-            call p%precv(ilev)%sm%descr(info,iout=iout_)
-          
+            write(iout_,*) ' Level ',ilev
+            call p%precv(ilev)%descr(info,iout=iout_)
           end do
 
           !
@@ -503,13 +499,17 @@ contains
 
           ilev = nlev
           write(iout_,*) 
-          call mld_ml_new_coarse_descr(iout_,ilev,&
-               & p%precv(ilev)%iprcparm,&
-               & p%precv(ilev)%map%naggr,info,&
-               & dprcparm=p%precv(ilev)%rprcparm)
-          call p%precv(ilev)%sm%descr(info,iout=iout_)
+          write(iout_,*) ' Level ',ilev,' (coarsest)'
+
+          call p%precv(ilev)%parms%descr(iout_,info,coarse=.true.)
+          call p%precv(ilev)%descr(info,iout=iout_,coarse=.true.)
+!!$          call mld_ml_new_coarse_descr(iout_,ilev,&
+!!$               & p%precv(ilev)%iprcparm,&
+!!$               & p%precv(ilev)%map%naggr,info,&
+!!$               & dprcparm=p%precv(ilev)%rprcparm)
+!!$          call p%precv(ilev)%sm%descr(info,iout=iout_)
         end if
-        
+
       endif
       write(iout_,*) 
     else
@@ -593,6 +593,66 @@ contains
     call mld_nullify_baseprec(p)
 
   end subroutine mld_dbase_precfree
+
+  subroutine d_base_onelev_descr(lv,info,iout,coarse)
+
+    use psb_sparse_mod
+
+    Implicit None
+
+    ! Arguments
+    class(mld_donelev_type), intent(in) :: lv
+    integer, intent(out)                :: info
+    integer, intent(in), optional       :: iout
+    logical, intent(in), optional       :: coarse
+
+    ! Local variables
+    integer      :: err_act
+    integer      :: ictxt, me, np
+    character(len=20), parameter :: name='mld_d_base_onelev_descr'
+    integer      :: iout_
+    logical      :: coarse_
+
+
+    call psb_erractionsave(err_act)
+
+    if (present(coarse)) then 
+      coarse_ = coarse
+    else
+      coarse_ = .false.
+    end if
+    if (present(iout)) then 
+      iout_ = iout
+    else 
+      iout_ = 6
+    end if
+
+    if (lv%parms%ml_type > mld_no_ml_) then
+      if (allocated(lv%map%naggr)) then
+        write(iout_,*) '  Size of coarse matrix: ', &
+             &  sum(lv%map%naggr(:))
+        write(iout_,*) '  Sizes of aggregates: ', &
+             &  lv%map%naggr(:)
+      end if
+      if (lv%parms%aggr_kind /= mld_no_smooth_) then
+        write(iout_,*) '  Damping omega: ', &
+             & lv%parms%aggr_omega_val
+      end if
+    end if
+    if (allocated(lv%sm)) &
+         & call lv%sm%descr(info,iout=iout_)
+
+    call psb_erractionrestore(err_act)
+    return
+
+9999 continue
+    call psb_erractionrestore(err_act)
+    if (err_act == psb_act_abort_) then
+      call psb_error()
+      return
+    end if
+    return
+  end subroutine d_base_onelev_descr
 
   subroutine mld_d_onelev_precfree(p,info)
     use psb_sparse_mod
