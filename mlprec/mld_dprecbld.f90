@@ -156,17 +156,17 @@ subroutine mld_dprecbld(a,desc_a,p,info)
     ! Check on the iprcparm contents: they should be the same
     ! on all processes.
     !
-    if (me == psb_root_) ipv(:) = p%precv(1)%iprcparm(:) 
-    call psb_bcast(ictxt,ipv) 
-    if (any(ipv(:) /=  p%precv(1)%iprcparm(:) )) then
-      write(debug_unit,*) me,name,&
-           &': Inconsistent arguments among processes, forcing a default'
-      p%precv(1)%iprcparm(:) = ipv(:) 
-    end if
-    !
-    ! Remember to fix base_a and base_desc
-    ! 
-    call init_baseprec_av(p%precv(1)%prec,info)
+!!$    if (me == psb_root_) ipv(:) = p%precv(1)%iprcparm(:) 
+!!$    call psb_bcast(ictxt,ipv) 
+!!$    if (any(ipv(:) /=  p%precv(1)%iprcparm(:) )) then
+!!$      write(debug_unit,*) me,name,&
+!!$           &': Inconsistent arguments among processes, forcing a default'
+!!$      p%precv(1)%iprcparm(:) = ipv(:) 
+!!$    end if
+!!$    !
+!!$    ! Remember to fix base_a and base_desc
+!!$    ! 
+!!$    call init_baseprec_av(p%precv(1)%prec,info)
     p%precv(1)%base_a    => a
     p%precv(1)%base_desc => desc_a
 

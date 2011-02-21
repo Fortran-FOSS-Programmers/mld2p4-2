@@ -129,104 +129,104 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
   !
   if (present(ilev)) then 
 
-    if (ilev_ == 1) then
-      ! 
-      ! Rules for fine level are slightly different.
-      ! 
-      select case(what) 
-      case(mld_smoother_type_)
-        p%precv(ilev_)%iprcparm(what)  = val
-        p%precv(ilev_)%prec%iprcparm(what)  = val
-      case(mld_smoother_sweeps_)
-        p%precv(ilev_)%iprcparm(what)  = val
-        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)   = val
-        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_)  = val
-        p%precv(ilev_)%prec%iprcparm(what)  = val
-      case(mld_sub_solve_,mld_sub_restr_,mld_sub_prol_,&
-           & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_)
-        p%precv(ilev_)%prec%iprcparm(what)  = val
-      case(mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
-           & mld_smoother_pos_,mld_aggr_omega_alg_,mld_aggr_eig_,&
-           & mld_smoother_sweeps_pre_,mld_smoother_sweeps_post_)
-        p%precv(ilev_)%iprcparm(what)  = val
-      case default
-        write(0,*) name,': Error: invalid WHAT'
-        info = -2
-      end select
-
-    else if (ilev_ > 1) then 
-      select case(what) 
-      case(mld_smoother_type_)
-        p%precv(ilev_)%iprcparm(what)  = val
-        p%precv(ilev_)%prec%iprcparm(what)  = val
-      case(mld_smoother_sweeps_)
-        p%precv(ilev_)%iprcparm(what)  = val
-        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = val
-        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = val
-        p%precv(ilev_)%prec%iprcparm(what)  = val
-      case(mld_sub_solve_,mld_sub_restr_,mld_sub_prol_,&
-           & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_)
-        p%precv(ilev_)%prec%iprcparm(what)  = val
-      case(mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
-           & mld_smoother_pos_,mld_aggr_omega_alg_,mld_aggr_eig_,&
-           & mld_smoother_sweeps_pre_,mld_smoother_sweeps_post_)
-        p%precv(ilev_)%iprcparm(what)  = val
-      case(mld_coarse_mat_)
-        if (ilev_ /= nlev_ .and. val /= mld_distr_mat_) then 
-          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
-          info = -2
-          return
-        end if
-        p%precv(ilev_)%iprcparm(mld_coarse_mat_)  = val
-      case(mld_coarse_subsolve_)
-        if (ilev_ /= nlev_) then 
-          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
-          info = -2
-          return
-        end if
-        p%precv(ilev_)%iprcparm(mld_sub_solve_)  = val
-      case(mld_coarse_solve_)
-        if (ilev_ /= nlev_) then 
-          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
-          info = -2
-          return
-        end if
-
-        if (nlev_ > 1) then 
-          p%precv(nlev_)%iprcparm(mld_coarse_solve_)  = val
-          p%precv(nlev_)%prec%iprcparm(mld_smoother_type_) = mld_bjac_
-          p%precv(nlev_)%iprcparm(mld_coarse_mat_)    = mld_distr_mat_
-          select case (val) 
-          case(mld_umf_, mld_slu_)
-            p%precv(nlev_)%iprcparm(mld_coarse_mat_)  = mld_repl_mat_
-            p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
-          case(mld_sludist_)
-            p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
-          end select
-        endif
-      case(mld_coarse_sweeps_)
-        if (ilev_ /= nlev_) then 
-          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
-          info = -2
-          return
-        end if
-        p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_)  = val
-        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)       = val
-        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)   = val
-        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_)  = val
-      case(mld_coarse_fillin_)
-        if (ilev_ /= nlev_) then 
-          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
-          info = -2
-          return
-        end if
-        p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)  = val
-      case default
-        write(0,*) name,': Error: invalid WHAT'
-        info = -2
-      end select
-
-    endif
+!!$    if (ilev_ == 1) then
+!!$      ! 
+!!$      ! Rules for fine level are slightly different.
+!!$      ! 
+!!$      select case(what) 
+!!$      case(mld_smoother_type_)
+!!$        p%precv(ilev_)%iprcparm(what)  = val
+!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
+!!$      case(mld_smoother_sweeps_)
+!!$        p%precv(ilev_)%iprcparm(what)  = val
+!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)   = val
+!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_)  = val
+!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
+!!$      case(mld_sub_solve_,mld_sub_restr_,mld_sub_prol_,&
+!!$           & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_)
+!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
+!!$      case(mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
+!!$           & mld_smoother_pos_,mld_aggr_omega_alg_,mld_aggr_eig_,&
+!!$           & mld_smoother_sweeps_pre_,mld_smoother_sweeps_post_)
+!!$        p%precv(ilev_)%iprcparm(what)  = val
+!!$      case default
+!!$        write(0,*) name,': Error: invalid WHAT'
+!!$        info = -2
+!!$      end select
+!!$
+!!$    else if (ilev_ > 1) then 
+!!$      select case(what) 
+!!$      case(mld_smoother_type_)
+!!$        p%precv(ilev_)%iprcparm(what)  = val
+!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
+!!$      case(mld_smoother_sweeps_)
+!!$        p%precv(ilev_)%iprcparm(what)  = val
+!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = val
+!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = val
+!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
+!!$      case(mld_sub_solve_,mld_sub_restr_,mld_sub_prol_,&
+!!$           & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_)
+!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
+!!$      case(mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
+!!$           & mld_smoother_pos_,mld_aggr_omega_alg_,mld_aggr_eig_,&
+!!$           & mld_smoother_sweeps_pre_,mld_smoother_sweeps_post_)
+!!$        p%precv(ilev_)%iprcparm(what)  = val
+!!$      case(mld_coarse_mat_)
+!!$        if (ilev_ /= nlev_ .and. val /= mld_distr_mat_) then 
+!!$          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
+!!$          info = -2
+!!$          return
+!!$        end if
+!!$        p%precv(ilev_)%iprcparm(mld_coarse_mat_)  = val
+!!$      case(mld_coarse_subsolve_)
+!!$        if (ilev_ /= nlev_) then 
+!!$          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
+!!$          info = -2
+!!$          return
+!!$        end if
+!!$        p%precv(ilev_)%iprcparm(mld_sub_solve_)  = val
+!!$      case(mld_coarse_solve_)
+!!$        if (ilev_ /= nlev_) then 
+!!$          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
+!!$          info = -2
+!!$          return
+!!$        end if
+!!$
+!!$        if (nlev_ > 1) then 
+!!$          p%precv(nlev_)%iprcparm(mld_coarse_solve_)  = val
+!!$          p%precv(nlev_)%prec%iprcparm(mld_smoother_type_) = mld_bjac_
+!!$          p%precv(nlev_)%iprcparm(mld_coarse_mat_)    = mld_distr_mat_
+!!$          select case (val) 
+!!$          case(mld_umf_, mld_slu_)
+!!$            p%precv(nlev_)%iprcparm(mld_coarse_mat_)  = mld_repl_mat_
+!!$            p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
+!!$          case(mld_sludist_)
+!!$            p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
+!!$          end select
+!!$        endif
+!!$      case(mld_coarse_sweeps_)
+!!$        if (ilev_ /= nlev_) then 
+!!$          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
+!!$          info = -2
+!!$          return
+!!$        end if
+!!$        p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_)  = val
+!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)       = val
+!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)   = val
+!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_)  = val
+!!$      case(mld_coarse_fillin_)
+!!$        if (ilev_ /= nlev_) then 
+!!$          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
+!!$          info = -2
+!!$          return
+!!$        end if
+!!$        p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)  = val
+!!$      case default
+!!$        write(0,*) name,': Error: invalid WHAT'
+!!$        info = -2
+!!$      end select
+!!$
+!!$    endif
 
   else if (.not.present(ilev)) then 
     !
@@ -236,15 +236,15 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
     select case(what) 
     case(mld_sub_solve_)
       do ilev_=1,max(1,nlev_-1)
-        if ((.not.allocated(p%precv(ilev_)%iprcparm)).or.&
-             & (.not.allocated(p%precv(ilev_)%sm))) then 
+!!$        if ((.not.allocated(p%precv(ilev_)%iprcparm)).or.&
+        if (.not.allocated(p%precv(ilev_)%sm)) then 
           write(0,*) name,&
                &': Error: uninitialized preconditioner component, should call MLD_PRECINIT' 
           info = -1 
           return 
         endif
-        p%precv(ilev_)%iprcparm(what)  = val
-        p%precv(ilev_)%prec%iprcparm(what)  = val
+!!$        p%precv(ilev_)%iprcparm(what)  = val
+!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
 
         call onelev_set_solver(p%precv(ilev_),val,info)
        
@@ -253,36 +253,36 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
     case(mld_sub_restr_,mld_sub_prol_,&
          & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_)
       do ilev_=1,max(1,nlev_-1)
-        if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
-          write(0,*) name,&
-               &': Error: uninitialized preconditioner component, should call MLD_PRECINIT' 
-          info = -1 
-          return 
-        endif
-        p%precv(ilev_)%iprcparm(what)  = val
-        p%precv(ilev_)%prec%iprcparm(what)  = val
+!!$        if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
+!!$          write(0,*) name,&
+!!$               &': Error: uninitialized preconditioner component, should call MLD_PRECINIT' 
+!!$          info = -1 
+!!$          return 
+!!$        endif
+!!$        p%precv(ilev_)%iprcparm(what)  = val
+!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
         call p%precv(ilev_)%set(what,val,info)
       end do
       
     case(mld_smoother_sweeps_)
       do ilev_=1,max(1,nlev_-1)
-        p%precv(ilev_)%iprcparm(what)  = val
-        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = val
-        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = val
-        p%precv(ilev_)%prec%iprcparm(what)  = val
+!!$        p%precv(ilev_)%iprcparm(what)  = val
+!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = val
+!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = val
+!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
         call p%precv(ilev_)%set(what,val,info)
       end do
 
     case(mld_smoother_type_)
       do ilev_=1,nlev_
-        if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
-          write(0,*) name,&
-               &': Error: uninitialized preconditioner component, should call MLD_PRECINIT' 
-          info = -1 
-          return 
-        endif
-        p%precv(ilev_)%iprcparm(what)  = val
-        p%precv(ilev_)%prec%iprcparm(what)  = val
+!!$        if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
+!!$          write(0,*) name,&
+!!$               &': Error: uninitialized preconditioner component, should call MLD_PRECINIT' 
+!!$          info = -1 
+!!$          return 
+!!$        endif
+!!$        p%precv(ilev_)%iprcparm(what)  = val
+!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
 
         call onelev_set_smoother(p%precv(ilev_),val,info)
 
@@ -293,61 +293,61 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
          & mld_smoother_pos_,mld_aggr_omega_alg_,&
          & mld_aggr_eig_,mld_aggr_filter_)
       do ilev_=1,nlev_
-        if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
-          write(0,*) name,&
-               &': Error: uninitialized preconditioner component, should call MLD_PRECINIT' 
-          info = -1 
-          return 
-        endif
-        p%precv(ilev_)%iprcparm(what)  = val
+!!$        if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
+!!$          write(0,*) name,&
+!!$               &': Error: uninitialized preconditioner component, should call MLD_PRECINIT' 
+!!$          info = -1 
+!!$          return 
+!!$        endif
+!!$        p%precv(ilev_)%iprcparm(what)  = val
         call p%precv(ilev_)%set(what,val,info)
       end do
 
     case(mld_coarse_mat_)
-      if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
-        write(0,*) name,&
-             & ': Error: uninitialized preconditioner component,',&
-             & ' should call MLD_PRECINIT' 
-        info = -1 
-        return 
-      endif
+!!$      if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
+!!$        write(0,*) name,&
+!!$             & ': Error: uninitialized preconditioner component,',&
+!!$             & ' should call MLD_PRECINIT' 
+!!$        info = -1 
+!!$        return 
+!!$      endif
       if (nlev_ > 1) then 
-        p%precv(nlev_)%iprcparm(mld_coarse_mat_)  = val
+!!$        p%precv(nlev_)%iprcparm(mld_coarse_mat_)  = val
         call p%precv(nlev_)%set(mld_coarse_mat_,val,info)
       end if
                 
     case(mld_coarse_solve_)
-      if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
-        write(0,*) name,&
-             &': Error: uninitialized preconditioner component,',&
-             &' should call MLD_PRECINIT' 
-        info = -1 
-        return 
-      endif
+!!$      if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
+!!$        write(0,*) name,&
+!!$             &': Error: uninitialized preconditioner component,',&
+!!$             &' should call MLD_PRECINIT' 
+!!$        info = -1 
+!!$        return 
+!!$      endif
 
       if (nlev_ > 1) then 
-        p%precv(nlev_)%iprcparm(mld_coarse_solve_)       = val
-        
-        
-        p%precv(nlev_)%prec%iprcparm(mld_smoother_type_) = mld_bjac_
-        p%precv(nlev_)%iprcparm(mld_coarse_mat_)         = mld_distr_mat_
+!!$        p%precv(nlev_)%iprcparm(mld_coarse_solve_)       = val
+!!$        
+!!$        
+!!$        p%precv(nlev_)%prec%iprcparm(mld_smoother_type_) = mld_bjac_
+!!$        p%precv(nlev_)%iprcparm(mld_coarse_mat_)         = mld_distr_mat_
         
         call p%precv(nlev_)%set(mld_coarse_solve_,val,info)
         select case (val) 
         case(mld_umf_, mld_slu_)
-          p%precv(nlev_)%iprcparm(mld_coarse_mat_)       = mld_repl_mat_
-          p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
+!!$          p%precv(nlev_)%iprcparm(mld_coarse_mat_)       = mld_repl_mat_
+!!$          p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
           call onelev_set_smoother(p%precv(nlev_),mld_bjac_,info)
           call onelev_set_solver(p%precv(nlev_),val,info)
           call p%precv(nlev_)%set(mld_coarse_mat_,mld_repl_mat_,info)
         case(mld_sludist_)
-          p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
+!!$          p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
           call onelev_set_smoother(p%precv(nlev_),mld_bjac_,info)
           call onelev_set_solver(p%precv(nlev_),val,info)
           call p%precv(nlev_)%set(mld_coarse_mat_,mld_distr_mat_,info)
         case(mld_jac_)
-          p%precv(nlev_)%prec%iprcparm(mld_smoother_type_) = mld_jac_
-          p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)     = mld_diag_scale_
+!!$          p%precv(nlev_)%prec%iprcparm(mld_smoother_type_) = mld_jac_
+!!$          p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)     = mld_diag_scale_
           call onelev_set_smoother(p%precv(nlev_),mld_jac_,info)
           call onelev_set_solver(p%precv(nlev_),mld_diag_scale_,info)
           call p%precv(nlev_)%set(mld_coarse_mat_,mld_distr_mat_,info)
@@ -356,45 +356,45 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
       endif
 
     case(mld_coarse_subsolve_)
-      if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
-        write(0,*) name,&
-             &': Error: uninitialized preconditioner component,',&
-             &' should call MLD_PRECINIT' 
-        info = -1 
-        return 
-      end if
+!!$      if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
+!!$        write(0,*) name,&
+!!$             &': Error: uninitialized preconditioner component,',&
+!!$             &' should call MLD_PRECINIT' 
+!!$        info = -1 
+!!$        return 
+!!$      end if
       if (nlev_ > 1) then 
-        p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)  = val
+!!$        p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)  = val
         call onelev_set_solver(p%precv(ilev_),val,info)
       endif
 
     case(mld_coarse_sweeps_)
-      if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
-        write(0,*) name,&
-             &': Error: uninitialized preconditioner component,',&
-             &' should call MLD_PRECINIT' 
-        info = -1 
-        return 
-      endif
+!!$      if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
+!!$        write(0,*) name,&
+!!$             &': Error: uninitialized preconditioner component,',&
+!!$             &' should call MLD_PRECINIT' 
+!!$        info = -1 
+!!$        return 
+!!$      endif
       if (nlev_ > 1) then
-        p%precv(nlev_)%prec%iprcparm(mld_smoother_sweeps_)      = val
-        p%precv(nlev_)%iprcparm(mld_smoother_sweeps_pre_)       = val
-        p%precv(nlev_)%iprcparm(mld_smoother_sweeps_post_)      = val
-        p%precv(nlev_)%prec%iprcparm(mld_smoother_sweeps_pre_)  = val
-        p%precv(nlev_)%prec%iprcparm(mld_smoother_sweeps_post_) = val
+!!$        p%precv(nlev_)%prec%iprcparm(mld_smoother_sweeps_)      = val
+!!$        p%precv(nlev_)%iprcparm(mld_smoother_sweeps_pre_)       = val
+!!$        p%precv(nlev_)%iprcparm(mld_smoother_sweeps_post_)      = val
+!!$        p%precv(nlev_)%prec%iprcparm(mld_smoother_sweeps_pre_)  = val
+!!$        p%precv(nlev_)%prec%iprcparm(mld_smoother_sweeps_post_) = val
         call p%precv(nlev_)%set(mld_smoother_sweeps_,val,info)
       end if
 
     case(mld_coarse_fillin_)
-      if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
-        write(0,*) name,&
-             &': Error: uninitialized preconditioner component,',&
-             &' should call MLD_PRECINIT' 
-        info = -1 
-        return 
-      endif
+!!$      if (.not.allocated(p%precv(nlev_)%iprcparm)) then 
+!!$        write(0,*) name,&
+!!$             &': Error: uninitialized preconditioner component,',&
+!!$             &' should call MLD_PRECINIT' 
+!!$        info = -1 
+!!$        return 
+!!$      endif
       if (nlev_ > 1) then 
-        p%precv(nlev_)%prec%iprcparm(mld_sub_fillin_)  = val
+!!$        p%precv(nlev_)%prec%iprcparm(mld_sub_fillin_)  = val
         call p%precv(nlev_)%set(mld_sub_fillin_,val,info)
       end if
     case default
@@ -638,20 +638,20 @@ subroutine mld_dprecsetsm(p,val,info,ilev)
     write(0,*) name,': Error: invalid ILEV/NLEV combination',ilev_, nlev_
     return
   endif
-  if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
-    info = 3111
-    write(0,*) name,&
-         &': Error: uninitialized preconditioner component,',&
-         &' should call MLD_PRECINIT' 
-    return 
-  endif
-  if (.not.allocated(p%precv(ilev_)%prec%iprcparm)) then 
-    info = 3111
-    write(0,*) name,&
-         &': Error: uninitialized preconditioner component,',&
-         &' should call MLD_PRECINIT' 
-    return 
-  endif
+!!$  if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
+!!$    info = 3111
+!!$    write(0,*) name,&
+!!$         &': Error: uninitialized preconditioner component,',&
+!!$         &' should call MLD_PRECINIT' 
+!!$    return 
+!!$  endif
+!!$  if (.not.allocated(p%precv(ilev_)%prec%iprcparm)) then 
+!!$    info = 3111
+!!$    write(0,*) name,&
+!!$         &': Error: uninitialized preconditioner component,',&
+!!$         &' should call MLD_PRECINIT' 
+!!$    return 
+!!$  endif
   
 
   do ilev_ = ilmin, ilmax 
@@ -717,20 +717,20 @@ subroutine mld_dprecsetsv(p,val,info,ilev)
     write(0,*) name,': Error: invalid ILEV/NLEV combination',ilev_, nlev_
     return
   endif
-  if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
-    info = 3111
-    write(0,*) name,&
-         &': Error: uninitialized preconditioner component,',&
-         &' should call MLD_PRECINIT' 
-    return 
-  endif
-  if (.not.allocated(p%precv(ilev_)%prec%iprcparm)) then 
-    info = 3111
-    write(0,*) name,&
-         &': Error: uninitialized preconditioner component,',&
-         &' should call MLD_PRECINIT' 
-    return 
-  endif
+!!$  if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
+!!$    info = 3111
+!!$    write(0,*) name,&
+!!$         &': Error: uninitialized preconditioner component,',&
+!!$         &' should call MLD_PRECINIT' 
+!!$    return 
+!!$  endif
+!!$  if (.not.allocated(p%precv(ilev_)%prec%iprcparm)) then 
+!!$    info = 3111
+!!$    write(0,*) name,&
+!!$         &': Error: uninitialized preconditioner component,',&
+!!$         &' should call MLD_PRECINIT' 
+!!$    return 
+!!$  endif
 
 
   do ilev_ = ilmin, ilmax 
@@ -834,12 +834,12 @@ subroutine mld_dprecsetc(p,what,string,info,ilev)
     info = -1
     return
   endif
-  if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
-    write(0,*) name,': Error: uninitialized preconditioner component,',&
-         &' should call MLD_PRECINIT' 
-    info = 3111
-    return 
-  endif
+!!$  if (.not.allocated(p%precv(ilev_)%iprcparm)) then 
+!!$    write(0,*) name,': Error: uninitialized preconditioner component,',&
+!!$         &' should call MLD_PRECINIT' 
+!!$    info = 3111
+!!$    return 
+!!$  endif
 
 
   call mld_stringval(string,val,info)
@@ -927,12 +927,12 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
     info = -1
     return
   endif
-  if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
-    write(0,*) name,': Error: uninitialized preconditioner component,',&
-         &' should call MLD_PRECINIT' 
-    info = 3111
-    return 
-  endif
+!!$  if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
+!!$    write(0,*) name,': Error: uninitialized preconditioner component,',&
+!!$         &' should call MLD_PRECINIT' 
+!!$    info = 3111
+!!$    return 
+!!$  endif
 
   !
   ! Set preconditioner parameters at level ilev.
@@ -945,7 +945,7 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
         !
         select case(what) 
         case(mld_sub_iluthrs_)
-          p%precv(ilev_)%prec%rprcparm(what)  = val
+!!$          p%precv(ilev_)%prec%rprcparm(what)  = val
           call p%precv(ilev_)%set(what,val,info)
           
         case default
@@ -956,10 +956,10 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
       else if (ilev_ > 1) then 
         select case(what) 
         case(mld_sub_iluthrs_)
-          p%precv(ilev_)%prec%rprcparm(what)  = val
+!!$          p%precv(ilev_)%prec%rprcparm(what)  = val
           call p%precv(ilev_)%set(what,val,info)
         case(mld_aggr_omega_val_,mld_aggr_thresh_)
-          p%precv(ilev_)%rprcparm(what)  = val
+!!$          p%precv(ilev_)%rprcparm(what)  = val
           call p%precv(ilev_)%set(what,val,info)
         case default
           write(0,*) name,': Error: invalid WHAT'
@@ -975,47 +975,47 @@ subroutine mld_dprecsetr(p,what,val,info,ilev)
       select case(what) 
       case(mld_sub_iluthrs_)
         do ilev_=1,nlev_
-          if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
-            write(0,*) name,': Error: uninitialized preconditioner ',&
-                 & 'component, should call MLD_PRECINIT' 
-            info = -1 
-            return 
-          endif
-          p%precv(ilev_)%prec%rprcparm(what)  = val
+!!$          if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
+!!$            write(0,*) name,': Error: uninitialized preconditioner ',&
+!!$                 & 'component, should call MLD_PRECINIT' 
+!!$            info = -1 
+!!$            return 
+!!$          endif
+!!$          p%precv(ilev_)%prec%rprcparm(what)  = val
           call p%precv(ilev_)%set(what,val,info)
         end do
 
       case(mld_coarse_iluthrs_)
         ilev_=nlev_
-        if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
-          write(0,*) name,': Error: uninitialized preconditioner ',&
-               & 'component, should call MLD_PRECINIT' 
-          info = -1 
-          return 
-        endif
-        p%precv(ilev_)%prec%rprcparm(mld_sub_iluthrs_)  = val
+!!$        if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
+!!$          write(0,*) name,': Error: uninitialized preconditioner ',&
+!!$               & 'component, should call MLD_PRECINIT' 
+!!$          info = -1 
+!!$          return 
+!!$        endif
+!!$        p%precv(ilev_)%prec%rprcparm(mld_sub_iluthrs_)  = val
         call p%precv(ilev_)%set(mld_sub_iluthrs_,val,info)
 
       case(mld_aggr_omega_val_)
         do ilev_=2,nlev_
-          if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
-            write(0,*) name,': Error: uninitialized preconditioner',&
-                 & ' component, should call MLD_PRECINIT' 
-            info = -1 
-            return 
-          endif
-          p%precv(ilev_)%rprcparm(what)  = val
+!!$          if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
+!!$            write(0,*) name,': Error: uninitialized preconditioner',&
+!!$                 & ' component, should call MLD_PRECINIT' 
+!!$            info = -1 
+!!$            return 
+!!$          endif
+!!$          p%precv(ilev_)%rprcparm(what)  = val
           call p%precv(ilev_)%set(what,val,info)
         end do
       case(mld_aggr_thresh_)
         do ilev_=2,nlev_
-          if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
-            write(0,*) name,': Error: uninitialized preconditioner',&
-                 &' component, should call MLD_PRECINIT' 
-            info = -1 
-            return 
-          endif
-          p%precv(ilev_)%rprcparm(what)  = val
+!!$          if (.not.allocated(p%precv(ilev_)%rprcparm)) then 
+!!$            write(0,*) name,': Error: uninitialized preconditioner',&
+!!$                 &' component, should call MLD_PRECINIT' 
+!!$            info = -1 
+!!$            return 
+!!$          endif
+!!$          p%precv(ilev_)%rprcparm(what)  = val
           call p%precv(ilev_)%set(what,val,info)
         end do
       case default

@@ -127,25 +127,25 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     nlev_ = 1
     ilev_ = 1
     allocate(p%precv(nlev_),stat=info) 
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
-    if (info /= psb_success_) return
-    p%precv(ilev_)%iprcparm(:)      = 0
-    p%precv(ilev_)%rprcparm(:)      = dzero
-    p%precv(ilev_)%prec%iprcparm(:) = 0
-    p%precv(ilev_)%prec%rprcparm(:) = dzero
-    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_noprec_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_f_none_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_none_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 0
-    p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
+!!$    if (info /= psb_success_) return
+!!$    p%precv(ilev_)%iprcparm(:)      = 0
+!!$    p%precv(ilev_)%rprcparm(:)      = dzero
+!!$    p%precv(ilev_)%prec%iprcparm(:) = 0
+!!$    p%precv(ilev_)%prec%rprcparm(:) = dzero
+!!$    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_noprec_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_f_none_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_none_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
 
     allocate(mld_d_base_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return
@@ -156,26 +156,26 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     nlev_ = 1
     ilev_ = 1
     allocate(p%precv(nlev_),stat=info) 
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
-    if (info /= psb_success_) return
-    p%precv(ilev_)%iprcparm(:)      = 0
-    p%precv(ilev_)%rprcparm(:)      = dzero
-    p%precv(ilev_)%prec%iprcparm(:) = 0
-    p%precv(ilev_)%prec%rprcparm(:) = dzero
-    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_jac_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_diag_scale_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_none_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 0
-    p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
-    p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
+!!$    if (info /= psb_success_) return
+!!$    p%precv(ilev_)%iprcparm(:)      = 0
+!!$    p%precv(ilev_)%rprcparm(:)      = dzero
+!!$    p%precv(ilev_)%prec%iprcparm(:) = 0
+!!$    p%precv(ilev_)%prec%rprcparm(:) = dzero
+!!$    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_jac_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_diag_scale_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_none_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
 
     allocate(mld_d_jac_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return
@@ -186,26 +186,26 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     nlev_ = 1
     ilev_ = 1
     allocate(p%precv(nlev_),stat=info) 
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
-    if (info /= psb_success_) return
-    p%precv(ilev_)%iprcparm(:)      = 0
-    p%precv(ilev_)%rprcparm(:)      = dzero
-    p%precv(ilev_)%prec%iprcparm(:) = 0
-    p%precv(ilev_)%prec%rprcparm(:) = dzero
-    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_bjac_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_ilu_n_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_none_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 0
-    p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
-    p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
+!!$    if (info /= psb_success_) return
+!!$    p%precv(ilev_)%iprcparm(:)      = 0
+!!$    p%precv(ilev_)%rprcparm(:)      = dzero
+!!$    p%precv(ilev_)%prec%iprcparm(:) = 0
+!!$    p%precv(ilev_)%prec%rprcparm(:) = dzero
+!!$    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_bjac_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_ilu_n_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_none_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
 
     allocate(mld_d_jac_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return
@@ -216,26 +216,26 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     nlev_ = 1
     ilev_ = 1
     allocate(p%precv(nlev_),stat=info) 
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
-    if (info /= psb_success_) return
-    p%precv(ilev_)%iprcparm(:)      = 0
-    p%precv(ilev_)%rprcparm(:)      = dzero
-    p%precv(ilev_)%prec%iprcparm(:) = 0
-    p%precv(ilev_)%prec%rprcparm(:) = dzero
-    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_as_ 
-    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_ilu_n_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_halo_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 1
-    p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
-    p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
+!!$    if (info /= psb_success_) return
+!!$    p%precv(ilev_)%iprcparm(:)      = 0
+!!$    p%precv(ilev_)%rprcparm(:)      = dzero
+!!$    p%precv(ilev_)%prec%iprcparm(:) = 0
+!!$    p%precv(ilev_)%prec%rprcparm(:) = dzero
+!!$    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_as_ 
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_ilu_n_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_halo_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 1
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
 
     allocate(mld_d_as_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return
@@ -252,37 +252,37 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
     end if
     ilev_ = 1
     allocate(p%precv(nlev_),stat=info) 
-!!$    write(0,*) 'Check 1: ',allocated(p%precv(1)%sm)
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
-!!$    write(0,*) 'Check 2: ',allocated(p%precv(1)%sm)
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
-!!$    write(0,*) 'Check 3: ',allocated(p%precv(1)%sm)
-    if (info /= psb_success_) return
-    p%precv(ilev_)%iprcparm(:)      = 0
-    p%precv(ilev_)%rprcparm(:)      = dzero
-    p%precv(ilev_)%prec%iprcparm(:) = 0
-    p%precv(ilev_)%prec%rprcparm(:) = dzero
-    p%precv(ilev_)%iprcparm(mld_ml_type_)         = mld_mult_ml_
-    p%precv(ilev_)%iprcparm(mld_aggr_alg_)        = mld_dec_aggr_
-    p%precv(ilev_)%iprcparm(mld_aggr_kind_)       = mld_smooth_prol_
-    p%precv(ilev_)%iprcparm(mld_coarse_mat_)      = mld_distr_mat_
-    p%precv(ilev_)%iprcparm(mld_smoother_pos_)    = mld_twoside_smooth_
-    p%precv(ilev_)%iprcparm(mld_aggr_omega_alg_)  = mld_eig_est_
-    p%precv(ilev_)%iprcparm(mld_aggr_eig_)        = mld_max_norm_
-    p%precv(ilev_)%iprcparm(mld_aggr_filter_)     = mld_no_filter_mat_
-    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_as_ 
-    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_ilu_n_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_halo_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 1
-    p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
-    p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
+!!$
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
+!!$
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
+!!$
+!!$    if (info /= psb_success_) return
+!!$    p%precv(ilev_)%iprcparm(:)      = 0
+!!$    p%precv(ilev_)%rprcparm(:)      = dzero
+!!$    p%precv(ilev_)%prec%iprcparm(:) = 0
+!!$    p%precv(ilev_)%prec%rprcparm(:) = dzero
+!!$    p%precv(ilev_)%iprcparm(mld_ml_type_)         = mld_mult_ml_
+!!$    p%precv(ilev_)%iprcparm(mld_aggr_alg_)        = mld_dec_aggr_
+!!$    p%precv(ilev_)%iprcparm(mld_aggr_kind_)       = mld_smooth_prol_
+!!$    p%precv(ilev_)%iprcparm(mld_coarse_mat_)      = mld_distr_mat_
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_pos_)    = mld_twoside_smooth_
+!!$    p%precv(ilev_)%iprcparm(mld_aggr_omega_alg_)  = mld_eig_est_
+!!$    p%precv(ilev_)%iprcparm(mld_aggr_eig_)        = mld_max_norm_
+!!$    p%precv(ilev_)%iprcparm(mld_aggr_filter_)     = mld_no_filter_mat_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_as_ 
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_ilu_n_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_halo_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 1
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
 
     allocate(mld_d_as_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return
@@ -293,36 +293,36 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
 !!$    write(0,*) 'Check 4: ',allocated(p%precv(1)%sm)
     if (nlev_ == 1) return 
     do ilev_ = 2, nlev_ -1 
-      if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
-      if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
-      if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
-      if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
-      if (info /= psb_success_) return
-      p%precv(ilev_)%iprcparm(:)      = 0
-      p%precv(ilev_)%rprcparm(:)      = dzero
-      p%precv(ilev_)%prec%iprcparm(:) = 0
-      p%precv(ilev_)%prec%rprcparm(:) = dzero
-      p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_as_
-      p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_halo_
-      p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
-      p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
-      p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 1
-      p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_ilu_n_
-      p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
-      p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
-      p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
-      p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
-      p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
-      p%precv(ilev_)%iprcparm(mld_ml_type_)         = mld_mult_ml_
-      p%precv(ilev_)%iprcparm(mld_aggr_alg_)        = mld_dec_aggr_
-      p%precv(ilev_)%iprcparm(mld_aggr_kind_)       = mld_smooth_prol_
-      p%precv(ilev_)%iprcparm(mld_coarse_mat_)      = mld_distr_mat_
-      p%precv(ilev_)%iprcparm(mld_smoother_pos_)    = mld_twoside_smooth_
-      p%precv(ilev_)%iprcparm(mld_aggr_omega_alg_)  = mld_eig_est_
-      p%precv(ilev_)%iprcparm(mld_aggr_eig_)        = mld_max_norm_
-      p%precv(ilev_)%iprcparm(mld_aggr_filter_)     = mld_no_filter_mat_
-      p%precv(ilev_)%rprcparm(mld_aggr_omega_val_)  = dzero
-      p%precv(ilev_)%rprcparm(mld_aggr_thresh_)     = dzero
+!!$      if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
+!!$      if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
+!!$      if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
+!!$      if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
+!!$      if (info /= psb_success_) return
+!!$      p%precv(ilev_)%iprcparm(:)      = 0
+!!$      p%precv(ilev_)%rprcparm(:)      = dzero
+!!$      p%precv(ilev_)%prec%iprcparm(:) = 0
+!!$      p%precv(ilev_)%prec%rprcparm(:) = dzero
+!!$      p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_as_
+!!$      p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_halo_
+!!$      p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
+!!$      p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
+!!$      p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 1
+!!$      p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_ilu_n_
+!!$      p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
+!!$      p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_) = 1
+!!$      p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 1
+!!$      p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 1
+!!$      p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 1
+!!$      p%precv(ilev_)%iprcparm(mld_ml_type_)         = mld_mult_ml_
+!!$      p%precv(ilev_)%iprcparm(mld_aggr_alg_)        = mld_dec_aggr_
+!!$      p%precv(ilev_)%iprcparm(mld_aggr_kind_)       = mld_smooth_prol_
+!!$      p%precv(ilev_)%iprcparm(mld_coarse_mat_)      = mld_distr_mat_
+!!$      p%precv(ilev_)%iprcparm(mld_smoother_pos_)    = mld_twoside_smooth_
+!!$      p%precv(ilev_)%iprcparm(mld_aggr_omega_alg_)  = mld_eig_est_
+!!$      p%precv(ilev_)%iprcparm(mld_aggr_eig_)        = mld_max_norm_
+!!$      p%precv(ilev_)%iprcparm(mld_aggr_filter_)     = mld_no_filter_mat_
+!!$      p%precv(ilev_)%rprcparm(mld_aggr_omega_val_)  = dzero
+!!$      p%precv(ilev_)%rprcparm(mld_aggr_thresh_)     = dzero
 
       allocate(mld_d_as_smoother_type :: p%precv(ilev_)%sm, stat=info) 
       if (info /= psb_success_) return
@@ -331,42 +331,42 @@ subroutine mld_dprecinit(p,ptype,info,nlev)
 
     end do
     ilev_ = nlev_
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
-    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
-    if (info /= psb_success_) return
-    p%precv(ilev_)%iprcparm(:)      = 0
-    p%precv(ilev_)%rprcparm(:)      = dzero
-    p%precv(ilev_)%prec%iprcparm(:) = 0
-    p%precv(ilev_)%prec%rprcparm(:) = dzero
-    p%precv(ilev_)%prec%iprcparm(mld_coarse_solve_)    = mld_bjac_
-#if defined(HAVE_UMF_)
-    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_umf_
-#elif defined(HAVE_SLU_)
-    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_slu_
-#else 
-    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_ilu_n_
-#endif
-    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_bjac_
-    p%precv(ilev_)%prec%iprcparm(mld_coarse_mat_)      = mld_distr_mat_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_none_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
-    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 0
-    p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
-    p%precv(ilev_)%iprcparm(mld_ml_type_)              = mld_mult_ml_
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 4
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 4
-    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 4
-    p%precv(ilev_)%iprcparm(mld_aggr_alg_)         = mld_dec_aggr_
-    p%precv(ilev_)%iprcparm(mld_aggr_kind_)        = mld_smooth_prol_
-    p%precv(ilev_)%iprcparm(mld_smoother_pos_)     = mld_twoside_smooth_
-    p%precv(ilev_)%iprcparm(mld_aggr_omega_alg_)   = mld_eig_est_
-    p%precv(ilev_)%iprcparm(mld_aggr_eig_)         = mld_max_norm_
-    p%precv(ilev_)%iprcparm(mld_aggr_filter_)      = mld_no_filter_mat_
-    p%precv(ilev_)%rprcparm(mld_aggr_omega_val_)   = dzero
-    p%precv(ilev_)%rprcparm(mld_aggr_thresh_)      = dzero
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%rprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_ifpsz_,p%precv(ilev_)%prec%iprcparm,info)
+!!$    if (info == psb_success_) call psb_realloc(mld_rfpsz_,p%precv(ilev_)%prec%rprcparm,info)
+!!$    if (info /= psb_success_) return
+!!$    p%precv(ilev_)%iprcparm(:)      = 0
+!!$    p%precv(ilev_)%rprcparm(:)      = dzero
+!!$    p%precv(ilev_)%prec%iprcparm(:) = 0
+!!$    p%precv(ilev_)%prec%rprcparm(:) = dzero
+!!$    p%precv(ilev_)%prec%iprcparm(mld_coarse_solve_)    = mld_bjac_
+!!$#if defined(HAVE_UMF_)
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_umf_
+!!$#elif defined(HAVE_SLU_)
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_slu_
+!!$#else 
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_solve_)       = mld_ilu_n_
+!!$#endif
+!!$    p%precv(ilev_)%prec%iprcparm(mld_smoother_type_)   = mld_bjac_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_coarse_mat_)      = mld_distr_mat_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_restr_)       = psb_none_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_prol_)        = psb_none_
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ren_)         = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_ovr_)         = 0
+!!$    p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)      = 0
+!!$    p%precv(ilev_)%iprcparm(mld_ml_type_)              = mld_mult_ml_
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)      = 4
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = 4
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = 4
+!!$    p%precv(ilev_)%iprcparm(mld_aggr_alg_)         = mld_dec_aggr_
+!!$    p%precv(ilev_)%iprcparm(mld_aggr_kind_)        = mld_smooth_prol_
+!!$    p%precv(ilev_)%iprcparm(mld_smoother_pos_)     = mld_twoside_smooth_
+!!$    p%precv(ilev_)%iprcparm(mld_aggr_omega_alg_)   = mld_eig_est_
+!!$    p%precv(ilev_)%iprcparm(mld_aggr_eig_)         = mld_max_norm_
+!!$    p%precv(ilev_)%iprcparm(mld_aggr_filter_)      = mld_no_filter_mat_
+!!$    p%precv(ilev_)%rprcparm(mld_aggr_omega_val_)   = dzero
+!!$    p%precv(ilev_)%rprcparm(mld_aggr_thresh_)      = dzero
 
     allocate(mld_d_as_smoother_type :: p%precv(ilev_)%sm, stat=info) 
     if (info /= psb_success_) return

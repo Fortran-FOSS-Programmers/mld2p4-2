@@ -216,9 +216,9 @@ module mld_d_prec_type
   type mld_donelev_type
     class(mld_d_base_smoother_type), allocatable :: sm
     type(mld_dml_parms)             :: parms 
-    type(mld_dbaseprec_type)        :: prec
-    integer, allocatable            :: iprcparm(:) 
-    real(psb_dpk_), allocatable     :: rprcparm(:) 
+!!$    type(mld_dbaseprec_type)        :: prec
+!!$    integer, allocatable            :: iprcparm(:) 
+!!$    real(psb_dpk_), allocatable     :: rprcparm(:) 
     type(psb_dspmat_type)           :: ac
     type(psb_desc_type)             :: desc_ac
     type(psb_dspmat_type), pointer  :: base_a    => null() 
@@ -372,14 +372,15 @@ contains
     integer(psb_long_int_k_) :: val
     integer             :: i
     
-    val = mld_sizeof(prec%prec)
-    if (allocated(prec%iprcparm)) &
-         &  val = val + psb_sizeof_int * size(prec%iprcparm)
+    val = 0
+!!$    val = val + mld_sizeof(prec%prec)
+!!$    if (allocated(prec%iprcparm)) &
+!!$         &  val = val + psb_sizeof_int * size(prec%iprcparm)
 !!$    if (allocated(prec%ilaggr)) &
 !!$         &  val = val + psb_sizeof_int * size(prec%ilaggr)
 !!$    if (allocated(prec%nlaggr)) &
 !!$         &  val = val + psb_sizeof_int * size(prec%nlaggr)
-    if (allocated(prec%rprcparm)) val = val + psb_sizeof_dp * size(prec%rprcparm)
+!!$    if (allocated(prec%rprcparm)) val = val + psb_sizeof_dp * size(prec%rprcparm)
     val = val + psb_sizeof(prec%desc_ac)
     val = val + psb_sizeof(prec%ac)
     val = val + psb_sizeof(prec%map) 
@@ -667,15 +668,15 @@ contains
     ! Actually we might just deallocate the top level array, except 
     ! for the inner UMFPACK or SLU stuff
     call p%sm%free(info)
-    call mld_precfree(p%prec,info)
+!!$    call mld_precfree(p%prec,info)
     
     call p%ac%free()
     if (psb_is_ok_desc(p%desc_ac)) &
          & call psb_cdfree(p%desc_ac,info)
     
-    if (allocated(p%rprcparm)) then 
-      deallocate(p%rprcparm,stat=info)
-    end if
+!!$    if (allocated(p%rprcparm)) then 
+!!$      deallocate(p%rprcparm,stat=info)
+!!$    end if
     ! This is a pointer to something else, must not free it here. 
     nullify(p%base_a) 
     ! This is a pointer to something else, must not free it here. 

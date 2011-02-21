@@ -160,9 +160,9 @@ contains
     
     call mld_precfree(b,info)
     call move_alloc(a%sm,b%sm)
-    if (info == psb_success_) call mld_move_alloc(a%prec,b%prec,info) 
-    if (info == psb_success_) call psb_move_alloc(a%iprcparm,b%iprcparm,info) 
-    if (info == psb_success_) call psb_move_alloc(a%rprcparm,b%rprcparm,info) 
+!!$    if (info == psb_success_) call mld_move_alloc(a%prec,b%prec,info) 
+!!$    if (info == psb_success_) call psb_move_alloc(a%iprcparm,b%iprcparm,info) 
+!!$    if (info == psb_success_) call psb_move_alloc(a%rprcparm,b%rprcparm,info) 
     if (info == psb_success_) call psb_move_alloc(a%ac,b%ac,info) 
     if (info == psb_success_) call psb_move_alloc(a%desc_ac,b%desc_ac,info) 
 !!$    if (info == psb_success_) call psb_move_alloc(a%mlia,b%mlia,info) 
