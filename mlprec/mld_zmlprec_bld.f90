@@ -67,7 +67,7 @@
 subroutine mld_zmlprec_bld(a,desc_a,p,info)
 
   use psb_sparse_mod
-  use mld_inner_mod, mld_protect_name => mld_zmlprec_bld
+  use mld_z_inner_mod, mld_protect_name => mld_zmlprec_bld
   use mld_prec_mod
   use mld_z_jac_smoother
   use mld_z_as_smoother

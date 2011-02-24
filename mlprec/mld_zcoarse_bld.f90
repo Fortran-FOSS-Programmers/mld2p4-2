@@ -68,7 +68,7 @@
 subroutine mld_zcoarse_bld(a,desc_a,p,info)
 
   use psb_sparse_mod
-  use mld_inner_mod, mld_protect_name => mld_zcoarse_bld
+  use mld_z_inner_mod, mld_protect_name => mld_zcoarse_bld
 
   implicit none
 

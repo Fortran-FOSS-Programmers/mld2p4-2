@@ -101,7 +101,7 @@
 subroutine mld_zaggrmat_asb(a,desc_a,ilaggr,nlaggr,p,info)
 
   use psb_sparse_mod
-  use mld_inner_mod, mld_protect_name => mld_zaggrmat_asb
+  use mld_z_inner_mod, mld_protect_name => mld_zaggrmat_asb
 
   implicit none
 

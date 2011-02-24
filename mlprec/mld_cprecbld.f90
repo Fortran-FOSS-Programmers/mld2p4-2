@@ -61,7 +61,7 @@
 subroutine mld_cprecbld(a,desc_a,p,info)
 
   use psb_sparse_mod
-  use mld_inner_mod
+  use mld_c_inner_mod
   use mld_prec_mod, mld_protect_name => mld_cprecbld
   use mld_c_jac_smoother
   use mld_c_as_smoother

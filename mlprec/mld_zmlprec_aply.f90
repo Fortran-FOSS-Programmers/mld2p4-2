@@ -315,7 +315,7 @@
 subroutine mld_zmlprec_aply(alpha,p,x,beta,y,desc_data,trans,work,info)
 
   use psb_sparse_mod
-  use mld_inner_mod, mld_protect_name => mld_zmlprec_aply
+  use mld_z_inner_mod, mld_protect_name => mld_zmlprec_aply
 
   implicit none
 

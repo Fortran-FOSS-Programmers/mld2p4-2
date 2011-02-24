@@ -100,7 +100,7 @@
 !
 subroutine mld_saggrmat_smth_asb(a,desc_a,ilaggr,nlaggr,p,info)
   use psb_sparse_mod
-  use mld_inner_mod, mld_protect_name => mld_saggrmat_smth_asb
+  use mld_s_inner_mod, mld_protect_name => mld_saggrmat_smth_asb
 
 #ifdef MPI_MOD
   use mpi
