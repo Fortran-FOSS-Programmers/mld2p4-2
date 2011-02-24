@@ -267,6 +267,10 @@ module mld_base_prec_type
     module procedure mld_icheck_def, mld_scheck_def, mld_dcheck_def
   end interface
 
+  interface psb_bcast 
+    module procedure mld_ml_bcast, mld_sml_bcast, mld_dml_bcast
+  end interface psb_bcast
+
 contains
 
   !
@@ -1106,5 +1110,50 @@ contains
 
   end function pr_to_str
 
+  subroutine mld_ml_bcast(ictxt,dat,root)
+    use psb_sparse_mod
+    implicit none 
+    integer, intent(in)      :: ictxt
+    type(mld_ml_parms), intent(inout)   :: dat
+    integer, intent(in), optional :: root
+
+    call psb_bcast(ictxt,dat%sweeps,root)
+    call psb_bcast(ictxt,dat%sweeps_pre,root)
+    call psb_bcast(ictxt,dat%sweeps_post,root)
+    call psb_bcast(ictxt,dat%ml_type,root)
+    call psb_bcast(ictxt,dat%smoother_pos,root)
+    call psb_bcast(ictxt,dat%aggr_alg,root)
+    call psb_bcast(ictxt,dat%aggr_kind,root)
+    call psb_bcast(ictxt,dat%aggr_omega_alg,root)
+    call psb_bcast(ictxt,dat%aggr_eig,root)
+    call psb_bcast(ictxt,dat%aggr_filter,root)
+    call psb_bcast(ictxt,dat%coarse_mat,root)
+    call psb_bcast(ictxt,dat%coarse_solve,root)
+
+  end subroutine mld_ml_bcast
+
+  subroutine mld_sml_bcast(ictxt,dat,root)
+    use psb_sparse_mod
+    implicit none 
+    integer, intent(in)      :: ictxt
+    type(mld_sml_parms), intent(inout)   :: dat
+    integer, intent(in), optional :: root
+
+    call psb_bcast(ictxt,dat%mld_ml_parms,root)
+    call psb_bcast(ictxt,dat%aggr_omega_val,root)
+    call psb_bcast(ictxt,dat%aggr_thresh,root)
+  end subroutine mld_sml_bcast
+  
+  subroutine mld_dml_bcast(ictxt,dat,root)
+    use psb_sparse_mod
+    implicit none 
+    integer, intent(in)      :: ictxt
+    type(mld_dml_parms), intent(inout)   :: dat
+    integer, intent(in), optional :: root
+    
+    call psb_bcast(ictxt,dat%mld_ml_parms,root)
+    call psb_bcast(ictxt,dat%aggr_omega_val,root)
+    call psb_bcast(ictxt,dat%aggr_thresh,root)
+  end subroutine mld_dml_bcast
 
 end module mld_base_prec_type

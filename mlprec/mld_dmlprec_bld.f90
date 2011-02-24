@@ -89,6 +89,7 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
   integer      :: ipv(mld_ifpsz_), val
   integer      :: int_err(5)
   character    :: upd_
+  type(mld_dml_parms) :: prm
   integer            :: debug_level, debug_unit
   character(len=20)  :: name, ch_err
 
@@ -163,12 +164,12 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
       ! Check on the iprcparm contents: they should be the same
       ! on all processes.
       !
-!!$      if (me == psb_root_) ipv(:) = p%precv(1)%iprcparm(:) 
-!!$      call psb_bcast(ictxt,ipv) 
-!!$      if (any(ipv(:) /=  p%precv(1)%iprcparm(:) )) then
+!!$      if (me == psb_root_) prm = p%precv(1)%parms
+      call psb_bcast(ictxt,p%precv(1)%parms)
+!!$      if (prm /= p%precv(1)%parms) then 
 !!$        write(debug_unit,*) me,name,&
 !!$             &': Inconsistent arguments among processes, forcing a default'
-!!$        p%precv(1)%iprcparm(:) = ipv(:) 
+!!$        p%precv(1)%parms = prm
 !!$      end if
       !
       ! Finest level first; remember to fix base_a and base_desc
@@ -187,12 +188,12 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
         ! Check on the iprcparm contents: they should be the same
         ! on all processes.
         !
-!!$        if (me == psb_root_) ipv(:) = p%precv(i)%iprcparm(:) 
-!!$        call psb_bcast(ictxt,ipv) 
-!!$        if (any(ipv(:) /=  p%precv(i)%iprcparm(:) )) then
+!!$        if (me == psb_root_) prm = p%precv(i)%parms
+        call psb_bcast(ictxt,p%precv(1)%parms)
+!!$        if (prm /= p%precv(i)%parms) then 
 !!$          write(debug_unit,*) me,name,&
-!!$               &': Inconsistent arguments among processes, resetting.'
-!!$          p%precv(i)%iprcparm(:) = ipv(:) 
+!!$               &': Inconsistent arguments among processes, forcing a default'
+!!$          p%precv(i)%parms = prm
 !!$        end if
 
         !

@@ -208,17 +208,9 @@ module mld_d_prec_type
     procedure, pass(sm) :: sizeof =>  d_base_smoother_sizeof
   end type mld_d_base_smoother_type
 
-  type, extends(psb_d_base_prec_type)   :: mld_dbaseprec_type
-    integer, allocatable                :: iprcparm(:) 
-    real(psb_dpk_), allocatable         :: rprcparm(:) 
-  end type mld_dbaseprec_type
-         
   type mld_donelev_type
     class(mld_d_base_smoother_type), allocatable :: sm
     type(mld_dml_parms)             :: parms 
-!!$    type(mld_dbaseprec_type)        :: prec
-!!$    integer, allocatable            :: iprcparm(:) 
-!!$    real(psb_dpk_), allocatable     :: rprcparm(:) 
     type(psb_dspmat_type)           :: ac
     type(psb_desc_type)             :: desc_ac
     type(psb_dspmat_type), pointer  :: base_a    => null() 
@@ -268,11 +260,7 @@ module mld_d_prec_type
   !
 
   interface mld_precfree
-    module procedure mld_dbase_precfree, mld_d_onelev_precfree, mld_dprec_free
-  end interface
-
-  interface mld_nullify_baseprec
-    module procedure mld_nullify_dbaseprec
+    module procedure mld_d_onelev_precfree, mld_dprec_free
   end interface
 
   interface mld_nullify_onelevprec
@@ -284,7 +272,7 @@ module mld_d_prec_type
   end interface
 
   interface mld_sizeof
-    module procedure mld_dprec_sizeof, mld_dbaseprec_sizeof, mld_d_onelev_prec_sizeof
+    module procedure mld_dprec_sizeof, mld_d_onelev_prec_sizeof
   end interface
 
   interface mld_precaply
@@ -331,40 +319,6 @@ contains
     end if
   end function mld_dprec_sizeof
 
-  function mld_dbaseprec_sizeof(prec) result(val)
-    implicit none 
-    type(mld_dbaseprec_type), intent(in) :: prec
-    integer(psb_long_int_k_) :: val
-    integer             :: i
-    
-    val = 0
-    if (allocated(prec%iprcparm)) then 
-      val = val + psb_sizeof_int * size(prec%iprcparm)
-      if (prec%iprcparm(mld_prec_status_) == mld_prec_built_) then 
-        select case(prec%iprcparm(mld_sub_solve_)) 
-        case(mld_ilu_n_,mld_ilu_t_)
-          ! do nothing
-        case(mld_slu_)
-        case(mld_umf_)
-        case(mld_sludist_)
-        case default
-        end select
-        
-      end if
-    end if
-    if (allocated(prec%rprcparm)) val = val + psb_sizeof_dp * size(prec%rprcparm)
-!!$    if (allocated(prec%d))        val = val + psb_sizeof_dp * size(prec%d)
-!!$    if (allocated(prec%perm))     val = val + psb_sizeof_int * size(prec%perm)
-!!$    if (allocated(prec%invperm))  val = val + psb_sizeof_int * size(prec%invperm)
-!!$                                  val = val + psb_sizeof(prec%desc_data)
-!!$    if (allocated(prec%av))  then 
-!!$      do i=1,size(prec%av)
-!!$        val = val + psb_sizeof(prec%av(i))
-!!$      end do
-!!$    end if
-
-
-  end function mld_dbaseprec_sizeof
 
   function mld_d_onelev_prec_sizeof(prec) result(val)
     implicit none 
@@ -373,14 +327,6 @@ contains
     integer             :: i
     
     val = 0
-!!$    val = val + mld_sizeof(prec%prec)
-!!$    if (allocated(prec%iprcparm)) &
-!!$         &  val = val + psb_sizeof_int * size(prec%iprcparm)
-!!$    if (allocated(prec%ilaggr)) &
-!!$         &  val = val + psb_sizeof_int * size(prec%ilaggr)
-!!$    if (allocated(prec%nlaggr)) &
-!!$         &  val = val + psb_sizeof_int * size(prec%nlaggr)
-!!$    if (allocated(prec%rprcparm)) val = val + psb_sizeof_dp * size(prec%rprcparm)
     val = val + psb_sizeof(prec%desc_ac)
     val = val + psb_sizeof(prec%ac)
     val = val + psb_sizeof(prec%map) 
@@ -497,6 +443,7 @@ contains
           !
           ! Print coarsest level details
           !
+          ! Should rework this. 
 
           ilev = nlev
           write(iout_,*) 
@@ -536,64 +483,6 @@ contains
   !  info    -  integer, output.
   !             error code.
   !
-  subroutine mld_dbase_precfree(p,info)
-    implicit none 
-
-    type(mld_dbaseprec_type), intent(inout) :: p
-    integer, intent(out)                :: info
-    integer :: i
-
-    info = psb_success_
-
-    ! Actually we might just deallocate the top level array, except 
-    ! for the inner UMFPACK or SLU stuff
-
-!!$    if (allocated(p%d)) then 
-!!$      deallocate(p%d,stat=info)
-!!$    end if
-!!$
-!!$    if (allocated(p%av))  then 
-!!$      do i=1,size(p%av) 
-!!$        call p%av(i)%free()
-!!$        if (info /= psb_success_) then 
-!!$          ! Actually, we don't care here about this.
-!!$          ! Just let it go.
-!!$          ! return
-!!$        end if
-!!$      enddo
-!!$      deallocate(p%av,stat=info)
-!!$    end if
-!!$
-    if (allocated(p%rprcparm)) then 
-      deallocate(p%rprcparm,stat=info)
-    end if
-
-!!$    if (allocated(p%perm)) then 
-!!$      deallocate(p%perm,stat=info)
-!!$    endif
-!!$
-!!$    if (allocated(p%invperm)) then 
-!!$      deallocate(p%invperm,stat=info)
-!!$    endif
-
-    if (allocated(p%iprcparm)) then 
-      if (p%iprcparm(mld_prec_status_) == mld_prec_built_) then       
-        if (p%iprcparm(mld_sub_solve_) == mld_slu_) then 
-          call mld_dslu_free(p%iprcparm(mld_slu_ptr_),info)
-        end if
-        if (p%iprcparm(mld_sub_solve_) == mld_sludist_) then 
-          call mld_dsludist_free(p%iprcparm(mld_slud_ptr_),info)
-        end if
-!!$        if (p%iprcparm(mld_sub_solve_) == mld_umf_) then 
-!!$          call mld_dumf_free(p%iprcparm(mld_umf_symptr_),&
-!!$               & p%iprcparm(mld_umf_numptr_),info)
-!!$        end if
-      end if
-      deallocate(p%iprcparm,stat=info)
-    end if
-    call mld_nullify_baseprec(p)
-
-  end subroutine mld_dbase_precfree
 
   subroutine d_base_onelev_descr(lv,info,iout,coarse)
 
@@ -666,17 +555,14 @@ contains
     info = psb_success_
 
     ! Actually we might just deallocate the top level array, except 
-    ! for the inner UMFPACK or SLU stuff
+    ! for the inner UMFPACK or SLU stuff.
+    ! We really need FINALs. 
     call p%sm%free(info)
-!!$    call mld_precfree(p%prec,info)
     
     call p%ac%free()
     if (psb_is_ok_desc(p%desc_ac)) &
          & call psb_cdfree(p%desc_ac,info)
-    
-!!$    if (allocated(p%rprcparm)) then 
-!!$      deallocate(p%rprcparm,stat=info)
-!!$    end if
+
     ! This is a pointer to something else, must not free it here. 
     nullify(p%base_a) 
     ! This is a pointer to something else, must not free it here. 
@@ -691,13 +577,6 @@ contains
     call mld_nullify_onelevprec(p)
   end subroutine mld_d_onelev_precfree
 
-  subroutine mld_nullify_dbaseprec(p)
-    implicit none 
-
-    type(mld_dbaseprec_type), intent(inout) :: p
-
-
-  end subroutine mld_nullify_dbaseprec
 
   subroutine mld_nullify_d_onelevprec(p)
     implicit none 
@@ -1811,61 +1690,5 @@ contains
 
   end subroutine d_base_solver_dmp
 
-!!$
-!!$
-!!$  subroutine mld_d_precdump_fact(prec,info,istart,iend,prefix,head)
-!!$    use psb_base_mod
-!!$    implicit none 
-!!$    type(mld_dprec_type), intent(in) :: prec
-!!$    integer, intent(out)             :: info
-!!$    integer, intent(in), optional    :: istart, iend
-!!$    character(len=*), intent(in), optional :: prefix,head
-!!$    integer :: i, j, il1, iln, lname, lev
-!!$    integer :: icontxt,iam, np
-!!$    character(len=80)  :: prefix_
-!!$    character(len=120) :: fname ! len should be at least 20 more than
-!!$    !  len of prefix_ 
-!!$
-!!$    info = 0
-!!$
-!!$    if (.not.mld_is_asb(prec)) then 
-!!$      info = -1
-!!$      write(psb_err_unit,*) 'Trying to dump a non-built preconditioner'
-!!$      return
-!!$    end if
-!!$
-!!$    il1 = 1
-!!$    iln = size(prec%precv)
-!!$    if (present(istart)) then 
-!!$      il1 = max(1,istart)
-!!$    end if
-!!$    if (present(iend)) then 
-!!$      iln = min(iln, iend)
-!!$    end if
-!!$    if (present(prefix)) then 
-!!$      prefix_ = trim(prefix(1:min(len(prefix),len(prefix_))))
-!!$    else
-!!$      prefix_ = "dump_fact_d"
-!!$    end if
-!!$
-!!$    icontxt = psb_cd_get_context(prec%precv(1)%prec%desc_data)
-!!$    call psb_info(icontxt,iam,np)
-!!$    lname = len_trim(prefix_)
-!!$    fname = trim(prefix_)
-!!$    write(fname(lname+1:lname+5),'(a,i3.3)') '_p',iam
-!!$    lname = lname + 5
-!!$    do lev=il1, iln
-!!$      write(fname(lname+1:),'(a,i3.3,a)')'_l',lev,'_lower.mtx'
-!!$      if (psb_is_asb(prec%precv(lev)%prec%av(mld_l_pr_))) &
-!!$           & call psb_csprt(fname,prec%precv(lev)%prec%av(mld_l_pr_),head=head)
-!!$      write(fname(lname+1:),'(a,i3.3,a)')'_l',lev,'_diag.mtx'
-!!$      if (allocated(prec%precv(lev)%prec%d)) &
-!!$           & call psb_geprt(fname,prec%precv(lev)%prec%d,head=head)
-!!$      write(fname(lname+1:),'(a,i3.3,a)')'_l',lev,'_upper.mtx'
-!!$      if (psb_is_asb(prec%precv(lev)%prec%av(mld_u_pr_))) &
-!!$           & call psb_csprt(fname,prec%precv(lev)%prec%av(mld_u_pr_),head=head)
-!!$    end do
-!!$
-!!$  end subroutine mld_d_precdump_fact
 
 end module mld_d_prec_type

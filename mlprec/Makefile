@@ -10,20 +10,22 @@ FINCLUDES=$(FMFLAG). $(FMFLAG)$(LIBDIR) $(FMFLAG)$(PSBINCDIR) $(FMFLAG)$(PSBLIBD
 MODOBJS=mld_base_prec_type.o \
 	mld_s_prec_type.o mld_d_prec_type.o mld_c_prec_type.o mld_z_prec_type.o \
 	mld_prec_type.o  mld_prec_mod.o mld_inner_mod.o mld_move_alloc_mod.o\
+	mld_s_inner_mod.o mld_d_inner_mod.o mld_c_inner_mod.o mld_z_inner_mod.o \
 	mld_d_ilu_solver.o mld_d_diag_solver.o mld_d_jac_smoother.o mld_d_as_smoother.o \
 	mld_s_ilu_solver.o mld_s_diag_solver.o mld_s_jac_smoother.o mld_s_as_smoother.o \
 	mld_c_ilu_solver.o mld_c_diag_solver.o mld_c_jac_smoother.o mld_c_as_smoother.o	\
 	mld_z_ilu_solver.o mld_z_diag_solver.o mld_z_jac_smoother.o mld_z_as_smoother.o \
 	mld_d_umf_solver.o mld_z_umf_solver.o \
 	mld_d_id_solver.o
-MPFOBJS=mld_daggrmat_nosmth_asb.o mld_daggrmat_smth_asb.o mld_daggrmat_minnrg_asb.o \
-	mld_saggrmat_nosmth_asb.o mld_saggrmat_smth_asb.o \
-	mld_caggrmat_nosmth_asb.o mld_caggrmat_smth_asb.o \
-	mld_zaggrmat_nosmth_asb.o mld_zaggrmat_smth_asb.o 
+SMPFOBJS=mld_saggrmat_nosmth_asb.o mld_saggrmat_smth_asb.o 
+DMPFOBJS=mld_daggrmat_nosmth_asb.o mld_daggrmat_smth_asb.o mld_daggrmat_minnrg_asb.o 
+CMPFOBJS=mld_caggrmat_nosmth_asb.o mld_caggrmat_smth_asb.o 
+ZMPFOBJS=mld_zaggrmat_nosmth_asb.o mld_zaggrmat_smth_asb.o 
+MPFOBJS=$(SMPFOBJS) $(DMPFOBJS) $(CMPFOBJS) $(ZMPFOBJS) 
 MPCOBJS=mld_sslud_interface.o mld_dslud_interface.o mld_cslud_interface.o mld_zslud_interface.o
-INNEROBJS= mld_dcoarse_bld.o  mld_dmlprec_bld.o	 mld_dslu_bld.o \
+INNEROBJS= mld_dcoarse_bld.o  mld_dmlprec_bld.o	  \
 	mld_dilu0_fact.o   mld_diluk_fact.o  mld_dilut_fact.o  mld_daggrmap_bld.o \
-	mld_dmlprec_aply.o mld_dslud_bld.o   mld_daggrmat_asb.o   \
+	mld_dmlprec_aply.o mld_daggrmat_asb.o   \
 	mld_scoarse_bld.o  mld_smlprec_bld.o mld_sslu_bld.o    mld_sumf_bld.o \
 	mld_silu0_fact.o   mld_siluk_fact.o  mld_silut_fact.o  mld_saggrmap_bld.o \
 	mld_smlprec_aply.o mld_sslud_bld.o   mld_saggrmat_asb.o   \
@@ -50,10 +52,11 @@ COBJS= mld_sslu_interface.o mld_sumf_interface.o \
 OBJS=$(F90OBJS) $(COBJS) $(MPFOBJS) $(MPCOBJS) $(MODOBJS)
 
 LIBMOD=mld_prec_mod$(.mod) 
-LOCAL_MODS=$(LIBMOD) mld_prec_type$(.mod) mld_inner_mod$(.mod) mld_move_alloc_mod$(.mod) \
-	mld_base_prec_type$(.mod) mld_s_prec_type$(.mod) mld_d_prec_type$(.mod)\
-	mld_c_prec_type$(.mod) mld_z_prec_type$(.mod) mld_d_as_smoother$(.mod) \
-	mld_d_jac_smoother$(.mod) mld_d_diag_solver$(.mod) mld_d_ilu_solver$(.mod)
+#LOCAL_MODS=$(LIBMOD) mld_prec_type$(.mod) mld_inner_mod$(.mod) mld_move_alloc_mod$(.mod) \
+#	mld_base_prec_type$(.mod) mld_s_prec_type$(.mod) mld_d_prec_type$(.mod)\
+#	mld_c_prec_type$(.mod) mld_z_prec_type$(.mod) mld_d_as_smoother$(.mod) \
+#	mld_d_jac_smoother$(.mod) mld_d_diag_solver$(.mod) mld_d_ilu_solver$(.mod)
+LOCAL_MODS=$(MODOBJS:.o=$(.mod))
 LIBNAME=libmld_prec.a
 
 lib: mpobjs $(OBJS) 
@@ -62,11 +65,11 @@ lib: mpobjs $(OBJS)
 	/bin/cp -p $(HERE)/$(LIBNAME) $(LIBDIR)
 	/bin/cp -p $(LIBMOD) $(LOCAL_MODS) $(LIBDIR)
 
-$(F90OBJS) $(MPFOBJS): $(MODOBJS:.o=$(.mod))
+#$(F90OBJS) $(MPFOBJS): $(MODOBJS:.o=$(.mod))
 mld_s_prec_type.o mld_d_prec_type.o mld_c_prec_type.o mld_z_prec_type.o	: mld_base_prec_type.o
 mld_prec_type.o: mld_s_prec_type.o mld_d_prec_type.o mld_c_prec_type.o mld_z_prec_type.o	
 mld_prec_mod.o mld_innner_mod.o: mld_prec_type.o
-mld_inner_mod.o: mld_move_alloc_mod.o
+mld_inner_mod.o: mld_move_alloc_mod.o 	mld_s_inner_mod.o mld_d_inner_mod.o mld_c_inner_mod.o mld_z_inner_mod.o 
 mld_move_alloc_mod.o: mld_prec_type.o
 mld_d_umf_solver.o mld_d_diag_solver.o mld_d_ilu_solver.o: mld_d_prec_type.o 
 mld_d_as_smoother.o mld_d_jac_smoother.o: mld_d_prec_type.o 
@@ -91,6 +94,9 @@ mld_c_jac_smoother.o: mld_c_diag_solver.o
 mld_cprecinit.o mld_cprecset.o: mld_c_diag_solver.o mld_c_ilu_solver.o \
 		mld_c_as_smoother.o mld_c_jac_smoother.o
 
+$(INNEROBJS): mld_inner_mod.o
+
+
 
 $(MODOBJS): $(PSBINCDIR)/psb_sparse_mod$(.mod)
  
@@ -103,3 +109,4 @@ veryclean: clean
 
 clean:
 	/bin/rm -f $(OBJS) $(LOCAL_MODS)
+
