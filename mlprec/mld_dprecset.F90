@@ -521,11 +521,6 @@ subroutine mld_dprecsetsm(p,val,info,ilev)
 
   use psb_sparse_mod
   use mld_prec_mod, mld_protect_name => mld_dprecsetsm
-  use mld_d_jac_smoother
-  use mld_d_as_smoother
-  use mld_d_diag_solver
-  use mld_d_ilu_solver
-
 
   implicit none
 
@@ -601,9 +596,6 @@ subroutine mld_dprecsetsv(p,val,info,ilev)
 
   use psb_sparse_mod
   use mld_prec_mod, mld_protect_name => mld_dprecsetsv
-  use mld_d_diag_solver
-  use mld_d_ilu_solver
-
 
   implicit none
 
