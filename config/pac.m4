@@ -810,7 +810,7 @@ if test "x$pac_slu_header_ok" == "xyes" ; then
  AC_MSG_CHECKING([for superlu_malloc in $SLU_LIBS])
  AC_TRY_LINK_FUNC(superlu_malloc, 
 		  [mld2p4_cv_have_superlu=yes;pac_slu_lib_ok=yes;],
-		  [mld2p4_cv_have_superlu=no;pac_slu_lib_ok=no; SLU_LIBS=""; SLU_INCLUDES=""])
+		  [mld2p4_cv_have_superlu=no;pac_slu_lib_ok=no; SLU_LIBS=""; ])
  if test "x$pac_slu_lib_ok" == "xno" ; then 
     dnl Maybe lib?
     SLU_LIBS="$mld2p4_cv_superlu -L$mld2p4_cv_superludir/lib";
@@ -870,7 +870,7 @@ dnl Maybe Include or include subdirs?
 
  AC_CHECK_HEADER([superlu_ddefs.h],
 		 [pac_sludist_header_ok=yes],
-		 [pac_sludist_header_ok=no; SLU_INCLUDES=""])
+		 [pac_sludist_header_ok=no; SLUDIST_INCLUDES=""])
 fi
 
 if test "x$pac_sludist_header_ok" == "xyes" ; then 
@@ -880,21 +880,22 @@ if test "x$pac_sludist_header_ok" == "xyes" ; then
       AC_TRY_LINK_FUNC(superlu_malloc_dist, 
        [mld2p4_cv_have_superludist=yes;pac_sludist_lib_ok=yes;],
        [mld2p4_cv_have_superludist=no;pac_sludist_lib_ok=no; 
-          SLUDIST_LIBS=""; SLUDIST_INCLUDES=""])
+          SLUDIST_LIBS=""; ])
   if test "x$pac_sludist_lib_ok" == "xno" ; then 
      dnl Maybe lib?
      SLUDIST_LIBS="$mld2p4_cv_superludist -L$mld2p4_cv_superludistdir/lib";
      LIBS="$SLUDIST_LIBS -lm $SAVE_LIBS";
      AC_TRY_LINK_FUNC(superlu_malloc_dist, 
 		     [mld2p4_cv_have_superludist=yes;pac_sludist_lib_ok=yes;],
-		     [mld2p4_cv_have_superludist=no;pac_sludist_lib_ok=no; SLUDIST_LIBS=""; SLUDIST_INCLUDES=""])
+		     [mld2p4_cv_have_superludist=no;pac_sludist_lib_ok=no; 
+		      SLUDIST_LIBS="";SLUDIST_INCLUDES=""])
  fi
 
  AC_MSG_RESULT($pac_sludist_lib_ok)
 fi
-LIBS="$save_LIBS";
-CPPFLAGS="$save_CPPFLAGS";
-CC="$save_CC";
+ LIBS="$save_LIBS";
+ CPPFLAGS="$save_CPPFLAGS";
+ CC="$save_CC";
 ])dnl 
 
 dnl @synopsis PAC_ARG_SERIAL_MPI

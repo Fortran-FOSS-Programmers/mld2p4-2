@@ -5064,7 +5064,7 @@ _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   mld2p4_cv_have_superlu=yes;pac_slu_lib_ok=yes;
 else
-  mld2p4_cv_have_superlu=no;pac_slu_lib_ok=no; SLU_LIBS=""; SLU_INCLUDES=""
+  mld2p4_cv_have_superlu=no;pac_slu_lib_ok=no; SLU_LIBS="";
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -5162,7 +5162,7 @@ if test "x$pac_sludist_header_ok" == "xno" ; then
 if test "x$ac_cv_header_superlu_ddefs_h" = x""yes; then :
   pac_sludist_header_ok=yes
 else
-  pac_sludist_header_ok=no; SLU_INCLUDES=""
+  pac_sludist_header_ok=no; SLUDIST_INCLUDES=""
 fi
 
 
@@ -5195,7 +5195,7 @@ if ac_fn_c_try_link "$LINENO"; then :
   mld2p4_cv_have_superludist=yes;pac_sludist_lib_ok=yes;
 else
   mld2p4_cv_have_superludist=no;pac_sludist_lib_ok=no;
-          SLUDIST_LIBS=""; SLUDIST_INCLUDES=""
+          SLUDIST_LIBS="";
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -5223,7 +5223,8 @@ _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   mld2p4_cv_have_superludist=yes;pac_sludist_lib_ok=yes;
 else
-  mld2p4_cv_have_superludist=no;pac_sludist_lib_ok=no; SLUDIST_LIBS=""; SLUDIST_INCLUDES=""
+  mld2p4_cv_have_superludist=no;pac_sludist_lib_ok=no;
+		      SLUDIST_LIBS="";SLUDIST_INCLUDES=""
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -5232,9 +5233,9 @@ rm -f core conftest.err conftest.$ac_objext \
  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pac_sludist_lib_ok" >&5
 $as_echo "$pac_sludist_lib_ok" >&6; }
 fi
-LIBS="$save_LIBS";
-CPPFLAGS="$save_CPPFLAGS";
-CC="$save_CC";
+ LIBS="$save_LIBS";
+ CPPFLAGS="$save_CPPFLAGS";
+ CC="$save_CC";
 
 if test "x$mld2p4_cv_have_superludist" == "xyes" ; then
    SLUDIST_FLAGS="-DHave_SLUDist_ $SLUDIST_INCLUDES"
