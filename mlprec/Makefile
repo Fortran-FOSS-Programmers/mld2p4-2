@@ -15,7 +15,7 @@ MODOBJS=mld_base_prec_type.o \
 	mld_s_ilu_solver.o mld_s_diag_solver.o mld_s_jac_smoother.o mld_s_as_smoother.o \
 	mld_c_ilu_solver.o mld_c_diag_solver.o mld_c_jac_smoother.o mld_c_as_smoother.o	\
 	mld_z_ilu_solver.o mld_z_diag_solver.o mld_z_jac_smoother.o mld_z_as_smoother.o \
-	mld_d_umf_solver.o mld_z_umf_solver.o \
+	mld_d_umf_solver.o mld_z_umf_solver.o mld_d_slu_solver.o \
 	mld_d_id_solver.o
 SMPFOBJS=mld_saggrmat_nosmth_asb.o mld_saggrmat_smth_asb.o 
 DMPFOBJS=mld_daggrmat_nosmth_asb.o mld_daggrmat_smth_asb.o mld_daggrmat_minnrg_asb.o 
@@ -85,12 +85,12 @@ $(CINNEROBJS): mld_c_inner_mod.o
 $(ZINNEROBJS): mld_z_inner_mod.o
 
 mld_move_alloc_mod.o: mld_prec_type.o
-mld_d_umf_solver.o mld_d_diag_solver.o mld_d_ilu_solver.o: mld_d_prec_type.o 
+mld_d_slu_solver.o mld_d_umf_solver.o mld_d_diag_solver.o mld_d_ilu_solver.o: mld_d_prec_type.o 
 mld_d_as_smoother.o mld_d_jac_smoother.o: mld_d_prec_type.o 
 mld_d_jac_smoother.o: mld_d_diag_solver.o
 mld_dprecinit.o mld_dprecset.o: mld_d_diag_solver.o mld_d_ilu_solver.o \
 		mld_d_umf_solver.o mld_d_as_smoother.o mld_d_jac_smoother.o \
-	        mld_d_id_solver.o
+	        mld_d_id_solver.o mld_d_slu_solver.o
 mld_z_umf_solver.o mld_z_diag_solver.o mld_z_ilu_solver.o: mld_z_prec_type.o 
 mld_z_as_smoother.o mld_z_jac_smoother.o: mld_z_prec_type.o 
 mld_z_jac_smoother.o: mld_z_diag_solver.o

@@ -88,6 +88,9 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
 #ifdef HAVE_UMF_
   use mld_d_umf_solver
 #endif
+#ifdef HAVE_SLU_
+  use mld_d_slu_solver
+#endif
 
   implicit none
 
@@ -129,104 +132,95 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
   !
   if (present(ilev)) then 
 
-!!$    if (ilev_ == 1) then
-!!$      ! 
-!!$      ! Rules for fine level are slightly different.
-!!$      ! 
-!!$      select case(what) 
-!!$      case(mld_smoother_type_)
-!!$        p%precv(ilev_)%iprcparm(what)  = val
-!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
-!!$      case(mld_smoother_sweeps_)
-!!$        p%precv(ilev_)%iprcparm(what)  = val
-!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)   = val
-!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_)  = val
-!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
-!!$      case(mld_sub_solve_,mld_sub_restr_,mld_sub_prol_,&
-!!$           & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_)
-!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
-!!$      case(mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
-!!$           & mld_smoother_pos_,mld_aggr_omega_alg_,mld_aggr_eig_,&
-!!$           & mld_smoother_sweeps_pre_,mld_smoother_sweeps_post_)
-!!$        p%precv(ilev_)%iprcparm(what)  = val
-!!$      case default
-!!$        write(0,*) name,': Error: invalid WHAT'
-!!$        info = -2
-!!$      end select
-!!$
-!!$    else if (ilev_ > 1) then 
-!!$      select case(what) 
-!!$      case(mld_smoother_type_)
-!!$        p%precv(ilev_)%iprcparm(what)  = val
-!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
-!!$      case(mld_smoother_sweeps_)
-!!$        p%precv(ilev_)%iprcparm(what)  = val
-!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)  = val
-!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_) = val
-!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
-!!$      case(mld_sub_solve_,mld_sub_restr_,mld_sub_prol_,&
-!!$           & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_)
-!!$        p%precv(ilev_)%prec%iprcparm(what)  = val
-!!$      case(mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
-!!$           & mld_smoother_pos_,mld_aggr_omega_alg_,mld_aggr_eig_,&
-!!$           & mld_smoother_sweeps_pre_,mld_smoother_sweeps_post_)
-!!$        p%precv(ilev_)%iprcparm(what)  = val
-!!$      case(mld_coarse_mat_)
-!!$        if (ilev_ /= nlev_ .and. val /= mld_distr_mat_) then 
-!!$          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
-!!$          info = -2
-!!$          return
-!!$        end if
-!!$        p%precv(ilev_)%iprcparm(mld_coarse_mat_)  = val
-!!$      case(mld_coarse_subsolve_)
-!!$        if (ilev_ /= nlev_) then 
-!!$          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
-!!$          info = -2
-!!$          return
-!!$        end if
-!!$        p%precv(ilev_)%iprcparm(mld_sub_solve_)  = val
-!!$      case(mld_coarse_solve_)
-!!$        if (ilev_ /= nlev_) then 
-!!$          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
-!!$          info = -2
-!!$          return
-!!$        end if
-!!$
-!!$        if (nlev_ > 1) then 
-!!$          p%precv(nlev_)%iprcparm(mld_coarse_solve_)  = val
-!!$          p%precv(nlev_)%prec%iprcparm(mld_smoother_type_) = mld_bjac_
-!!$          p%precv(nlev_)%iprcparm(mld_coarse_mat_)    = mld_distr_mat_
-!!$          select case (val) 
-!!$          case(mld_umf_, mld_slu_)
-!!$            p%precv(nlev_)%iprcparm(mld_coarse_mat_)  = mld_repl_mat_
-!!$            p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
-!!$          case(mld_sludist_)
-!!$            p%precv(nlev_)%prec%iprcparm(mld_sub_solve_)   = val
-!!$          end select
-!!$        endif
-!!$      case(mld_coarse_sweeps_)
-!!$        if (ilev_ /= nlev_) then 
-!!$          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
-!!$          info = -2
-!!$          return
-!!$        end if
-!!$        p%precv(ilev_)%prec%iprcparm(mld_smoother_sweeps_)  = val
-!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_)       = val
-!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_pre_)   = val
-!!$        p%precv(ilev_)%iprcparm(mld_smoother_sweeps_post_)  = val
-!!$      case(mld_coarse_fillin_)
-!!$        if (ilev_ /= nlev_) then 
-!!$          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
-!!$          info = -2
-!!$          return
-!!$        end if
-!!$        p%precv(ilev_)%prec%iprcparm(mld_sub_fillin_)  = val
-!!$      case default
-!!$        write(0,*) name,': Error: invalid WHAT'
-!!$        info = -2
-!!$      end select
-!!$
-!!$    endif
+    if (ilev_ == 1) then
+      ! 
+      ! Rules for fine level are slightly different.
+      ! 
+      select case(what) 
+      case(mld_smoother_type_)
+        call onelev_set_smoother(p%precv(ilev_),val,info)
+      case(mld_sub_solve_)
+        call onelev_set_solver(p%precv(ilev_),val,info)
+      case(mld_smoother_sweeps_,mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
+           & mld_smoother_pos_,mld_aggr_omega_alg_,mld_aggr_eig_,&
+           & mld_smoother_sweeps_pre_,mld_smoother_sweeps_post_,&
+           & mld_sub_restr_,mld_sub_prol_, &
+           & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_)
+        call p%precv(ilev_)%set(what,val,info)
+
+      case default
+        write(0,*) name,': Error: invalid WHAT'
+        info = -2
+      end select
+
+    else if (ilev_ > 1) then 
+
+      select case(what) 
+      case(mld_smoother_type_)
+        call onelev_set_smoother(p%precv(ilev_),val,info)
+      case(mld_sub_solve_)
+        call onelev_set_solver(p%precv(ilev_),val,info)
+      case(mld_smoother_sweeps_,mld_ml_type_,mld_aggr_alg_,mld_aggr_kind_,&
+           & mld_smoother_pos_,mld_aggr_omega_alg_,mld_aggr_eig_,&
+           & mld_smoother_sweeps_pre_,mld_smoother_sweeps_post_,&
+           & mld_sub_restr_,mld_sub_prol_, &
+           & mld_sub_ren_,mld_sub_ovr_,mld_sub_fillin_,&
+           & mld_coarse_mat_)
+        call p%precv(ilev_)%set(what,val,info)
+
+      case(mld_coarse_subsolve_)
+        if (ilev_ /= nlev_) then 
+          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
+          info = -2
+          return
+        end if
+        call onelev_set_solver(p%precv(ilev_),val,info)
+      case(mld_coarse_solve_)
+        if (ilev_ /= nlev_) then 
+          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
+          info = -2
+          return
+        end if
+
+        if (nlev_ > 1) then 
+          call p%precv(nlev_)%set(mld_coarse_solve_,val,info)
+          select case (val) 
+          case(mld_umf_, mld_slu_,mld_ilu_n_, mld_ilu_t_,mld_milu_n_)
+            call onelev_set_smoother(p%precv(nlev_),mld_bjac_,info)
+            call onelev_set_solver(p%precv(nlev_),val,info)
+            call p%precv(nlev_)%set(mld_coarse_mat_,mld_repl_mat_,info)
+          case(mld_sludist_)
+            call onelev_set_smoother(p%precv(nlev_),mld_bjac_,info)
+            call onelev_set_solver(p%precv(nlev_),val,info)
+            call p%precv(nlev_)%set(mld_coarse_mat_,mld_distr_mat_,info)
+          case(mld_jac_)
+            call onelev_set_smoother(p%precv(nlev_),mld_bjac_,info)
+            call onelev_set_solver(p%precv(nlev_),mld_diag_scale_,info)
+            call p%precv(nlev_)%set(mld_coarse_mat_,mld_distr_mat_,info)
+          end select
+
+        endif
+      case(mld_coarse_sweeps_)
+        if (ilev_ /= nlev_) then 
+          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
+          info = -2
+          return
+        end if
+        call p%precv(nlev_)%set(mld_smoother_sweeps_,val,info)
+
+      case(mld_coarse_fillin_)
+        if (ilev_ /= nlev_) then 
+          write(0,*) name,': Error: Inconsistent specification of WHAT vs. ILEV'
+          info = -2
+          return
+        end if
+        call p%precv(nlev_)%set(mld_sub_fillin_,val,info)
+      case default
+        write(0,*) name,': Error: invalid WHAT'
+        info = -2
+      end select
+
+    endif
 
   else if (.not.present(ilev)) then 
     !
@@ -238,12 +232,13 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
       do ilev_=1,max(1,nlev_-1)
         if (.not.allocated(p%precv(ilev_)%sm)) then 
           write(0,*) name,&
-               &': Error: uninitialized preconditioner component, should call MLD_PRECINIT' 
+               & ': Error: uninitialized preconditioner component,',&
+               & ' should call MLD_PRECINIT' 
           info = -1 
           return 
         endif
         call onelev_set_solver(p%precv(ilev_),val,info)
-       
+
       end do
 
     case(mld_sub_restr_,mld_sub_prol_,&
@@ -251,7 +246,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
       do ilev_=1,max(1,nlev_-1)
         call p%precv(ilev_)%set(what,val,info)
       end do
-      
+
     case(mld_smoother_sweeps_)
       do ilev_=1,max(1,nlev_-1)
         call p%precv(ilev_)%set(what,val,info)
@@ -274,13 +269,13 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
       if (nlev_ > 1) then 
         call p%precv(nlev_)%set(mld_coarse_mat_,val,info)
       end if
-                
+
     case(mld_coarse_solve_)
       if (nlev_ > 1) then 
-        
+
         call p%precv(nlev_)%set(mld_coarse_solve_,val,info)
         select case (val) 
-        case(mld_umf_, mld_slu_)
+        case(mld_umf_, mld_slu_,mld_ilu_n_, mld_ilu_t_,mld_milu_n_)
           call onelev_set_smoother(p%precv(nlev_),mld_bjac_,info)
           call onelev_set_solver(p%precv(nlev_),val,info)
           call p%precv(nlev_)%set(mld_coarse_mat_,mld_repl_mat_,info)
@@ -289,7 +284,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
           call onelev_set_solver(p%precv(nlev_),val,info)
           call p%precv(nlev_)%set(mld_coarse_mat_,mld_distr_mat_,info)
         case(mld_jac_)
-          call onelev_set_smoother(p%precv(nlev_),mld_jac_,info)
+          call onelev_set_smoother(p%precv(nlev_),mld_bjac_,info)
           call onelev_set_solver(p%precv(nlev_),mld_diag_scale_,info)
           call p%precv(nlev_)%set(mld_coarse_mat_,mld_distr_mat_,info)
         end select
@@ -298,7 +293,7 @@ subroutine mld_dprecseti(p,what,val,info,ilev)
 
     case(mld_coarse_subsolve_)
       if (nlev_ > 1) then 
-        call onelev_set_solver(p%precv(ilev_),val,info)
+        call onelev_set_solver(p%precv(nlev_),val,info)
       endif
 
     case(mld_coarse_sweeps_)
@@ -493,11 +488,28 @@ contains
         allocate(mld_d_umf_solver_type :: level%sm%sv, stat=info)
       endif
 #endif
+#ifdef HAVE_SLU_
+    case (mld_slu_) 
+      if (allocated(level%sm%sv)) then 
+        select type (sv => level%sm%sv)
+          class is (mld_d_slu_solver_type) 
+            ! do nothing
+          class default
+          call level%sm%sv%free(info)
+          if (info == 0) deallocate(level%sm%sv)
+          if (info == 0) allocate(mld_d_slu_solver_type ::&
+               & level%sm%sv, stat=info)
+        end select
+      else 
+        allocate(mld_d_slu_solver_type :: level%sm%sv, stat=info)
+      endif
+#endif
     case default
       !
       ! Do nothing and hope for the best :) 
       !
     end select
+
     call level%set(what,val,info)
 
   end subroutine onelev_set_solver

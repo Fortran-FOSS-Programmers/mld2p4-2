@@ -46,7 +46,7 @@
 module mld_prec_mod
 
   use mld_prec_type
-
+  
   interface mld_precinit
     subroutine mld_sprecinit(p,ptype,info,nlev)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_

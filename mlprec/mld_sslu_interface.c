@@ -241,7 +241,7 @@ mld_sslu_fact_(int *n, int *nnz,
 	     mem_usage.expansions);
 #endif
     } else {
-      printf("dgstrf() error returns INFO= %d\n", *info);
+      printf("sgstrf() error returns INFO= %d\n", *info);
       if ( *info <= *n ) { /* factorization completes */
 	sQuerySpace(L, U, &mem_usage);
 	printf("L\\U MB %.3f\ttotal MB needed %.3f\texpansions %d\n",
