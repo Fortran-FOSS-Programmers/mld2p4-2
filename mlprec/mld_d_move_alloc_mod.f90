@@ -1,4 +1,4 @@
-!!$ 
+!!$
 !!$ 
 !!$                           MLD2P4  version 2.0
 !!$  MultiLevel Domain Decomposition Parallel Preconditioners Package
@@ -36,17 +36,68 @@
 !!$  POSSIBILITY OF SUCH DAMAGE.
 !!$ 
 !!$
-! File: mld_inner_mod.f90
+! File: mld_move_alloc_mod.f90
 !
-! Module: mld_inner_mod
+! Module: mld_move_alloc_mod
 !
-!  This module defines the interfaces to the real/complex, single/double
-!  precision versions of the MLD2P4 routines, except those of the user level,
-!  whose interfaces are defined in mld_prec_mod.f90.
+!  This module defines move_alloc-like routines, and related interfaces,
+!  for the preconditioner data structures. .   
 !
-module mld_inner_mod
-  use mld_s_inner_mod
-  use mld_d_inner_mod
-  use mld_c_inner_mod
-  use mld_z_inner_mod
-end module mld_inner_mod
+
+module mld_d_move_alloc_mod
+
+  use mld_d_prec_type
+
+  interface mld_move_alloc
+    module procedure  mld_donelev_prec_move_alloc,&
+         & mld_dprec_move_alloc
+  end interface
+
+contains
+
+
+  subroutine mld_donelev_prec_move_alloc(a, b,info)
+    use psb_sparse_mod
+    implicit none
+    type(mld_donelev_type), intent(inout) :: a, b
+    integer, intent(out) :: info 
+    
+    call mld_precfree(b,info)
+    call move_alloc(a%sm,b%sm)
+    if (info == psb_success_) call psb_move_alloc(a%ac,b%ac,info) 
+    if (info == psb_success_) call psb_move_alloc(a%desc_ac,b%desc_ac,info) 
+    if (info == psb_success_) call psb_move_alloc(a%map,b%map,info) 
+    b%base_a    => a%base_a
+    b%base_desc => a%base_desc
+    
+  end subroutine mld_donelev_prec_move_alloc
+
+  subroutine mld_dprec_move_alloc(a, b,info)
+    use psb_sparse_mod
+    implicit none
+    type(mld_dprec_type), intent(inout) :: a
+    type(mld_dprec_type), intent(inout), target :: b
+    integer, intent(out) :: info 
+    integer :: i,isz
+    
+    if (allocated(b%precv)) then 
+      ! This might not be required if FINAL procedures are available.
+      call mld_precfree(b,info)
+      if (info /= psb_success_) then 
+        !       ?????
+    !!$        return
+      endif
+    end if
+
+    call move_alloc(a%precv,b%precv)
+    ! Fix the pointers except on level 1.
+    do i=2, isz
+      b%precv(i)%base_a    => b%precv(i)%ac
+      b%precv(i)%base_desc => b%precv(i)%desc_ac
+      b%precv(i)%map%p_desc_X => b%precv(i-1)%base_desc
+      b%precv(i)%map%p_desc_Y => b%precv(i)%base_desc
+    end do
+  end subroutine mld_dprec_move_alloc
+
+
+end module mld_d_move_alloc_mod

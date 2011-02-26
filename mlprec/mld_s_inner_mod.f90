@@ -46,12 +46,12 @@
 !
 module mld_s_inner_mod
   use mld_s_prec_type
-  use mld_move_alloc_mod
+  use mld_s_move_alloc_mod
 
   interface mld_baseprec_aply
     subroutine mld_sbaseprec_aply(alpha,prec,x,beta,y,desc_data,trans,work,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       type(psb_desc_type),intent(in)      :: desc_data
       type(mld_sbaseprec_type), intent(in) :: prec
       real(psb_spk_),intent(in)         :: x(:)
@@ -66,7 +66,7 @@ module mld_s_inner_mod
   interface mld_mlprec_bld
     subroutine mld_smlprec_bld(a,desc_a,prec,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sprec_type
+      use mld_s_prec_type, only : mld_sprec_type
       implicit none
       type(psb_sspmat_type), intent(in), target   :: a
       type(psb_desc_type), intent(in), target     :: desc_a
@@ -79,7 +79,7 @@ module mld_s_inner_mod
   interface mld_as_aply
     subroutine mld_sas_aply(alpha,prec,x,beta,y,desc_data,trans,work,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       type(psb_desc_type),intent(in)      :: desc_data
       type(mld_sbaseprec_type), intent(in) :: prec
       real(psb_spk_),intent(in)         :: x(:)
@@ -94,7 +94,7 @@ module mld_s_inner_mod
   interface mld_mlprec_aply
     subroutine mld_smlprec_aply(alpha,p,x,beta,y,desc_data,trans,work,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type, mld_sprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type, mld_sprec_type
       type(psb_desc_type),intent(in)      :: desc_data
       type(mld_sprec_type), intent(in)  :: p
       real(psb_spk_),intent(in)         :: alpha,beta
@@ -110,7 +110,7 @@ module mld_s_inner_mod
   interface mld_asmat_bld
     Subroutine mld_sasmat_bld(ptype,novr,a,blk,desc_data,upd,desc_p,info,outfmt)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       integer, intent(in)                 :: ptype,novr
       Type(psb_sspmat_type), Intent(in)   ::  a
       Type(psb_sspmat_type), Intent(out)  ::  blk
@@ -125,7 +125,7 @@ module mld_s_inner_mod
   interface mld_sp_renum
     subroutine mld_ssp_renum(a,blck,p,atmp,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       type(psb_sspmat_type), intent(in)      :: a,blck
       type(psb_sspmat_type), intent(out)     :: atmp
       type(mld_sbaseprec_type), intent(inout) :: p
@@ -136,7 +136,7 @@ module mld_s_inner_mod
   interface mld_coarse_bld
     subroutine mld_scoarse_bld(a,desc_a,p,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type, mld_sonelev_type
+      use mld_s_prec_type, only : mld_sbaseprec_type, mld_sonelev_type
       type(psb_sspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       type(mld_sonelev_type), intent(inout), target :: p
@@ -147,7 +147,7 @@ module mld_s_inner_mod
   interface mld_aggrmap_bld
     subroutine mld_saggrmap_bld(aggr_type,theta,a,desc_a,ilaggr,nlaggr,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       integer, intent(in)               :: aggr_type
       real(psb_spk_), intent(in)        :: theta
       type(psb_sspmat_type), intent(in) :: a
@@ -160,7 +160,7 @@ module mld_s_inner_mod
   interface mld_aggrmat_asb
     subroutine mld_saggrmat_asb(a,desc_a,ilaggr,nlaggr,p,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type, mld_sonelev_type
+      use mld_s_prec_type, only : mld_sbaseprec_type, mld_sonelev_type
       type(psb_sspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       integer, intent(inout)                         :: ilaggr(:), nlaggr(:)
@@ -172,7 +172,7 @@ module mld_s_inner_mod
   interface mld_aggrmat_nosmth_asb
     subroutine mld_saggrmat_nosmth_asb(a,desc_a,ilaggr,nlaggr,p,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type, mld_sonelev_type
+      use mld_s_prec_type, only : mld_sbaseprec_type, mld_sonelev_type
       type(psb_sspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       integer, intent(inout)                         :: ilaggr(:), nlaggr(:)
@@ -184,7 +184,7 @@ module mld_s_inner_mod
   interface mld_aggrmat_smth_asb
     subroutine mld_saggrmat_smth_asb(a,desc_a,ilaggr,nlaggr,p,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type, mld_sonelev_type
+      use mld_s_prec_type, only : mld_sbaseprec_type, mld_sonelev_type
       type(psb_sspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       integer, intent(inout)                         :: ilaggr(:), nlaggr(:)
@@ -196,7 +196,7 @@ module mld_s_inner_mod
   interface mld_baseprec_bld
     subroutine mld_sbaseprec_bld(a,desc_a,p,info,upd)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       type(psb_sspmat_type), target              :: a
       type(psb_desc_type), intent(in), target    :: desc_a
       type(mld_sbaseprec_type),intent(inout)      :: p
@@ -208,7 +208,7 @@ module mld_s_inner_mod
   interface mld_as_bld
     subroutine mld_sas_bld(a,desc_a,p,upd,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       type(psb_sspmat_type),intent(in), target :: a
       type(psb_desc_type), intent(in), target  :: desc_a
       type(mld_sbaseprec_type),intent(inout)   :: p
@@ -220,7 +220,7 @@ module mld_s_inner_mod
   interface mld_diag_bld
     subroutine mld_sdiag_bld(a,desc_data,p,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       integer, intent(out) :: info
       type(psb_sspmat_type), intent(in), target :: a
       type(psb_desc_type),intent(in)            :: desc_data
@@ -231,7 +231,7 @@ module mld_s_inner_mod
   interface mld_fact_bld
     subroutine mld_sfact_bld(a,p,upd,info,blck)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       type(psb_sspmat_type), intent(in), target :: a
       type(mld_sbaseprec_type), intent(inout)    :: p
       integer, intent(out)                      :: info
@@ -243,7 +243,7 @@ module mld_s_inner_mod
   interface mld_ilu_bld
     subroutine mld_silu_bld(a,p,upd,info,blck)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       integer, intent(out) :: info
       type(psb_sspmat_type), intent(in), target :: a
       type(mld_sbaseprec_type), intent(inout)    :: p
@@ -255,7 +255,7 @@ module mld_s_inner_mod
   interface mld_sludist_bld
     subroutine mld_ssludist_bld(a,desc_a,p,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       type(psb_sspmat_type), intent(inout)   :: a
       type(psb_desc_type), intent(in)         :: desc_a
       type(mld_sbaseprec_type), intent(inout) :: p
@@ -266,7 +266,7 @@ module mld_s_inner_mod
   interface mld_slu_bld
     subroutine mld_sslu_bld(a,desc_a,p,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       type(psb_sspmat_type), intent(inout)      :: a
       type(psb_desc_type), intent(in)        :: desc_a
       type(mld_sbaseprec_type), intent(inout) :: p
@@ -277,7 +277,7 @@ module mld_s_inner_mod
   interface mld_umf_bld
     subroutine mld_sumf_bld(a,desc_a,p,info)
       use psb_sparse_mod, only : psb_sspmat_type, psb_desc_type, psb_spk_
-      use mld_prec_type, only : mld_sbaseprec_type
+      use mld_s_prec_type, only : mld_sbaseprec_type
       type(psb_sspmat_type), intent(inout)    :: a
       type(psb_desc_type), intent(in)         :: desc_a
       type(mld_sbaseprec_type), intent(inout) :: p

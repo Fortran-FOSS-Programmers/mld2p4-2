@@ -68,7 +68,7 @@ subroutine mld_smlprec_bld(a,desc_a,p,info)
 
   use psb_sparse_mod
   use mld_s_inner_mod, mld_protect_name => mld_smlprec_bld
-  use mld_prec_mod
+  use mld_s_prec_mod
   use mld_s_jac_smoother
   use mld_s_as_smoother
   use mld_s_diag_solver

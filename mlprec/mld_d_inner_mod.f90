@@ -46,13 +46,13 @@
 !
 module mld_d_inner_mod
   use mld_d_prec_type
-  use mld_move_alloc_mod
+  use mld_d_move_alloc_mod
 
 
   interface mld_mlprec_bld
     subroutine mld_dmlprec_bld(a,desc_a,prec,info)
       use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
-      use mld_prec_type, only : mld_dprec_type
+      use mld_d_prec_type, only : mld_dprec_type
       implicit none
       type(psb_dspmat_type), intent(in), target   :: a
       type(psb_desc_type), intent(in), target     :: desc_a
@@ -66,7 +66,7 @@ module mld_d_inner_mod
   interface mld_mlprec_aply
     subroutine mld_dmlprec_aply(alpha,p,x,beta,y,desc_data,trans,work,info)
       use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
-      use mld_prec_type, only : mld_dprec_type
+      use mld_d_prec_type, only : mld_dprec_type
       type(psb_desc_type),intent(in)    :: desc_data
       type(mld_dprec_type), intent(in)  :: p
       real(psb_dpk_),intent(in)         :: alpha,beta
@@ -82,7 +82,7 @@ module mld_d_inner_mod
   interface mld_coarse_bld
     subroutine mld_dcoarse_bld(a,desc_a,p,info)
       use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
-      use mld_prec_type, only : mld_donelev_type
+      use mld_d_prec_type, only : mld_donelev_type
       type(psb_dspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       type(mld_donelev_type), intent(inout), target :: p
@@ -105,7 +105,7 @@ module mld_d_inner_mod
   interface mld_aggrmat_asb
     subroutine mld_daggrmat_asb(a,desc_a,ilaggr,nlaggr,p,info)
       use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
-      use mld_prec_type, only : mld_donelev_type
+      use mld_d_prec_type, only : mld_donelev_type
       type(psb_dspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       integer, intent(inout)                         :: ilaggr(:), nlaggr(:)
@@ -117,7 +117,7 @@ module mld_d_inner_mod
   interface mld_aggrmat_nosmth_asb
     subroutine mld_daggrmat_nosmth_asb(a,desc_a,ilaggr,nlaggr,p,info)
       use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
-      use mld_prec_type, only :  mld_donelev_type
+      use mld_d_prec_type, only :  mld_donelev_type
       type(psb_dspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       integer, intent(inout)                         :: ilaggr(:), nlaggr(:)
@@ -129,7 +129,7 @@ module mld_d_inner_mod
   interface mld_aggrmat_smth_asb
     subroutine mld_daggrmat_smth_asb(a,desc_a,ilaggr,nlaggr,p,info)
       use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
-      use mld_prec_type, only :  mld_donelev_type
+      use mld_d_prec_type, only :  mld_donelev_type
       type(psb_dspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       integer, intent(inout)                         :: ilaggr(:), nlaggr(:)
@@ -141,7 +141,7 @@ module mld_d_inner_mod
   interface mld_aggrmat_minnrg_asb
     subroutine mld_daggrmat_minnrg_asb(a,desc_a,ilaggr,nlaggr,p,info)
       use psb_sparse_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
-      use mld_prec_type, only :  mld_donelev_type
+      use mld_d_prec_type, only :  mld_donelev_type
       type(psb_dspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       integer, intent(inout)                         :: ilaggr(:), nlaggr(:)

@@ -79,7 +79,7 @@
 subroutine mld_cprecseti(p,what,val,info,ilev)
 
   use psb_sparse_mod
-  use mld_prec_mod, mld_protect_name => mld_cprecseti
+  use mld_c_prec_mod, mld_protect_name => mld_cprecseti
 
   implicit none
 
@@ -342,7 +342,7 @@ end subroutine mld_cprecseti
 subroutine mld_cprecsetc(p,what,string,info,ilev)
 
   use psb_sparse_mod
-  use mld_prec_mod, mld_protect_name => mld_cprecsetc
+  use mld_c_prec_mod, mld_protect_name => mld_cprecsetc
 
   implicit none
 
@@ -433,7 +433,7 @@ end subroutine mld_cprecsetc
 subroutine mld_cprecsetr(p,what,val,info,ilev)
 
   use psb_sparse_mod
-  use mld_prec_mod, mld_protect_name => mld_cprecsetr
+  use mld_c_prec_mod, mld_protect_name => mld_cprecsetr
 
   implicit none
 

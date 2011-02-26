@@ -91,7 +91,7 @@
 subroutine mld_cprecinit(p,ptype,info,nlev)
 
   use psb_sparse_mod
-  use mld_prec_mod, mld_protect_name => mld_cprecinit
+  use mld_c_prec_mod, mld_protect_name => mld_cprecinit
   use mld_c_jac_smoother
   use mld_c_as_smoother
   use mld_c_diag_solver

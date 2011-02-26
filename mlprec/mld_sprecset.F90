@@ -79,7 +79,7 @@
 subroutine mld_sprecseti(p,what,val,info,ilev)
 
   use psb_sparse_mod
-  use mld_prec_mod, mld_protect_name => mld_sprecseti
+  use mld_s_prec_mod, mld_protect_name => mld_sprecseti
   use mld_s_jac_smoother
   use mld_s_as_smoother
   use mld_s_diag_solver
@@ -359,7 +359,7 @@ end subroutine mld_sprecseti
 subroutine mld_sprecsetsm(p,what,val,info,ilev)
 
   use psb_sparse_mod
-  use mld_prec_mod, mld_protect_name => mld_sprecsetsm
+  use mld_s_prec_mod, mld_protect_name => mld_sprecsetsm
   use mld_s_jac_smoother
   use mld_s_as_smoother
   use mld_s_diag_solver
@@ -649,7 +649,7 @@ end subroutine mld_sprecsetsm
 subroutine mld_sprecsetsv(p,what,val,info,ilev)
 
   use psb_sparse_mod
-  use mld_prec_mod, mld_protect_name => mld_sprecsetsv
+  use mld_s_prec_mod, mld_protect_name => mld_sprecsetsv
   use mld_s_diag_solver
   use mld_s_ilu_solver
 
@@ -977,7 +977,7 @@ end subroutine mld_sprecsetsv
 subroutine mld_sprecsetc(p,what,string,info,ilev)
 
   use psb_sparse_mod
-  use mld_prec_mod, mld_protect_name => mld_sprecsetc
+  use mld_s_prec_mod, mld_protect_name => mld_sprecsetc
 
   implicit none
 
@@ -1068,7 +1068,7 @@ end subroutine mld_sprecsetc
 subroutine mld_sprecsetr(p,what,val,info,ilev)
 
   use psb_sparse_mod
-  use mld_prec_mod, mld_protect_name => mld_sprecsetr
+  use mld_s_prec_mod, mld_protect_name => mld_sprecsetr
 
   implicit none
 

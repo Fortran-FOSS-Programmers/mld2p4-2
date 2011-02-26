@@ -214,6 +214,10 @@ contains
     if (debug_level >= psb_debug_outer_) &
          & write(debug_unit,*) me,' ',trim(name),' start'
 
+    write(0,*) 'SLUDIST INTERFACE IS CURRENTLY BROKEN. TO BE FIXED'
+    info=psb_err_internal_error_
+    call psb_errpush(info,name)
+    goto 9999
 
     n_row  = psb_cd_get_local_rows(desc_a)
     n_col  = psb_cd_get_local_cols(desc_a)
