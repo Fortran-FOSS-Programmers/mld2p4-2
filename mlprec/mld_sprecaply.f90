@@ -140,7 +140,7 @@ subroutine mld_sprecaply(prec,x,y,desc_data,info,trans,work)
     ! Number of levels = 1: apply the base preconditioner
     !
     call prec%precv(1)%sm%apply(sone,x,szero,y,desc_data,trans_,&
-         & prec%precv(1)%iprcparm(mld_smoother_sweeps_), work_,info)
+         & prec%precv(1)%parms%sweeps, work_,info)
   else 
     info = psb_err_from_subroutine_ai_
     call psb_errpush(info,name,a_err='Invalid size of precv',&

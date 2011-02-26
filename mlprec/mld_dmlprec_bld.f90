@@ -68,11 +68,6 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
   use psb_sparse_mod
   use mld_d_inner_mod, mld_protect_name => mld_dmlprec_bld
   use mld_d_prec_mod
-  use mld_d_jac_smoother
-  use mld_d_as_smoother
-  use mld_d_diag_solver
-  use mld_d_ilu_solver
-  use mld_d_umf_solver
 
   Implicit None
 
@@ -164,13 +159,7 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
       ! Check on the iprcparm contents: they should be the same
       ! on all processes.
       !
-!!$      if (me == psb_root_) prm = p%precv(1)%parms
       call psb_bcast(ictxt,p%precv(1)%parms)
-!!$      if (prm /= p%precv(1)%parms) then 
-!!$        write(debug_unit,*) me,name,&
-!!$             &': Inconsistent arguments among processes, forcing a default'
-!!$        p%precv(1)%parms = prm
-!!$      end if
       !
       ! Finest level first; remember to fix base_a and base_desc
       ! 
@@ -188,13 +177,7 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
         ! Check on the iprcparm contents: they should be the same
         ! on all processes.
         !
-!!$        if (me == psb_root_) prm = p%precv(i)%parms
         call psb_bcast(ictxt,p%precv(1)%parms)
-!!$        if (prm /= p%precv(i)%parms) then 
-!!$          write(debug_unit,*) me,name,&
-!!$               &': Inconsistent arguments among processes, forcing a default'
-!!$          p%precv(i)%parms = prm
-!!$        end if
 
         !
         ! Sanity checks on the parameters
@@ -300,14 +283,6 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
       if (debug_level >= psb_debug_outer_) &
            & write(debug_unit,*) me,' ',trim(name),&
            & 'Calling mlprcbld at level  ',i
-!!$      select case(p%precv(i)%prec%iprcparm(mld_sub_solve_))
-!!$      case(mld_ilu_n_,mld_milu_n_)      
-!!$        call mld_check_def(p%precv(i)%prec%iprcparm(mld_sub_fillin_),&
-!!$             & 'Level',0,is_legal_ml_lev)
-!!$      case(mld_ilu_t_)                 
-!!$        call mld_check_def(p%precv(i)%prec%rprcparm(mld_sub_iluthrs_),&
-!!$             & 'Eps',dzero,is_legal_fact_thrs)
-!!$      end select
       call mld_check_def(p%precv(i)%parms%sweeps,&
            & 'Jacobi sweeps',1,is_legal_jac_sweeps)
       call mld_check_def(p%precv(i)%parms%sweeps_pre,&
@@ -332,59 +307,6 @@ subroutine mld_dmlprec_bld(a,desc_a,p,info)
       !
       !  Test version for beginning of OO stuff. 
       ! 
-!!$      if (allocated(p%precv(i)%sm)) then 
-!!$        call p%precv(i)%sm%free(info)
-!!$        if (info == psb_success_) deallocate(p%precv(i)%sm,stat=info)
-!!$        if (info /= psb_success_) then 
-!!$          call psb_errpush(psb_err_alloc_dealloc_,name,&
-!!$               & a_err='One level preconditioner build.')
-!!$          goto 9999
-!!$        endif
-!!$      end if
-!!$      select case (p%precv(i)%prec%iprcparm(mld_smoother_type_)) 
-!!$      case(mld_bjac_, mld_jac_) 
-!!$        allocate(mld_d_jac_smoother_type :: p%precv(i)%sm, stat=info)
-!!$      case(mld_as_)
-!!$        allocate(mld_d_as_smoother_type  :: p%precv(i)%sm, stat=info)
-!!$      case default
-!!$        info = -1 
-!!$      end select
-!!$      if (info /= psb_success_) then 
-!!$        write(0,*) ' Smoother allocation error',info,&
-!!$             & p%precv(i)%prec%iprcparm(mld_smoother_type_)
-!!$        call psb_errpush(psb_err_internal_error_,name,&
-!!$             & a_err='One level preconditioner build.')
-!!$        goto 9999
-!!$      endif
-!!$      call p%precv(i)%sm%set(mld_sub_restr_,p%precv(i)%prec%iprcparm(mld_sub_restr_),info)
-!!$      call p%precv(i)%sm%set(mld_sub_prol_,p%precv(i)%prec%iprcparm(mld_sub_prol_),info)
-!!$      call p%precv(i)%sm%set(mld_sub_ovr_,p%precv(i)%prec%iprcparm(mld_sub_ovr_),info)
-!!$
-!!$      select case (p%precv(i)%prec%iprcparm(mld_sub_solve_)) 
-!!$      case(mld_ilu_n_,mld_milu_n_,mld_ilu_t_) 
-!!$        allocate(mld_d_ilu_solver_type :: p%precv(i)%sm%sv, stat=info)
-!!$        if (info == psb_success_) call  p%precv(i)%sm%sv%set(mld_sub_solve_,&
-!!$             & p%precv(i)%prec%iprcparm(mld_sub_solve_),info)
-!!$        if (info == psb_success_) call  p%precv(i)%sm%sv%set(mld_sub_fillin_,&
-!!$             & p%precv(i)%prec%iprcparm(mld_sub_fillin_),info)
-!!$        if (info == psb_success_) call  p%precv(i)%sm%sv%set(mld_sub_iluthrs_,&
-!!$             & p%precv(i)%prec%rprcparm(mld_sub_iluthrs_),info)
-!!$      case(mld_diag_scale_)
-!!$        allocate(mld_d_diag_solver_type :: p%precv(i)%sm%sv, stat=info)
-!!$      case(mld_umf_)
-!!$        allocate(mld_d_umf_solver_type :: p%precv(i)%sm%sv, stat=info)
-!!$      case default
-!!$        info = -1 
-!!$      end select
-!!$
-!!$      if (info /= psb_success_) then 
-!!$        write(0,*) ' Solver allocation error',info,&
-!!$             & p%precv(i)%prec%iprcparm(mld_sub_solve_)
-!!$        call psb_errpush(psb_err_internal_error_,name,&
-!!$             & a_err='One level preconditioner build.')
-!!$        goto 9999
-!!$      endif
-
       call p%precv(i)%sm%build(p%precv(i)%base_a,p%precv(i)%base_desc,'F',info)
 
       if (info /= psb_success_) then 

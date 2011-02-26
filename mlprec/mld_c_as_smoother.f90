@@ -401,7 +401,7 @@ contains
           ! and Y(j) is the approximate solution at sweep j.
           !
           ww(1:n_row) = tx(1:n_row)
-          call psb_spmm(-cone,sm%nd,tx,cone,ww,sm%desc_data,info,work=aux,trans=trans_)
+          call psb_spmm(-cone,sm%nd,ty,cone,ww,sm%desc_data,info,work=aux,trans=trans_)
 
           if (info /= psb_success_) exit
 

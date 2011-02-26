@@ -115,43 +115,8 @@ typedef struct {
 
 #endif
 
-
-#ifdef  LowerUnderscore
-#define mld_sslu_fact_   mld_sslu_fact_
-#define mld_sslu_solve_  mld_sslu_solve_
-#define mld_sslu_free_   mld_sslu_free_
-#endif
-#ifdef  LowerDoubleUnderscore
-#define mld_sslu_fact_   mld_sslu_fact__
-#define mld_sslu_solve_  mld_sslu_solve__
-#define mld_sslu_free_   mld_sslu_free__
-#endif
-#ifdef  LowerCase
-#define mld_sslu_fact_   mld_sslu_fact
-#define mld_sslu_solve_  mld_sslu_solve
-#define mld_sslu_free_   mld_sslu_free
-#endif
-#ifdef  UpperUnderscore
-#define mld_sslu_fact_   MLD_SSLU_FACT_
-#define mld_sslu_solve_  MLD_SSLU_SOLVE_
-#define mld_sslu_free_   MLD_SSLU_FREE_
-#endif
-#ifdef  UpperDoubleUnderscore
-#define mld_sslu_fact_   MLD_SSLU_FACT__
-#define mld_sslu_solve_  MLD_SSLU_SOLVE__
-#define mld_sslu_free_   MLD_SSLU_FREE__
-#endif
-#ifdef  UpperCase
-#define mld_sslu_fact_   MLD_SSLU_FACT
-#define mld_sslu_solve_  MLD_SSLU_SOLVE
-#define mld_sslu_free_   MLD_SSLU_FREE
-#endif
-
-
-
-
 void
-mld_sslu_fact_(int *n, int *nnz,
+mld_sslu_fact(int *n, int *nnz,
                  float *values, int *rowptr, int *colind,
 #ifdef Have_SLU_		 
 		 fptr *f_factors, /* a handle containing the address
@@ -275,7 +240,7 @@ mld_sslu_fact_(int *n, int *nnz,
 
 
 void
-mld_sslu_solve_(int *itrans, int *n, int *nrhs, 
+mld_sslu_solve(int *itrans, int *n, int *nrhs, 
 		float *b, int *ldb,
 #ifdef Have_SLU_		 
 		fptr *f_factors, /* a handle containing the address
@@ -339,7 +304,7 @@ mld_sslu_solve_(int *itrans, int *n, int *nrhs,
 
 
 void
-mld_sslu_free_(
+mld_sslu_free(
 #ifdef Have_SLU_		 
  fptr *f_factors, /* a handle containing the address
 				     pointing to the factored matrices */

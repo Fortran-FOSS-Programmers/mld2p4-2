@@ -8,7 +8,8 @@ FINCLUDES=$(FMFLAG). $(FMFLAG)$(LIBDIR) $(FMFLAG)$(PSBINCDIR) $(FMFLAG)$(PSBLIBD
 
 
 SMODOBJS=mld_s_prec_type.o mld_s_prec_mod.o mld_s_move_alloc_mod.o \
-	mld_s_inner_mod.o mld_s_ilu_solver.o mld_s_diag_solver.o mld_s_jac_smoother.o mld_s_as_smoother.o 
+	mld_s_inner_mod.o mld_s_ilu_solver.o mld_s_diag_solver.o mld_s_jac_smoother.o mld_s_as_smoother.o \
+	mld_s_id_solver.o mld_s_slu_solver.o
 
 DMODOBJS=mld_d_prec_type.o mld_d_prec_mod.o mld_d_move_alloc_mod.o \
 	mld_d_inner_mod.o mld_d_ilu_solver.o mld_d_diag_solver.o mld_d_jac_smoother.o mld_d_as_smoother.o \
@@ -20,7 +21,7 @@ CMODOBJS=mld_c_prec_type.o mld_c_prec_mod.o mld_c_move_alloc_mod.o \
 ZMODOBJS=mld_z_prec_type.o mld_z_prec_mod.o mld_z_move_alloc_mod.o \
 	mld_z_inner_mod.o mld_z_ilu_solver.o mld_z_diag_solver.o mld_z_jac_smoother.o mld_z_as_smoother.o	
 
-MODOBJS=mld_base_prec_type.o mld_prec_type.o  mld_prec_mod.o mld_move_alloc_mod.o \
+MODOBJS=mld_base_prec_type.o mld_prec_type.o  mld_prec_mod.o \
 	$(SMODOBJS) $(DMODOBJS) $(CMODOBJS) $(ZMODOBJS) 
 
 SMPFOBJS=mld_saggrmat_nosmth_asb.o mld_saggrmat_smth_asb.o 
@@ -31,9 +32,9 @@ MPFOBJS=$(SMPFOBJS) $(DMPFOBJS) $(CMPFOBJS) $(ZMPFOBJS)
 
 MPCOBJS=mld_sslud_interface.o mld_dslud_interface.o mld_cslud_interface.o mld_zslud_interface.o
 
-SINNEROBJS= mld_scoarse_bld.o  mld_smlprec_bld.o mld_sslu_bld.o    mld_sumf_bld.o \
+SINNEROBJS= mld_scoarse_bld.o  mld_smlprec_bld.o     \
 	mld_silu0_fact.o   mld_siluk_fact.o  mld_silut_fact.o  mld_saggrmap_bld.o \
-	mld_smlprec_aply.o mld_sslud_bld.o   mld_saggrmat_asb.o   \
+	mld_smlprec_aply.o mld_saggrmat_asb.o   \
 	$(SMPFOBJS) 
 
 DINNEROBJS= mld_dcoarse_bld.o  mld_dmlprec_bld.o	  \
@@ -81,10 +82,7 @@ lib: $(OBJS)
 
 mld_s_prec_type.o mld_d_prec_type.o mld_c_prec_type.o mld_z_prec_type.o	: mld_base_prec_type.o
 mld_prec_type.o: mld_s_prec_type.o mld_d_prec_type.o mld_c_prec_type.o mld_z_prec_type.o	
-mld_move_alloc_mod.o: mld_prec_type.o  mld_s_move_alloc_mod.o \
-	mld_d_move_alloc_mod.o mld_c_move_alloc_mod.o mld_z_move_alloc_mod.o
-
-mld_prec_mod.o: mld_prec_type.o mld_move_alloc_mod.o mld_s_prec_mod.o mld_d_prec_mod.o mld_c_prec_mod.o mld_z_prec_mod.o
+mld_prec_mod.o: mld_prec_type.o mld_s_prec_mod.o mld_d_prec_mod.o mld_c_prec_mod.o mld_z_prec_mod.o
 
 $(MODOBJS): $(PSBINCDIR)/psb_sparse_mod$(.mod)
 

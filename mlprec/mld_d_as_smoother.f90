@@ -324,10 +324,7 @@ contains
           goto 9999
         end select
 
-!!$        write(0,*) me,' Entry to inner slver in AS ',tx
         call sm%sv%apply(done,tx,dzero,ty,sm%desc_data,trans_,aux,info) 
-
-!!$        write(0,*) me,' out from  inner slver in AS ',ty
 
         if (info /= psb_success_) then
           call psb_errpush(psb_err_internal_error_,name,&
@@ -478,13 +475,12 @@ contains
           ! and Y(j) is the approximate solution at sweep j.
           !
           ww(1:n_row) = tx(1:n_row)
-!!$          write(0,*) me,' Entry to spmm in AS-ND',ty
           call psb_spmm(-done,sm%nd,ty,done,ww,sm%desc_data,info,work=aux,trans=trans_)
 
           if (info /= psb_success_) exit
-!!$          write(0,*) me,' Entry to inner slver in AS-ND',ww
+
           call sm%sv%apply(done,ww,dzero,ty,sm%desc_data,trans_,aux,info) 
-!!$          write(0,*) me,' Exit from inner slver in AS-ND ',ty
+
           if (info /= psb_success_) exit
 
 
@@ -759,9 +755,6 @@ contains
     case default
       if (allocated(sm%sv)) then 
         call sm%sv%set(what,val,info)
-      else
-        write(0,*) trim(name),' Missing component, not setting!'
-        info = 1121
       end if
     end select
 

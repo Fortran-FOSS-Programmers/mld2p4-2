@@ -461,7 +461,6 @@ contains
       !
       ! No preconditioning, should not really get here
       ! 
-!!$      write(0,*) 'MLD_NO_ML_ in inner_ml ',level
       call psb_errpush(psb_err_internal_error_,name,&
            & a_err='mld_no_ml_ in mlprc_aply?')
       goto 9999      
@@ -514,21 +513,19 @@ contains
       !  Pre/post-smoothing versions.
       !  Note that the transpose switches pre <-> post.
       !
-!!$      write(0,*) me,' inner_ml: mult ', level 
       select case(p%precv(level)%parms%smoother_pos)
 
       case(mld_post_smooth_)
 
         select case (trans_) 
         case('N')
-!!$          write(0,*) me,' inner_ml: post',level
+
           if (level > 1) then 
             ! Apply the restriction
             call psb_map_X2Y(done,mlprec_wrk(level-1)%x2l,&
                  & dzero,mlprec_wrk(level)%x2l,&
                  & p%precv(level)%map,info,work=work)
 
-!!$            write(0,*) me,' inner_ml: entry x2l:',mlprec_wrk(level)%x2l
             if (info /= psb_success_) then
               call psb_errpush(psb_err_internal_error_,name,&
                    & a_err='Error during restriction')
@@ -557,7 +554,6 @@ contains
             if (info /= psb_success_) goto 9999
 
             sweeps = p%precv(level)%parms%sweeps_post 
-!!$            write(0,*) me,' inner_ml: apply ',level,' sweeps: ',sweeps
             call p%precv(level)%sm%apply(done,&
                  & mlprec_wrk(level)%x2l,done,mlprec_wrk(level)%y2l,&
                  & p%precv(level)%base_desc, trans,&
@@ -565,15 +561,12 @@ contains
            
           else
             sweeps = p%precv(level)%parms%sweeps 
-!!$            write(0,*) me,' inner_ml: apply ',level,' sweeps: ',sweeps
             call p%precv(level)%sm%apply(done,&
                  & mlprec_wrk(level)%x2l,dzero,mlprec_wrk(level)%y2l,&
                  & p%precv(level)%base_desc, trans,&
                  & sweeps,work,info)
 
           end if
-
-!!$          write(0,*) me,' inner_ml: exit y2l:',mlprec_wrk(level)%y2l
 
         case('T','C')
 

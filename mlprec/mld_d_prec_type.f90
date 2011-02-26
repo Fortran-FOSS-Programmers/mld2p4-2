@@ -187,8 +187,8 @@ module mld_d_prec_type
     procedure, pass(sv) :: setr  => d_base_solver_setr
     generic, public     :: set   => seti, setc, setr
     procedure, pass(sv) :: default => d_base_solver_default
-    procedure, pass(sv) :: descr =>   d_base_solver_descr
-    procedure, pass(sv) :: sizeof =>  d_base_solver_sizeof
+    procedure, pass(sv) :: descr   => d_base_solver_descr
+    procedure, pass(sv) :: sizeof  => d_base_solver_sizeof
   end type mld_d_base_solver_type
 
   type  mld_d_base_smoother_type
@@ -451,11 +451,6 @@ contains
 
           call p%precv(ilev)%parms%descr(iout_,info,coarse=.true.)
           call p%precv(ilev)%descr(info,iout=iout_,coarse=.true.)
-!!$          call mld_ml_new_coarse_descr(iout_,ilev,&
-!!$               & p%precv(ilev)%iprcparm,&
-!!$               & p%precv(ilev)%map%naggr,info,&
-!!$               & dprcparm=p%precv(ilev)%rprcparm)
-!!$          call p%precv(ilev)%sm%descr(info,iout=iout_)
         end if
 
       endif

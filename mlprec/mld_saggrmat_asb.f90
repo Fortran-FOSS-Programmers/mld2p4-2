@@ -126,7 +126,7 @@ subroutine mld_saggrmat_asb(a,desc_a,ilaggr,nlaggr,p,info)
 
   call psb_info(ictxt, me, np)
 
-  select case (p%iprcparm(mld_aggr_kind_))
+  select case (p%parms%aggr_kind)
   case (mld_no_smooth_) 
 
     call mld_aggrmat_nosmth_asb(a,desc_a,ilaggr,nlaggr,p,info)

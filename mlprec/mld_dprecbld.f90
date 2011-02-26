@@ -63,11 +63,6 @@ subroutine mld_dprecbld(a,desc_a,p,info)
   use psb_sparse_mod
   use mld_d_inner_mod
   use mld_d_prec_mod, mld_protect_name => mld_dprecbld
-  use mld_d_jac_smoother
-  use mld_d_as_smoother
-  use mld_d_diag_solver
-  use mld_d_ilu_solver
-  use mld_d_umf_solver
 
   Implicit None
 
@@ -106,7 +101,7 @@ subroutine mld_dprecbld(a,desc_a,p,info)
        & write(debug_unit,*) me,' ',trim(name),&
        & 'Entering '
   !
-  ! For the time being we are commenting out the UPDATE argument;
+  ! For the time being we are commenting out the UPDATE argument
   ! we plan to resurrect it later. 
 !!$  if (present(upd)) then 
 !!$    if (debug_level >= psb_debug_outer_) &
@@ -157,13 +152,7 @@ subroutine mld_dprecbld(a,desc_a,p,info)
     ! Check on the iprcparm contents: they should be the same
     ! on all processes.
     !
-!!$    if (me == psb_root_) prm = p%precv(1)%parms
     call psb_bcast(ictxt,p%precv(1)%parms)
-!!$    if (.not.(prm == p%precv(1)%parms)) then 
-!!$      write(debug_unit,*) me,name,&
-!!$           &': Inconsistent arguments among processes, forcing a default'
-!!$      p%precv(1)%parms = prm
-!!$    end if
 
     p%precv(1)%base_a    => a
     p%precv(1)%base_desc => desc_a

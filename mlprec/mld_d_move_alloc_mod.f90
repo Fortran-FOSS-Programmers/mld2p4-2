@@ -55,7 +55,6 @@ module mld_d_move_alloc_mod
 
 contains
 
-
   subroutine mld_donelev_prec_move_alloc(a, b,info)
     use psb_sparse_mod
     implicit none
