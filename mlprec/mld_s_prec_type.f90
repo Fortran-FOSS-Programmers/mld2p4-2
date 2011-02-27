@@ -231,8 +231,8 @@ module mld_s_prec_type
     integer                             :: ictxt
     type(mld_sonelev_type), allocatable :: precv(:) 
   contains
-    procedure, pass(prec)               :: d_apply2v => mld_s_apply2v
-    procedure, pass(prec)               :: d_apply1v => mld_s_apply1v
+    procedure, pass(prec)               :: s_apply2v => mld_s_apply2v
+    procedure, pass(prec)               :: s_apply1v => mld_s_apply1v
     procedure, pass(prec)               :: dump      => mld_s_dump
   end type mld_sprec_type
 

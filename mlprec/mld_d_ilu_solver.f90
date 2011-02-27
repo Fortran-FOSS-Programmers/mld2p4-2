@@ -406,7 +406,9 @@ contains
 
       case default
         ! If we end up here, something was wrong up in the call chain. 
-        call psb_errpush(psb_err_alloc_dealloc_,name)
+        info = psb_err_input_value_invalid_i_
+        call psb_errpush(psb_err_input_value_invalid_i_,name,&
+             & i_err=(/3,sv%fact_type,0,0,0/))
         goto 9999
 
       end select

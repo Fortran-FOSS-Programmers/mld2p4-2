@@ -115,16 +115,11 @@ typedef struct {
 
 #endif
 
-void
-mld_sslu_fact(int *n, int *nnz,
-                 float *values, int *rowptr, int *colind,
-#ifdef Have_SLU_		 
-		 fptr *f_factors, /* a handle containing the address
-				     pointing to the factored matrices */
-#else 
-		 void *f_factors,
-#endif
-		 int *info)
+
+
+int 
+mld_sslu_fact(int n, int nnz, float *values,
+	      int *rowptr, int *colind, void **f_factors)
 
 {
 /* 
@@ -152,6 +147,7 @@ mld_sslu_fact(int *n, int *nnz,
     superlu_options_t options;
     SuperLUStat_t stat;
     factors_t *LUfactors;
+    int info;
 
     trans = NOTRANS;
 
@@ -162,17 +158,13 @@ mld_sslu_fact(int *n, int *nnz,
     /* Initialize the statistics variables. */
     StatInit(&stat);
     
-    /* Adjust to 0-based indexing */
-    for (i = 0; i < *nnz; ++i) --colind[i];
-    for (i = 0; i <= *n; ++i) --rowptr[i];
-    
-    sCreate_CompRow_Matrix(&A, *n, *n, *nnz, values, colind, rowptr,
+    sCreate_CompRow_Matrix(&A, n, n, nnz, values, colind, rowptr,
 			   SLU_NR, SLU_S, SLU_GE);
     L = (SuperMatrix *) SUPERLU_MALLOC( sizeof(SuperMatrix) );
     U = (SuperMatrix *) SUPERLU_MALLOC( sizeof(SuperMatrix) );
-    if ( !(perm_r = intMalloc(*n)) ) ABORT("Malloc fails for perm_r[].");
-    if ( !(perm_c = intMalloc(*n)) ) ABORT("Malloc fails for perm_c[].");
-    if ( !(etree = intMalloc(*n)) ) ABORT("Malloc fails for etree[].");
+    if ( !(perm_r = intMalloc(n)) ) ABORT("Malloc fails for perm_r[].");
+    if ( !(perm_c = intMalloc(n)) ) ABORT("Malloc fails for perm_c[].");
+    if ( !(etree = intMalloc(n)) ) ABORT("Malloc fails for etree[].");
     
     /*
 	 * Get column permutation vector perm_c[], according to permc_spec:
@@ -191,9 +183,9 @@ mld_sslu_fact(int *n, int *nnz,
     relax = sp_ienv(2);
     
     sgstrf(&options, &AC, drop_tol, relax, panel_size, 
-	   etree, NULL, 0, perm_c, perm_r, L, U, &stat, info);
+	   etree, NULL, 0, perm_c, perm_r, L, U, &stat, &info);
     
-    if ( *info == 0 ) {
+    if ( info == 0 ) {
       Lstore = (SCformat *) L->Store;
       Ustore = (NCformat *) U->Store;
       sQuerySpace(L, U, &mem_usage);
@@ -206,8 +198,8 @@ mld_sslu_fact(int *n, int *nnz,
 	     mem_usage.expansions);
 #endif
     } else {
-      printf("sgstrf() error returns INFO= %d\n", *info);
-      if ( *info <= *n ) { /* factorization completes */
+      printf("sgstrf() error returns INFO= %d\n", info);
+      if ( info <= n ) { /* factorization completes */
 	sQuerySpace(L, U, &mem_usage);
 	printf("L\\U MB %.3f\ttotal MB needed %.3f\texpansions %d\n",
 		       mem_usage.for_lu/1e6, mem_usage.total_needed/1e6,
@@ -215,47 +207,38 @@ mld_sslu_fact(int *n, int *nnz,
       }
     }
     
-    /* Restore to 1-based indexing */
-    for (i = 0; i < *nnz; ++i) ++colind[i];
-    for (i = 0; i <= *n; ++i) ++rowptr[i];
-    
     /* Save the LU factors in the factors handle */
     LUfactors = (factors_t*) SUPERLU_MALLOC(sizeof(factors_t));
     LUfactors->L = L;
     LUfactors->U = U;
     LUfactors->perm_c = perm_c;
     LUfactors->perm_r = perm_r;
-    *f_factors = (fptr) LUfactors;
+    *f_factors = (void *) LUfactors;
     
     /* Free un-wanted storage */
     SUPERLU_FREE(etree);
     Destroy_SuperMatrix_Store(&A);
     Destroy_CompCol_Permuted(&AC);
     StatFree(&stat);
+    return(info);
 #else
     fprintf(stderr," SLU Not Configured, fix make.inc and recompile\n");
-    *info=-1;
+    return(-1);
 #endif
 }
 
 
-void
-mld_sslu_solve(int *itrans, int *n, int *nrhs, 
-		float *b, int *ldb,
-#ifdef Have_SLU_		 
-		fptr *f_factors, /* a handle containing the address
-				    pointing to the factored matrices */
-#else 
-		void *f_factors,
-#endif
-		int *info)
+int
+mld_sslu_solve(int itrans, int n, int nrhs, float *b, int ldb,
+	       void *f_factors)
   
 {
-/* 
- * This routine can be called from Fortran.
- *      performs triangular solve
- *
- */
+  /* 
+   * This routine can be called from Fortran.
+   *      performs triangular solve
+   *
+   */
+  int info;
 #ifdef Have_SLU_ 
     SuperMatrix A, AC, B;
     SuperMatrix *L, *U;
@@ -270,11 +253,11 @@ mld_sslu_solve(int *itrans, int *n, int *nrhs,
     SuperLUStat_t stat;
     factors_t *LUfactors;
 
-    if (*itrans == 0) {
+    if (itrans == 0) {
       trans = NOTRANS;
-    } else if (*itrans ==1) {
+    } else if (itrans ==1) {
       trans = TRANS;
-    } else if (*itrans ==2) {
+    } else if (itrans ==2) {
       trans = CONJ;
     } else {
       trans = NOTRANS;
@@ -283,35 +266,28 @@ mld_sslu_solve(int *itrans, int *n, int *nrhs,
     StatInit(&stat);
     
     /* Extract the LU factors in the factors handle */
-    LUfactors = (factors_t*) *f_factors;
+    LUfactors = (factors_t*) f_factors;
     L = LUfactors->L;
     U = LUfactors->U;
     perm_c = LUfactors->perm_c;
     perm_r = LUfactors->perm_r;
     
-    sCreate_Dense_Matrix(&B, *n, *nrhs, b, *ldb, SLU_DN, SLU_S, SLU_GE);
+    sCreate_Dense_Matrix(&B, n, nrhs, b, ldb, SLU_DN, SLU_S, SLU_GE);
     /* Solve the system A*X=B, overwriting B with X. */
-    sgstrs (trans, L, U, perm_c, perm_r, &B, &stat, info);
+    sgstrs (trans, L, U, perm_c, perm_r, &B, &stat, &info);
 
     Destroy_SuperMatrix_Store(&B);
     StatFree(&stat);
 #else
-    fprintf(stderr," SLU Not Configured, fix make.inc and recompile\n");
-    *info=-1;
+  fprintf(stderr," SLU Not Configured, fix make.inc and recompile\n");
+  info=-1;
 #endif
-    
+  return(info);
 }
 
 
-void
-mld_sslu_free(
-#ifdef Have_SLU_		 
- fptr *f_factors, /* a handle containing the address
-				     pointing to the factored matrices */
-#else 
- void *f_factors,
-#endif
- int *info)
+int
+mld_sslu_free(void *f_factors)
 
 {
 /* 
@@ -321,24 +297,24 @@ mld_sslu_free(
  *
  */
 #ifdef Have_SLU_ 
-    SuperMatrix A, AC, B;
-    SuperMatrix *L, *U;
-    int *perm_r; /* row permutations from partial pivoting */
-    int *perm_c; /* column permutation vector */
-    int *etree;  /* column elimination tree */
-    SCformat *Lstore;
-    NCformat *Ustore;
-    int      i, panel_size, permc_spec, relax;
-    trans_t  trans;
-    float   drop_tol = 0.0;
-    mem_usage_t   mem_usage;
-    superlu_options_t options;
-    SuperLUStat_t stat;
-    factors_t *LUfactors; 
-
-    trans = NOTRANS;
-    /* Free the LU factors in the factors handle */
-    LUfactors = (factors_t*) *f_factors;
+  SuperMatrix A, AC, B;
+  SuperMatrix *L, *U;
+  int *perm_r; /* row permutations from partial pivoting */
+  int *perm_c; /* column permutation vector */
+  int *etree;  /* column elimination tree */
+  SCformat *Lstore;
+  NCformat *Ustore;
+  int      i, panel_size, permc_spec, relax;
+  trans_t  trans;
+  mem_usage_t   mem_usage;
+  superlu_options_t options;
+  SuperLUStat_t stat;
+  factors_t *LUfactors; 
+  
+  trans = NOTRANS;
+  /* Free the LU factors in the factors handle */
+  LUfactors = (factors_t*) f_factors;
+  if (LUfactors != NULL) {
     SUPERLU_FREE (LUfactors->perm_r);
     SUPERLU_FREE (LUfactors->perm_c);
     Destroy_SuperNode_Matrix(LUfactors->L);
@@ -346,10 +322,11 @@ mld_sslu_free(
     SUPERLU_FREE (LUfactors->L);
     SUPERLU_FREE (LUfactors->U);
     SUPERLU_FREE (LUfactors);
-    *info = 0;
+  }
+  return(0);
 #else
-    fprintf(stderr," SLU Not Configured, fix make.inc and recompile\n");
-    *info=-1;
+  fprintf(stderr," SLU Not Configured, fix make.inc and recompile\n");
+  return(-1);
 #endif
 }
 

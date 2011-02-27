@@ -118,9 +118,8 @@ typedef struct {
 
 
 int 
-mld_dslu_fact(int n, int nnz,
-                 double *values, int *rowptr, int *colind,
-		 void **f_factors)
+mld_dslu_fact(int n, int nnz, double *values,
+	      int *rowptr, int *colind, void **f_factors)
 
 {
 /* 
@@ -307,7 +306,6 @@ mld_dslu_free(void *f_factors)
   NCformat *Ustore;
   int      i, panel_size, permc_spec, relax;
   trans_t  trans;
-  double   drop_tol = 0.0;
   mem_usage_t   mem_usage;
   superlu_options_t options;
   SuperLUStat_t stat;
@@ -316,13 +314,15 @@ mld_dslu_free(void *f_factors)
   trans = NOTRANS;
   /* Free the LU factors in the factors handle */
   LUfactors = (factors_t*) f_factors;
-  SUPERLU_FREE (LUfactors->perm_r);
-  SUPERLU_FREE (LUfactors->perm_c);
-  Destroy_SuperNode_Matrix(LUfactors->L);
-  Destroy_CompCol_Matrix(LUfactors->U);
-  SUPERLU_FREE (LUfactors->L);
-  SUPERLU_FREE (LUfactors->U);
-  SUPERLU_FREE (LUfactors);
+  if (LUfactors != NULL) {
+    SUPERLU_FREE (LUfactors->perm_r);
+    SUPERLU_FREE (LUfactors->perm_c);
+    Destroy_SuperNode_Matrix(LUfactors->L);
+    Destroy_CompCol_Matrix(LUfactors->U);
+    SUPERLU_FREE (LUfactors->L);
+    SUPERLU_FREE (LUfactors->U);
+    SUPERLU_FREE (LUfactors);
+  }
   return(0);
 #else
   fprintf(stderr," SLU Not Configured, fix make.inc and recompile\n");
