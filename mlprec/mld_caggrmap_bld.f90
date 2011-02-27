@@ -251,7 +251,7 @@ contains
           call a%csget(i,i,nz,irow,icol,val,info)
           if (info /= psb_success_) then 
             info=psb_err_from_subroutine_
-            call psb_errpush(info,name,a_err='psb_sp_getrow')
+            call psb_errpush(info,name,a_err='csget')
             goto 9999
           end if
 

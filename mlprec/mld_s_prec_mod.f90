@@ -96,7 +96,7 @@ module mld_s_prec_mod
       use mld_s_prec_type, only : mld_sprec_type
       type(mld_sprec_type), intent(inout)    :: p
       integer, intent(in)                    :: what 
-      real(psb_spk_), intent(in)           :: val
+      real(psb_spk_), intent(in)             :: val
       integer, intent(out)                   :: info
       integer, optional, intent(in)          :: ilev
     end subroutine mld_sprecsetr

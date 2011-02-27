@@ -171,7 +171,8 @@
 !
 !
 ! Additive multilevel
-!    This is additive both within the levels and among levels.
+!
+!  This is additive both within the levels and among levels.
 !
 !  For details on the additive multilevel Schwarz preconditioner see the
 !  Algorithm 3.1.1 in the book:
@@ -203,7 +204,7 @@
 !
 !
 !
-!  Hybrid multiplicative---pre-smoothing
+!  Hybrid multiplicative, pre-smoothing	only
 !  
 !  The preconditioner M is hybrid in the sense that it is multiplicative through the
 !  levels and additive inside a level. 
@@ -357,7 +358,8 @@ subroutine mld_smlprec_aply(alpha,p,x,beta,y,desc_data,trans,work,info)
   nlev = size(p%precv)
   allocate(mlprec_wrk(nlev),stat=info) 
   if (info /= psb_success_) then 
-    call psb_errpush(psb_err_from_subroutine_,name,a_err='Allocate')
+    call psb_errpush(psb_err_from_subroutine_,name,&
+         & a_err='Allocate')
     goto 9999      
   end if
   level = 1
@@ -490,7 +492,6 @@ contains
            & p%precv(level)%base_desc, trans,&
            & sweeps,work,info)
 
-
       if (info /= psb_success_) goto 9999
       if (level < nlev) then
         call inner_ml_aply(level+1,p,mlprec_wrk,trans,work,info)
@@ -558,7 +559,6 @@ contains
                  & mlprec_wrk(level)%x2l,sone,mlprec_wrk(level)%y2l,&
                  & p%precv(level)%base_desc, trans,&
                  & sweeps,work,info)
-           
           else
             sweeps = p%precv(level)%parms%sweeps 
             call p%precv(level)%sm%apply(sone,&
@@ -762,7 +762,8 @@ contains
             goto 9999
           end if
         end if
-        call psb_geaxpby(sone,mlprec_wrk(level)%x2l,szero,mlprec_wrk(level)%tx,&
+        call psb_geaxpby(sone,mlprec_wrk(level)%x2l,szero,&
+             & mlprec_wrk(level)%tx,&
              & p%precv(level)%base_desc,info)
         !
         ! Apply the base preconditioner

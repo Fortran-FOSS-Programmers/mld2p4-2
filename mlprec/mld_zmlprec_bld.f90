@@ -73,7 +73,9 @@ subroutine mld_zmlprec_bld(a,desc_a,p,info)
   use mld_z_as_smoother
   use mld_z_diag_solver
   use mld_z_ilu_solver
+#ifdef HAVE_UMF_
   use mld_z_umf_solver
+#endif
 
   Implicit None
 

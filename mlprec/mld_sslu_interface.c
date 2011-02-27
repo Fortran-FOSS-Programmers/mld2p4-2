@@ -240,7 +240,7 @@ mld_sslu_solve(int itrans, int n, int nrhs, float *b, int ldb,
    */
   int info;
 #ifdef Have_SLU_ 
-    SuperMatrix A, AC, B;
+    SuperMatrix  B;
     SuperMatrix *L, *U;
     int *perm_r; /* row permutations from partial pivoting */
     int *perm_c; /* column permutation vector */
@@ -297,21 +297,8 @@ mld_sslu_free(void *f_factors)
  *
  */
 #ifdef Have_SLU_ 
-  SuperMatrix A, AC, B;
-  SuperMatrix *L, *U;
-  int *perm_r; /* row permutations from partial pivoting */
-  int *perm_c; /* column permutation vector */
-  int *etree;  /* column elimination tree */
-  SCformat *Lstore;
-  NCformat *Ustore;
-  int      i, panel_size, permc_spec, relax;
-  trans_t  trans;
-  mem_usage_t   mem_usage;
-  superlu_options_t options;
-  SuperLUStat_t stat;
   factors_t *LUfactors; 
   
-  trans = NOTRANS;
   /* Free the LU factors in the factors handle */
   LUfactors = (factors_t*) f_factors;
   if (LUfactors != NULL) {

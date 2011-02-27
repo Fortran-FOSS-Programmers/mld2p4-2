@@ -64,8 +64,23 @@ module mld_c_prec_mod
   end interface
 
   interface mld_inner_precset
+    subroutine mld_cprecsetsm(p,what,val,info,ilev)
+      use mld_c_prec_type, only : mld_cprec_type, mld_c_base_smoother_type
+      type(mld_cprec_type), intent(inout)    :: p
+      integer, intent(in)                    :: what 
+      class(mld_c_base_smoother_type), intent(in) :: val
+      integer, intent(out)                   :: info
+      integer, optional, intent(in)          :: ilev
+    end subroutine mld_cprecsetsm
+    subroutine mld_cprecsetsv(p,what,val,info,ilev)
+      use mld_c_prec_type, only : mld_cprec_type, mld_c_base_solver_type
+      type(mld_cprec_type), intent(inout)    :: p
+      integer, intent(in)                    :: what 
+      class(mld_c_base_solver_type), intent(in) :: val
+      integer, intent(out)                   :: info
+      integer, optional, intent(in)          :: ilev
+    end subroutine mld_cprecsetsv
     subroutine mld_cprecseti(p,what,val,info,ilev)
-      use psb_sparse_mod, only : psb_cspmat_type, psb_desc_type, psb_spk_
       use mld_c_prec_type, only : mld_cprec_type
       type(mld_cprec_type), intent(inout)    :: p
       integer, intent(in)                    :: what 

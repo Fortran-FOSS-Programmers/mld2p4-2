@@ -149,7 +149,6 @@ subroutine mld_smlprec_bld(a,desc_a,p,info)
     goto 9999
   endif
 
-
   if (iszv > 1) then
 
     !

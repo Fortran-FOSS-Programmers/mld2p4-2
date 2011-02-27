@@ -16,7 +16,8 @@ DMODOBJS=mld_d_prec_type.o mld_d_prec_mod.o mld_d_move_alloc_mod.o \
 	mld_d_umf_solver.o mld_d_slu_solver.o mld_d_sludist_solver.o mld_d_id_solver.o 
 
 CMODOBJS=mld_c_prec_type.o mld_c_prec_mod.o mld_c_move_alloc_mod.o \
-	mld_c_inner_mod.o mld_c_ilu_solver.o mld_c_diag_solver.o mld_c_jac_smoother.o mld_c_as_smoother.o	
+	mld_c_inner_mod.o mld_c_ilu_solver.o mld_c_diag_solver.o mld_c_jac_smoother.o mld_c_as_smoother.o \
+	mld_c_id_solver.o mld_c_slu_solver.o
 
 ZMODOBJS=mld_z_prec_type.o mld_z_prec_mod.o mld_z_move_alloc_mod.o \
 	mld_z_inner_mod.o mld_z_ilu_solver.o mld_z_diag_solver.o mld_z_jac_smoother.o mld_z_as_smoother.o	
@@ -42,9 +43,9 @@ DINNEROBJS= mld_dcoarse_bld.o  mld_dmlprec_bld.o	  \
 	mld_dmlprec_aply.o mld_daggrmat_asb.o   \
 	$(DMPFOBJS) 
 
-CINNEROBJS= mld_ccoarse_bld.o  mld_cmlprec_bld.o mld_cslu_bld.o    mld_cumf_bld.o \
+CINNEROBJS= mld_ccoarse_bld.o  mld_cmlprec_bld.o \
 	mld_cilu0_fact.o   mld_ciluk_fact.o  mld_cilut_fact.o  mld_caggrmap_bld.o \
-	mld_cmlprec_aply.o mld_cslud_bld.o   mld_caggrmat_asb.o   \
+	mld_cmlprec_aply.o mld_caggrmat_asb.o   \
 	$(CMPFOBJS) 
 
 ZINNEROBJS= mld_zcoarse_bld.o  mld_zmlprec_bld.o mld_zslu_bld.o    mld_zumf_bld.o \

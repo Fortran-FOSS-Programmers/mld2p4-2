@@ -204,8 +204,8 @@ module mld_s_prec_type
     procedure, pass(sm) :: setr  => s_base_smoother_setr
     generic, public     :: set   => seti, setc, setr
     procedure, pass(sm) :: default => s_base_smoother_default
-    procedure, pass(sm) :: descr =>   s_base_smoother_descr
-    procedure, pass(sm) :: sizeof =>  s_base_smoother_sizeof
+    procedure, pass(sm) :: descr   => s_base_smoother_descr
+    procedure, pass(sm) :: sizeof  => s_base_smoother_sizeof
   end type mld_s_base_smoother_type
 
   type mld_sonelev_type
@@ -304,7 +304,6 @@ contains
   !
 
   function mld_sprec_sizeof(prec) result(val)
-    use psb_sparse_mod
     implicit none 
     type(mld_sprec_type), intent(in) :: prec
     integer(psb_long_int_k_) :: val
@@ -1260,7 +1259,7 @@ contains
     integer, intent(out)              :: info
     character(len=1), optional        :: trans
     Integer           :: err_act
-    character(len=20) :: name='d_prec_apply'
+    character(len=20) :: name='s_prec_apply'
 
     call psb_erractionsave(err_act)
 
@@ -1352,8 +1351,8 @@ contains
     lv%parms%aggr_omega_alg  = mld_eig_est_
     lv%parms%aggr_eig        = mld_max_norm_
     lv%parms%aggr_filter     = mld_no_filter_mat_
-    lv%parms%aggr_omega_val  = dzero
-    lv%parms%aggr_thresh     = dzero
+    lv%parms%aggr_omega_val  = szero
+    lv%parms%aggr_thresh     = szero
     
     if (allocated(lv%sm)) call lv%sm%default()
 
