@@ -49,33 +49,11 @@ module mld_z_move_alloc_mod
   use mld_z_prec_type
 
   interface mld_move_alloc
-    module procedure mld_zbaseprec_move_alloc, mld_zonelev_prec_move_alloc,&
+    module procedure   mld_zonelev_prec_move_alloc,&
          & mld_zprec_move_alloc
   end interface
 
 contains
-
-
-  subroutine mld_zbaseprec_move_alloc(a, b,info)
-    use psb_sparse_mod
-    implicit none
-    type(mld_zbaseprec_type), intent(inout) :: a, b
-    integer, intent(out) :: info 
-    integer :: i, isz
-    
-    call mld_precfree(b,info)
-    if (info == psb_success_) call psb_move_alloc(a%iprcparm,b%iprcparm,info) 
-    if (info == psb_success_) call psb_move_alloc(a%rprcparm,b%rprcparm,info) 
-!!$    if (info == psb_success_) call psb_move_alloc(a%desc_data,b%desc_data,info) 
-!!$    if (info == psb_success_) call psb_move_alloc(a%perm,b%perm,info) 
-!!$    if (info == psb_success_) call psb_move_alloc(a%invperm,b%invperm,info) 
-!!$    if (info == psb_success_) call psb_move_alloc(a%d,b%d,info) 
-!!$    call move_alloc(a%av,b%av)
-    if (info /= psb_success_) then
-      write(0,*) 'Error in baseprec_:transfer',info
-    end if
-
-  end subroutine mld_zbaseprec_move_alloc
 
   subroutine mld_zonelev_prec_move_alloc(a, b,info)
     use psb_sparse_mod
@@ -84,18 +62,15 @@ contains
     integer, intent(out) :: info 
     
     call mld_precfree(b,info)
-    if (info == psb_success_) call mld_move_alloc(a%prec,b%prec,info) 
-    if (info == psb_success_) call psb_move_alloc(a%iprcparm,b%iprcparm,info) 
-    if (info == psb_success_) call psb_move_alloc(a%rprcparm,b%rprcparm,info) 
+    call move_alloc(a%sm,b%sm)
     if (info == psb_success_) call psb_move_alloc(a%ac,b%ac,info) 
     if (info == psb_success_) call psb_move_alloc(a%desc_ac,b%desc_ac,info) 
-!!$    if (info == psb_success_) call psb_move_alloc(a%mlia,b%mlia,info) 
-!!$    if (info == psb_success_) call psb_move_alloc(a%nlaggr,b%nlaggr,info) 
     if (info == psb_success_) call psb_move_alloc(a%map,b%map,info) 
     b%base_a    => a%base_a
     b%base_desc => a%base_desc
     
   end subroutine mld_zonelev_prec_move_alloc
+
 
   subroutine mld_zprec_move_alloc(a, b,info)
     use psb_sparse_mod

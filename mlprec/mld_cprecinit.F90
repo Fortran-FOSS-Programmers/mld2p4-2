@@ -94,8 +94,8 @@ subroutine mld_cprecinit(p,ptype,info,nlev)
   use mld_c_prec_mod, mld_protect_name => mld_cprecinit
   use mld_c_jac_smoother
   use mld_c_as_smoother
-  use mld_c_diag_solver
   use mld_c_id_solver
+  use mld_c_diag_solver
   use mld_c_ilu_solver
 #if defined(HAVE_SLU_)
   use mld_c_slu_solver

@@ -64,8 +64,23 @@ module mld_z_prec_mod
   end interface
 
   interface mld_inner_precset
+    subroutine mld_zprecsetsm(p,what,val,info,ilev)
+      use mld_z_prec_type, only : mld_zprec_type, mld_z_base_smoother_type
+      type(mld_zprec_type), intent(inout)    :: p
+      integer, intent(in)                    :: what 
+      class(mld_z_base_smoother_type), intent(in) :: val
+      integer, intent(out)                   :: info
+      integer, optional, intent(in)          :: ilev
+    end subroutine mld_zprecsetsm
+    subroutine mld_zprecsetsv(p,what,val,info,ilev)
+      use mld_z_prec_type, only : mld_zprec_type, mld_z_base_solver_type
+      type(mld_zprec_type), intent(inout)    :: p
+      integer, intent(in)                    :: what 
+      class(mld_z_base_solver_type), intent(in) :: val
+      integer, intent(out)                   :: info
+      integer, optional, intent(in)          :: ilev
+    end subroutine mld_zprecsetsv
     subroutine mld_zprecseti(p,what,val,info,ilev)
-      use psb_sparse_mod, only : psb_zspmat_type, psb_desc_type, psb_dpk_
       use mld_z_prec_type, only : mld_zprec_type
       type(mld_zprec_type), intent(inout)    :: p
       integer, intent(in)                    :: what 

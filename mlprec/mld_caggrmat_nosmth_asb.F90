@@ -93,7 +93,7 @@ subroutine mld_caggrmat_nosmth_asb(a,desc_a,ilaggr,nlaggr,p,info)
   include 'mpif.h'
 #endif
 
-! Arguments
+  ! Arguments
   type(psb_cspmat_type), intent(in)               :: a
   type(psb_desc_type), intent(in)                 :: desc_a
   integer, intent(inout)                          :: ilaggr(:), nlaggr(:)

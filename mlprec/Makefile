@@ -20,7 +20,8 @@ CMODOBJS=mld_c_prec_type.o mld_c_prec_mod.o mld_c_move_alloc_mod.o \
 	mld_c_id_solver.o mld_c_slu_solver.o
 
 ZMODOBJS=mld_z_prec_type.o mld_z_prec_mod.o mld_z_move_alloc_mod.o \
-	mld_z_inner_mod.o mld_z_ilu_solver.o mld_z_diag_solver.o mld_z_jac_smoother.o mld_z_as_smoother.o	
+	mld_z_inner_mod.o mld_z_ilu_solver.o mld_z_diag_solver.o mld_z_jac_smoother.o mld_z_as_smoother.o \
+	mld_z_id_solver.o mld_z_umf_solver.o mld_z_slu_solver.o 
 
 MODOBJS=mld_base_prec_type.o mld_prec_type.o  mld_prec_mod.o \
 	$(SMODOBJS) $(DMODOBJS) $(CMODOBJS) $(ZMODOBJS) 
@@ -48,9 +49,9 @@ CINNEROBJS= mld_ccoarse_bld.o  mld_cmlprec_bld.o \
 	mld_cmlprec_aply.o mld_caggrmat_asb.o   \
 	$(CMPFOBJS) 
 
-ZINNEROBJS= mld_zcoarse_bld.o  mld_zmlprec_bld.o mld_zslu_bld.o    mld_zumf_bld.o \
+ZINNEROBJS= mld_zcoarse_bld.o  mld_zmlprec_bld.o \
 	mld_zilu0_fact.o   mld_ziluk_fact.o  mld_zilut_fact.o  mld_zaggrmap_bld.o \
-	mld_zmlprec_aply.o mld_zslud_bld.o   mld_zaggrmat_asb.o   \
+	mld_zmlprec_aply.o mld_zaggrmat_asb.o   \
 	$(ZMPFOBJS) 
 
 INNEROBJS= $(SINNEROBJS) $(DINNEROBJS) $(CINNEROBJS) $(ZINNEROBJS)

@@ -66,7 +66,7 @@ module mld_c_inner_mod
   interface mld_mlprec_aply
     subroutine mld_cmlprec_aply(alpha,p,x,beta,y,desc_data,trans,work,info)
       use psb_sparse_mod, only : psb_cspmat_type, psb_desc_type, psb_spk_
-      use mld_c_prec_type, only : mld_cbaseprec_type, mld_cprec_type
+      use mld_c_prec_type, only : mld_cprec_type
       type(psb_desc_type),intent(in)    :: desc_data
       type(mld_cprec_type), intent(in)  :: p
       complex(psb_spk_),intent(in)      :: alpha,beta
@@ -82,7 +82,7 @@ module mld_c_inner_mod
   interface mld_coarse_bld
     subroutine mld_ccoarse_bld(a,desc_a,p,info)
       use psb_sparse_mod, only : psb_cspmat_type, psb_desc_type, psb_spk_
-      use mld_c_prec_type, only : mld_cbaseprec_type, mld_conelev_type
+      use mld_c_prec_type, only : mld_conelev_type
       type(psb_cspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       type(mld_conelev_type), intent(inout), target :: p
@@ -93,7 +93,6 @@ module mld_c_inner_mod
   interface mld_aggrmap_bld
     subroutine mld_caggrmap_bld(aggr_type,theta,a,desc_a,ilaggr,nlaggr,info)
       use psb_sparse_mod, only : psb_cspmat_type, psb_desc_type, psb_spk_
-      use mld_c_prec_type, only : mld_cbaseprec_type
       integer, intent(in)               :: aggr_type
       real(psb_spk_), intent(in)        :: theta
       type(psb_cspmat_type), intent(in) :: a
@@ -106,7 +105,7 @@ module mld_c_inner_mod
   interface mld_aggrmat_asb
     subroutine mld_caggrmat_asb(a,desc_a,ilaggr,nlaggr,p,info)
       use psb_sparse_mod, only : psb_cspmat_type, psb_desc_type, psb_spk_
-      use mld_c_prec_type, only : mld_cbaseprec_type, mld_conelev_type
+      use mld_c_prec_type, only : mld_conelev_type
       type(psb_cspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       integer, intent(inout)                         :: ilaggr(:), nlaggr(:)
@@ -118,7 +117,7 @@ module mld_c_inner_mod
   interface mld_aggrmat_nosmth_asb
     subroutine mld_caggrmat_nosmth_asb(a,desc_a,ilaggr,nlaggr,p,info)
       use psb_sparse_mod, only : psb_cspmat_type, psb_desc_type, psb_spk_
-      use mld_c_prec_type, only : mld_cbaseprec_type, mld_conelev_type
+      use mld_c_prec_type, only : mld_conelev_type
       type(psb_cspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       integer, intent(inout)                         :: ilaggr(:), nlaggr(:)
@@ -130,7 +129,7 @@ module mld_c_inner_mod
   interface mld_aggrmat_smth_asb
     subroutine mld_caggrmat_smth_asb(a,desc_a,ilaggr,nlaggr,p,info)
       use psb_sparse_mod, only : psb_cspmat_type, psb_desc_type, psb_spk_
-      use mld_c_prec_type, only : mld_cbaseprec_type, mld_conelev_type
+      use mld_c_prec_type, only : mld_conelev_type
       type(psb_cspmat_type), intent(in)              :: a
       type(psb_desc_type), intent(in)                :: desc_a
       integer, intent(inout)                         :: ilaggr(:), nlaggr(:)

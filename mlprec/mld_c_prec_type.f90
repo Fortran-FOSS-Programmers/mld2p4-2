@@ -208,11 +208,6 @@ module mld_c_prec_type
     procedure, pass(sm) :: sizeof  => c_base_smoother_sizeof
   end type mld_c_base_smoother_type
 
-  type, extends(psb_c_base_prec_type)   :: mld_cbaseprec_type
-    integer, allocatable                :: iprcparm(:) 
-    real(psb_spk_), allocatable         :: rprcparm(:) 
-  end type mld_cbaseprec_type
-
   type mld_conelev_type
     class(mld_c_base_smoother_type), allocatable :: sm
     type(mld_sml_parms)             :: parms 
@@ -571,7 +566,6 @@ contains
 
     call mld_nullify_onelevprec(p)
   end subroutine mld_c_onelev_precfree
-
 
   subroutine mld_nullify_c_onelevprec(p)
     implicit none 
@@ -1576,7 +1570,7 @@ contains
     if (present(prefix)) then 
       prefix_ = trim(prefix(1:min(len(prefix),len(prefix_))))
     else
-      prefix_ = "dump_lev_d"
+      prefix_ = "dump_lev_c"
     end if
 
     if (associated(lv%base_desc)) then 

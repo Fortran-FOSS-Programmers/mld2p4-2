@@ -82,9 +82,9 @@ subroutine mld_cprecseti(p,what,val,info,ilev)
   use mld_c_prec_mod, mld_protect_name => mld_cprecseti
   use mld_c_jac_smoother
   use mld_c_as_smoother
+  use mld_c_id_solver
   use mld_c_diag_solver
   use mld_c_ilu_solver
-  use mld_c_id_solver
 #ifdef HAVE_SLU_
   use mld_c_slu_solver
 #endif
@@ -683,7 +683,7 @@ subroutine mld_cprecsetc(p,what,string,info,ilev)
   integer, intent(out)                   :: info
   integer, optional, intent(in)          :: ilev
 
-! Local variables
+  ! Local variables
   integer                                :: ilev_, nlev_,val
   character(len=*), parameter            :: name='mld_precsetc'
 
