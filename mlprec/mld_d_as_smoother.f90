@@ -585,7 +585,7 @@ contains
 
   end subroutine d_as_smoother_apply
 
-  subroutine d_as_smoother_bld(a,desc_a,sm,upd,info,mold)
+  subroutine d_as_smoother_bld(a,desc_a,sm,upd,info,amold,vmold)
 
     use psb_base_mod
 
@@ -597,7 +597,8 @@ contains
     class(mld_d_as_smoother_type), intent(inout) :: sm
     character, intent(in)                        :: upd
     integer, intent(out)                         :: info
-    class(psb_d_base_sparse_mat), intent(in), optional :: mold
+    class(psb_d_base_sparse_mat), intent(in), optional :: amold
+    class(psb_d_vect), intent(in), optional            :: vmold
     ! Local variables
     type(psb_dspmat_type) :: blck, atmp
     integer :: n_row,n_col, nrow_a, nhalo, novr, data_, nzeros
@@ -688,7 +689,8 @@ contains
 
     End if
     if (info == psb_success_) &
-         & call sm%sv%build(a,sm%desc_data,upd,info,blck,mold=mold)
+         & call sm%sv%build(a,sm%desc_data,upd,info,blck,&
+         & amold=amold,vmold=vmold)
 
     nrow_a = a%get_nrows()
     n_row  = psb_cd_get_local_rows(sm%desc_data)

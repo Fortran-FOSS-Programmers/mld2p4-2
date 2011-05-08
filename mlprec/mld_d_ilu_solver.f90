@@ -246,7 +246,7 @@ contains
 
   end subroutine d_ilu_solver_apply
 
-  subroutine d_ilu_solver_bld(a,desc_a,sv,upd,info,b,mold)
+  subroutine d_ilu_solver_bld(a,desc_a,sv,upd,info,b,amold,vmold)
 
     use psb_base_mod
 
@@ -258,7 +258,8 @@ contains
     class(mld_d_ilu_solver_type), intent(inout) :: sv
     character, intent(in)                       :: upd
     integer, intent(out)                        :: info
-    class(psb_d_base_sparse_mat), intent(in), optional :: mold
+    class(psb_d_base_sparse_mat), intent(in), optional :: amold
+    class(psb_d_vect), intent(in), optional            :: vmold
     type(psb_dspmat_type), intent(in), target, optional  :: b
     ! Local variables
     integer :: n_row,n_col, nrow_a, nztota
@@ -404,9 +405,9 @@ contains
     call sv%u%set_asb()
     call sv%u%trim()
 
-    if (present(mold)) then 
-      call sv%l%cscnv(info,mold=mold)
-      call sv%u%cscnv(info,mold=mold)
+    if (present(amold)) then 
+      call sv%l%cscnv(info,mold=amold)
+      call sv%u%cscnv(info,mold=amold)
       Write(0,*) 'Converted L into ',sv%l%get_fmt(),&
            &' and U into ',sv%u%get_fmt()
     end if

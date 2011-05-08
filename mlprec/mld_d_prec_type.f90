@@ -232,6 +232,7 @@ module mld_d_prec_type
     real(psb_dpk_)                      :: op_complexity=-done
     type(mld_donelev_type), allocatable :: precv(:) 
   contains
+    procedure, pass(prec)               :: d_apply2_vect => mld_d_apply2_vect
     procedure, pass(prec)               :: d_apply2v => mld_d_apply2v
     procedure, pass(prec)               :: d_apply1v => mld_d_apply1v
     procedure, pass(prec)               :: dump      => mld_d_dump
@@ -280,6 +281,18 @@ module mld_d_prec_type
   end interface
 
   interface mld_precaply
+    subroutine mld_dprecaply_vect(prec,x,y,desc_data,info,trans,work)
+      use psb_base_mod, only : psb_dspmat_type, psb_desc_type, &
+           & psb_dpk_, psb_d_vect
+      import mld_dprec_type
+      type(psb_desc_type),intent(in)   :: desc_data
+      type(mld_dprec_type), intent(in) :: prec
+      class(psb_d_vect),intent(inout)   :: x
+      class(psb_d_vect),intent(inout)   :: y
+      integer, intent(out)             :: info
+      character(len=1), optional       :: trans
+      real(psb_dpk_),intent(inout), optional, target :: work(:)
+    end subroutine mld_dprecaply_vect
     subroutine mld_dprecaply(prec,x,y,desc_data,info,trans,work)
       use psb_base_mod, only : psb_dspmat_type, psb_desc_type, psb_dpk_
       import mld_dprec_type
@@ -828,19 +841,20 @@ contains
     return
   end subroutine d_base_smoother_setr
 
-  subroutine d_base_smoother_bld(a,desc_a,sm,upd,info,mold)
+  subroutine d_base_smoother_bld(a,desc_a,sm,upd,info,amold,vmold)
 
     use psb_base_mod
 
     Implicit None
 
     ! Arguments
-    type(psb_dspmat_type), intent(in), target     :: a
+    type(psb_dspmat_type), intent(in), target      :: a
     Type(psb_desc_type), Intent(in)                :: desc_a 
     class(mld_d_base_smoother_type), intent(inout) :: sm 
     character, intent(in)                          :: upd
     integer, intent(out)                           :: info
-    class(psb_d_base_sparse_mat), intent(in), optional :: mold
+    class(psb_d_base_sparse_mat), intent(in), optional :: amold
+    class(psb_d_vect), intent(in), optional            :: vmold
     Integer           :: err_act
     character(len=20) :: name='d_base_smoother_bld'
 
@@ -848,7 +862,7 @@ contains
 
     info = psb_success_
     if (allocated(sm%sv)) then 
-      call sm%sv%build(a,desc_a,upd,info,mold=mold)
+      call sm%sv%build(a,desc_a,upd,info,amold=amold,vmold=vmold)
     else
       info = 1121
       call psb_errpush(info,name)
@@ -1021,7 +1035,7 @@ contains
     
   end subroutine d_base_solver_apply
 
-  subroutine d_base_solver_bld(a,desc_a,sv,upd,info,b,mold)
+  subroutine d_base_solver_bld(a,desc_a,sv,upd,info,b,amold,vmold)
 
     use psb_base_mod
 
@@ -1034,7 +1048,8 @@ contains
     character, intent(in)                        :: upd
     integer, intent(out)                         :: info
     type(psb_dspmat_type), intent(in), target, optional  :: b
-    class(psb_d_base_sparse_mat), intent(in), optional :: mold
+    class(psb_d_base_sparse_mat), intent(in), optional :: amold
+    class(psb_d_vect), intent(in), optional            :: vmold
 
     Integer :: err_act
     character(len=20)  :: name='d_base_solver_bld'
@@ -1250,6 +1265,43 @@ contains
 
     return
   end subroutine d_base_solver_default
+
+
+  subroutine mld_d_apply2_vect(prec,x,y,desc_data,info,trans,work)
+    use psb_base_mod
+    type(psb_desc_type),intent(in)    :: desc_data
+    class(mld_dprec_type), intent(in) :: prec
+    class(psb_d_vect),intent(inout)   :: x
+    class(psb_d_vect),intent(inout)   :: y
+    integer, intent(out)              :: info
+    character(len=1), optional        :: trans
+    real(psb_dpk_),intent(inout), optional, target :: work(:)
+    Integer           :: err_act
+    character(len=20) :: name='d_prec_apply'
+
+    call psb_erractionsave(err_act)
+
+    select type(prec) 
+    type is (mld_dprec_type)
+      call mld_precaply(prec,x,y,desc_data,info,trans,work)
+    class default
+      info = psb_err_missing_override_method_
+      call psb_errpush(info,name)
+      goto 9999 
+    end select
+
+    call psb_erractionrestore(err_act)
+    return
+
+9999 continue
+    call psb_erractionrestore(err_act)
+    if (err_act == psb_act_abort_) then
+      call psb_error()
+      return
+    end if
+    return
+
+  end subroutine mld_d_apply2_vect
 
 
   subroutine mld_d_apply2v(prec,x,y,desc_data,info,trans,work)

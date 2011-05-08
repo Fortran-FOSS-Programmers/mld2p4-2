@@ -228,7 +228,7 @@ contains
 
   end subroutine d_jac_smoother_apply
 
-  subroutine d_jac_smoother_bld(a,desc_a,sm,upd,info,mold)
+  subroutine d_jac_smoother_bld(a,desc_a,sm,upd,info,amold,vmold)
 
     use psb_base_mod
     use mld_d_diag_solver
@@ -236,11 +236,12 @@ contains
 
     ! Arguments
     type(psb_dspmat_type), intent(in), target     :: a
-    Type(psb_desc_type), Intent(in)                :: desc_a 
+    Type(psb_desc_type), Intent(in)               :: desc_a 
     class(mld_d_jac_smoother_type), intent(inout) :: sm
-    character, intent(in)                          :: upd
-    integer, intent(out)                           :: info
-    class(psb_d_base_sparse_mat), intent(in), optional :: mold
+    character, intent(in)                         :: upd
+    integer, intent(out)                          :: info
+    class(psb_d_base_sparse_mat), intent(in), optional :: amold
+    class(psb_d_vect), intent(in), optional            :: vmold
     ! Local variables
     integer :: n_row,n_col, nrow_a, nztota, nzeros
     real(psb_dpk_), pointer :: ww(:), aux(:), tx(:),ty(:)
@@ -276,7 +277,7 @@ contains
       goto 9999
     end if
     
-    call sm%sv%build(a,desc_a,upd,info,mold=mold)
+    call sm%sv%build(a,desc_a,upd,info,amold=amold,vmold=vmold)
     if (info /= psb_success_) then
       call psb_errpush(psb_err_from_subroutine_,name,&
            & a_err='solver build')

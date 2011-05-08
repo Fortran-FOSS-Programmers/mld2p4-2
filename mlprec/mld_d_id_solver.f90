@@ -113,7 +113,7 @@ contains
 
   end subroutine d_id_solver_apply
 
-  subroutine d_id_solver_bld(a,desc_a,sv,upd,info,b,mold)
+  subroutine d_id_solver_bld(a,desc_a,sv,upd,info,b,amold,vmold)
 
     use psb_base_mod
 
@@ -125,7 +125,8 @@ contains
     class(mld_d_id_solver_type), intent(inout) :: sv
     character, intent(in)                       :: upd
     integer, intent(out)                        :: info
-    class(psb_d_base_sparse_mat), intent(in), optional :: mold
+    class(psb_d_base_sparse_mat), intent(in), optional :: amold
+    class(psb_d_vect), intent(in), optional            :: vmold
     type(psb_dspmat_type), intent(in), target, optional  :: b
     ! Local variables
     integer :: n_row,n_col, nrow_a, nztota
