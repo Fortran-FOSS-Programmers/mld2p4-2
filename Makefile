@@ -11,7 +11,7 @@ mlp:
 
 install:
 	(./mkdir.sh  $(INSTALL_DIR) &&\
-	   $(INSTALL_DATA) Make.inc  $(INSTALL_DIR)/Make.inc.MLD2P4)
+	   $(INSTALL_DATA) Make.inc  $(INSTALL_DIR)/Make.inc)
 	(./mkdir.sh $(INSTALL_LIBDIR) &&\
 	   $(INSTALL_DATA) lib/*.a  $(INSTALL_LIBDIR))
 	(./mkdir.sh $(INSTALL_INCLUDEDIR) && \
