@@ -55,16 +55,16 @@ module mld_d_as_smoother
     type(psb_desc_type)   :: desc_data 
     integer               :: novr, restr, prol, nd_nnz_tot
   contains
-    procedure, pass(sm) :: check => d_as_smoother_check
-    procedure, pass(sm) :: dump  => d_as_smoother_dmp
-    procedure, pass(sm) :: build => d_as_smoother_bld
-    procedure, pass(sm) :: apply => d_as_smoother_apply
-    procedure, pass(sm) :: free  => d_as_smoother_free
-    procedure, pass(sm) :: seti  => d_as_smoother_seti
-    procedure, pass(sm) :: setc  => d_as_smoother_setc
-    procedure, pass(sm) :: setr  => d_as_smoother_setr
-    procedure, pass(sm) :: descr => d_as_smoother_descr
-    procedure, pass(sm) :: sizeof => d_as_smoother_sizeof
+    procedure, pass(sm) :: check   => d_as_smoother_check
+    procedure, pass(sm) :: dump    => d_as_smoother_dmp
+    procedure, pass(sm) :: build   => d_as_smoother_bld
+    procedure, pass(sm) :: apply_a => d_as_smoother_apply
+    procedure, pass(sm) :: free    => d_as_smoother_free
+    procedure, pass(sm) :: seti    => d_as_smoother_seti
+    procedure, pass(sm) :: setc    => d_as_smoother_setc
+    procedure, pass(sm) :: setr    => d_as_smoother_setr
+    procedure, pass(sm) :: descr   => d_as_smoother_descr
+    procedure, pass(sm) :: sizeof  => d_as_smoother_sizeof
     procedure, pass(sm) :: default => d_as_smoother_default
   end type mld_d_as_smoother_type
   

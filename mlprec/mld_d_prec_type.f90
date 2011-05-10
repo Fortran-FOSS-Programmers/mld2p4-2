@@ -180,7 +180,9 @@ module mld_d_prec_type
     procedure, pass(sv) :: check => d_base_solver_check
     procedure, pass(sv) :: dump  => d_base_solver_dmp
     procedure, pass(sv) :: build => d_base_solver_bld
-    procedure, pass(sv) :: apply => d_base_solver_apply
+    procedure, pass(sv) :: apply_v => d_base_solver_apply_vect
+    procedure, pass(sv) :: apply_a => d_base_solver_apply
+    generic, public     :: apply => apply_a, apply_v
     procedure, pass(sv) :: free  => d_base_solver_free
     procedure, pass(sv) :: seti  => d_base_solver_seti
     procedure, pass(sv) :: setc  => d_base_solver_setc
@@ -197,7 +199,9 @@ module mld_d_prec_type
     procedure, pass(sm) :: check => d_base_smoother_check
     procedure, pass(sm) :: dump  => d_base_smoother_dmp
     procedure, pass(sm) :: build => d_base_smoother_bld
-    procedure, pass(sm) :: apply => d_base_smoother_apply
+    procedure, pass(sm) :: apply_v => d_base_smoother_apply_vect
+    procedure, pass(sm) :: apply_a => d_base_smoother_apply
+    generic, public     :: apply => apply_a, apply_v
     procedure, pass(sm) :: free  => d_base_smoother_free
     procedure, pass(sm) :: seti  => d_base_smoother_seti
     procedure, pass(sm) :: setc  => d_base_smoother_setc
@@ -245,13 +249,13 @@ module mld_d_prec_type
        &  d_base_solver_setc,    d_base_solver_setr, &
        &  d_base_solver_descr,   d_base_solver_sizeof, &
        &  d_base_solver_default, d_base_solver_check,&
-       &  d_base_solver_dmp, &
+       &  d_base_solver_dmp, d_base_solver_apply_vect, &
        &  d_base_smoother_bld,   d_base_smoother_apply, &
        &  d_base_smoother_free,  d_base_smoother_seti, &
        &  d_base_smoother_setc,  d_base_smoother_setr,&
        &  d_base_smoother_descr, d_base_smoother_sizeof, &
        &  d_base_smoother_default, d_base_smoother_check, &
-       &  d_base_smoother_dmp, &
+       &  d_base_smoother_dmp, d_base_smoother_apply_vect, &
        &  d_base_onelev_seti, d_base_onelev_setc, &
        &  d_base_onelev_setr, d_base_onelev_check, &
        &  d_base_onelev_default, d_base_onelev_dump, &
@@ -285,12 +289,12 @@ module mld_d_prec_type
       use psb_base_mod, only : psb_dspmat_type, psb_desc_type, &
            & psb_dpk_, psb_d_vect
       import mld_dprec_type
-      type(psb_desc_type),intent(in)   :: desc_data
-      type(mld_dprec_type), intent(in) :: prec
-      class(psb_d_vect),intent(inout)   :: x
-      class(psb_d_vect),intent(inout)   :: y
-      integer, intent(out)             :: info
-      character(len=1), optional       :: trans
+      type(psb_desc_type),intent(in)      :: desc_data
+      type(mld_dprec_type), intent(inout) :: prec
+      class(psb_d_vect),intent(inout)     :: x
+      class(psb_d_vect),intent(inout)     :: y
+      integer, intent(out)                :: info
+      character(len=1), optional          :: trans
       real(psb_dpk_),intent(inout), optional, target :: work(:)
     end subroutine mld_dprecaply_vect
     subroutine mld_dprecaply(prec,x,y,desc_data,info,trans,work)
@@ -462,6 +466,10 @@ contains
           endif
           call p%precv(1)%sm%descr(info,iout=iout_)
           if (nlev == 1) then 
+            if (p%precv(1)%parms%sweeps > 1) then 
+              write(iout_,*) '  Number of sweeps : ',&
+                   & p%precv(1)%parms%sweeps 
+            end if
             write(iout_,*) 
             return 
           end if
@@ -698,6 +706,47 @@ contains
     return
     
   end subroutine d_base_smoother_apply
+
+  subroutine d_base_smoother_apply_vect(alpha,sm,x,beta,y,desc_data,&
+       &  trans,sweeps,work,info)
+    use psb_base_mod
+    type(psb_desc_type), intent(in)             :: desc_data
+    class(mld_d_base_smoother_type), intent(inout) :: sm
+    class(psb_d_vect),intent(inout)             :: x
+    class(psb_d_vect),intent(inout)             :: y
+    real(psb_dpk_),intent(in)                   :: alpha,beta
+    character(len=1),intent(in)                 :: trans
+    integer, intent(in)                         :: sweeps
+    real(psb_dpk_),target, intent(inout)        :: work(:)
+    integer, intent(out)                        :: info
+    
+    Integer           :: err_act
+    character(len=20) :: name='d_base_smoother_apply'
+
+    call psb_erractionsave(err_act)
+    info = psb_success_
+    if (allocated(sm%sv)) then 
+      call sm%sv%apply(alpha,x,beta,y,desc_data,trans,work,info)
+    else
+      info = 1121
+    endif
+    if (info /= psb_success_) then 
+      call psb_errpush(info,name)
+      goto 9999 
+    end if
+
+    call psb_erractionrestore(err_act)
+    return
+
+9999 continue
+    call psb_erractionrestore(err_act)
+    if (err_act == psb_act_abort_) then
+      call psb_error()
+      return
+    end if
+    return
+    
+  end subroutine d_base_smoother_apply_vect
 
   subroutine d_base_smoother_check(sm,info)
 
@@ -1001,7 +1050,6 @@ contains
   end subroutine d_base_smoother_default
 
 
-
   subroutine d_base_solver_apply(alpha,sv,x,beta,y,desc_data,trans,work,info)
     use psb_base_mod
     type(psb_desc_type), intent(in)           :: desc_data
@@ -1034,6 +1082,39 @@ contains
     return
     
   end subroutine d_base_solver_apply
+
+  subroutine d_base_solver_apply_vect(alpha,sv,x,beta,y,desc_data,trans,work,info)
+    use psb_base_mod
+    type(psb_desc_type), intent(in)           :: desc_data
+    class(mld_d_base_solver_type), intent(inout) :: sv
+    class(psb_d_vect),intent(inout)           :: x
+    class(psb_d_vect),intent(inout)           :: y
+    real(psb_dpk_),intent(in)                 :: alpha,beta
+    character(len=1),intent(in)               :: trans
+    real(psb_dpk_),target, intent(inout)      :: work(:)
+    integer, intent(out)                      :: info
+    
+    Integer :: err_act
+    character(len=20)  :: name='d_base_solver_apply'
+
+    call psb_erractionsave(err_act)
+    
+    info = psb_err_missing_override_method_
+    call psb_errpush(info,name)
+    goto 9999 
+    
+    call psb_erractionrestore(err_act)
+    return
+
+9999 continue
+    call psb_erractionrestore(err_act)
+    if (err_act == psb_act_abort_) then
+      call psb_error()
+      return
+    end if
+    return
+    
+  end subroutine d_base_solver_apply_vect
 
   subroutine d_base_solver_bld(a,desc_a,sv,upd,info,b,amold,vmold)
 

@@ -862,3 +862,28 @@ contains
 
 end subroutine mld_dmlprec_aply
 
+subroutine mld_dmlprec_aply_vect(alpha,p,x,beta,y,desc_data,trans,work,info)
+
+  use psb_base_mod
+  use mld_d_inner_mod, mld_protect_name => mld_dmlprec_aply_vect
+
+  implicit none
+
+  ! Arguments
+  type(psb_desc_type),intent(in)    :: desc_data
+  type(mld_dprec_type), intent(in)  :: p
+  real(psb_dpk_),intent(in)         :: alpha,beta
+  class(psb_d_vect),intent(inout)   :: x
+  class(psb_d_vect),intent(inout)   :: y
+  character, intent(in)             :: trans
+  real(psb_dpk_),target             :: work(:)
+  integer, intent(out)              :: info
+
+
+  ! Temporary placeholder
+
+  call mld_mlprec_aply(alpha,p,x%v,beta,y%v,desc_data,trans,work,info)
+
+  return
+  
+end subroutine mld_dmlprec_aply_vect

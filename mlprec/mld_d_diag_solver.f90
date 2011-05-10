@@ -46,31 +46,36 @@
 module mld_d_diag_solver
 
   use mld_d_prec_type
+  use psb_base_mod, only : psb_d_vect
 
   type, extends(mld_d_base_solver_type) :: mld_d_diag_solver_type
+    class(psb_d_vect), allocatable :: dv
     real(psb_dpk_), allocatable :: d(:)
   contains
-    procedure, pass(sv) :: build => d_diag_solver_bld
-    procedure, pass(sv) :: apply => d_diag_solver_apply
-    procedure, pass(sv) :: free  => d_diag_solver_free
-    procedure, pass(sv) :: seti  => d_diag_solver_seti
-    procedure, pass(sv) :: setc  => d_diag_solver_setc
-    procedure, pass(sv) :: setr  => d_diag_solver_setr
-    procedure, pass(sv) :: descr => d_diag_solver_descr
-    procedure, pass(sv) :: sizeof => d_diag_solver_sizeof
+    procedure, pass(sv) :: build   => d_diag_solver_bld
+    procedure, pass(sv) :: apply_v => d_diag_solver_apply_vect
+    procedure, pass(sv) :: apply_a => d_diag_solver_apply
+    procedure, pass(sv) :: free    => d_diag_solver_free
+    procedure, pass(sv) :: seti    => d_diag_solver_seti
+    procedure, pass(sv) :: setc    => d_diag_solver_setc
+    procedure, pass(sv) :: setr    => d_diag_solver_setr
+    procedure, pass(sv) :: descr   => d_diag_solver_descr
+    procedure, pass(sv) :: sizeof  => d_diag_solver_sizeof
   end type mld_d_diag_solver_type
 
 
   private :: d_diag_solver_bld, d_diag_solver_apply, &
        &  d_diag_solver_free,   d_diag_solver_seti, &
        &  d_diag_solver_setc,   d_diag_solver_setr,&
-       &  d_diag_solver_descr,  d_diag_solver_sizeof
+       &  d_diag_solver_descr,  d_diag_solver_sizeof,&
+       &  d_diag_solver_apply_vect
 
 
 contains
 
   subroutine d_diag_solver_apply(alpha,sv,x,beta,y,desc_data,trans,work,info)
     use psb_base_mod
+    implicit none 
     type(psb_desc_type), intent(in)      :: desc_data
     class(mld_d_diag_solver_type), intent(in) :: sv
     real(psb_dpk_),intent(inout)         :: x(:)
@@ -189,6 +194,60 @@ contains
 
   end subroutine d_diag_solver_apply
 
+
+  subroutine d_diag_solver_apply_vect(alpha,sv,x,beta,y,desc_data,trans,work,info)
+    use psb_base_mod
+    implicit none 
+    type(psb_desc_type), intent(in)      :: desc_data
+    class(mld_d_diag_solver_type), intent(inout) :: sv
+    class(psb_d_vect),intent(inout)      :: x
+    class(psb_d_vect),intent(inout)      :: y
+    real(psb_dpk_),intent(in)            :: alpha,beta
+    character(len=1),intent(in)          :: trans
+    real(psb_dpk_),target, intent(inout) :: work(:)
+    integer, intent(out)                 :: info
+
+    integer    :: n_row,n_col
+    real(psb_dpk_), pointer :: ww(:), aux(:), tx(:),ty(:)
+    integer    :: ictxt,np,me,i, err_act
+    character          :: trans_
+    character(len=20)  :: name='d_diag_solver_apply'
+
+    call psb_erractionsave(err_act)
+    info = psb_success_
+
+    trans_ = psb_toupper(trans)
+    select case(trans_)
+    case('N')
+    case('T','C')
+    case default
+      call psb_errpush(psb_err_iarg_invalid_i_,name)
+      goto 9999
+    end select
+
+    n_row = psb_cd_get_local_rows(desc_data)
+    n_col = psb_cd_get_local_cols(desc_data)
+
+
+    call y%mlt(alpha,sv%dv,x,beta,info)
+
+    if (info /= psb_success_) then 
+      call psb_errpush(psb_err_internal_error_,name)
+      goto 9999
+    end if
+    call psb_erractionrestore(err_act)
+    return
+
+9999 continue
+    call psb_erractionrestore(err_act)
+    if (err_act == psb_act_abort_) then
+      call psb_error()
+      return
+    end if
+    return
+
+  end subroutine d_diag_solver_apply_vect
+
   subroutine d_diag_solver_bld(a,desc_a,sv,upd,info,b,amold,vmold)
 
     use psb_base_mod
@@ -253,6 +312,16 @@ contains
       end if
     end do
 
+    if (present(vmold)) then 
+      allocate(sv%dv,mold=vmold,stat=info) 
+    else
+      allocate(psb_d_vect :: sv%dv,stat=info) 
+    end if
+    if (info == 0) then 
+      call sv%dv%bld(sv%d)
+    else 
+      write(0,*) 'Error on sv%dv%bld ', info
+    end if
 
     if (debug_level >= psb_debug_outer_) &
          & write(debug_unit,*) me,' ',trim(name),' end'

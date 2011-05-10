@@ -79,7 +79,20 @@ module mld_d_inner_mod
       real(psb_dpk_),target             :: work(:)
       integer, intent(out)              :: info
     end subroutine mld_dmlprec_aply
-  end interface mld_mlprec_aply
+    subroutine mld_dmlprec_aply_vect(alpha,p,x,beta,y,desc_data,trans,work,info)
+      use psb_base_mod, only : psb_dspmat_type, psb_desc_type, &
+           & psb_dpk_, psb_d_vect
+      use mld_d_prec_type, only : mld_dprec_type
+      type(psb_desc_type),intent(in)      :: desc_data
+      type(mld_dprec_type), intent(inout) :: p
+      real(psb_dpk_),intent(in)           :: alpha,beta
+      class(psb_d_vect),intent(inout)     :: x
+      class(psb_d_vect),intent(inout)     :: y
+      character,intent(in)                :: trans
+      real(psb_dpk_),target               :: work(:)
+      integer, intent(out)                :: info
+    end subroutine mld_dmlprec_aply_vect
+  end interface mld_mlprec_aply 
 
 
   interface mld_coarse_bld
