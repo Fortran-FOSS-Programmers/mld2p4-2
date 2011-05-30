@@ -42,7 +42,7 @@ SINNEROBJS= mld_scoarse_bld.o  mld_smlprec_bld.o     \
 DINNEROBJS= mld_dcoarse_bld.o  mld_dmlprec_bld.o	  \
 	mld_dilu0_fact.o   mld_diluk_fact.o  mld_dilut_fact.o  mld_daggrmap_bld.o \
 	mld_d_dec_map_bld.o mld_dmlprec_aply.o mld_daggrmat_asb.o   \
-	$(DMPFOBJS) 
+	$(DMPFOBJS) mld_d_decmc64_bld.o
 
 CINNEROBJS= mld_ccoarse_bld.o  mld_cmlprec_bld.o \
 	mld_cilu0_fact.o   mld_ciluk_fact.o  mld_cilut_fact.o  mld_caggrmap_bld.o \

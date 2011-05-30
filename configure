@@ -597,6 +597,7 @@ ac_includes_default="\
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 FDEFINES
+MC64_LIBS
 SLUDIST_LIBS
 SLUDIST_FLAGS
 UMF_LIBS
@@ -675,6 +676,8 @@ ac_user_opts='
 enable_option_checking
 with_psblas
 with_libs
+with_mc64
+with_mc64dir
 with_umfpack
 with_umfpackdir
 enable_serial
@@ -1320,6 +1323,9 @@ Optional Packages:
   --with-libs             List additional link flags here. For example,
                           --with-libs=-lspecial_system_lib or
                           --with-libs=-L/path/to/libs
+  --with-mc64=LIBNAME     Specify the library name for the library containing
+                          MC64. Default: "-lmc64"
+  --with-mc64dir=DIR      Specify the directory for MC64 library and includes.
   --with-umfpack=LIBNAME  Specify the library name for UMFPACK library.
                           Default: "-lumfpack -lamd"
   --with-umfpackdir=DIR   Specify the directory for UMFPACK library and
@@ -3363,6 +3369,66 @@ fi
 # Note : SuperLU_Dist produces superlu.a by default..
 # Note : THESE WERE NOT TESTED
 
+# Check whether --with-mc64 was given.
+if test "${with_mc64+set}" = set; then :
+  withval=$with_mc64; mld2p4_cv_mc64=$withval
+else
+  mld2p4_cv_mc64='-lmc64'
+fi
+
+MC64_LIBS="$mld2p4_cv_mc64"
+
+# Check whether --with-mc64dir was given.
+if test "${with_mc64dir+set}" = set; then :
+  withval=$with_mc64dir; mld2p4_cv_mc64dir=$withval
+else
+  mld2p4_cv_mc64dir=''
+fi
+
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+save_LIBS="$LIBS"
+save_CPPFLAGS="$CPPFLAGS"
+if test "x$mld2p4_cv_mc64dir" != "x"; then
+   MC64_LIBS="-L$mld2p4_cv_mc64dir $MC64_LIBS"
+fi
+LIBS="$MC64_LIBS $LIBS"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Looking  for mc64 in dir $mld2p4_cv_mc64dir" >&5
+$as_echo_n "checking Looking  for mc64 in dir $mld2p4_cv_mc64dir... " >&6; }
+ac_exeext=''
+ac_ext='f90'
+ac_link='${MPIFC-$FC} -o conftest${ac_exeext} conftest.$ac_ext  $LIBS  1>&5'
+cat > conftest.$ac_ext <<EOF
+           program test
+              integer icntl(10)
+	      call mc64id(icntl)
+           end program test
+EOF
+if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_link\""; } >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && test -s conftest${ac_exeext}; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+ mld2p4_cv_have_mc64=yes;pac_mc64_lib_ok=yes;
+  :
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+  mld2p4_cv_have_mc64=no;pac_mc64_lib_ok=no; MC64_LIBS="";
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+fi
+LIBS="$SAVE_LIBS";
+rm -f conftest*
+if test "x$mld2p4_cv_have_mc64" == "xyes" ; then
+   FDEFINES="$mld_cv_define_prepend-DHAVE_MC64_ $FDEFINES"
+fi
+
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -5376,6 +5442,7 @@ rm -f conftest*
 ###############################################################################
 # Variable substitutions : the Make.inc.in will have these @VARIABLES@
 # substituted.
+
 
 
 

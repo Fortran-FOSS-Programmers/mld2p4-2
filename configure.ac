@@ -167,6 +167,10 @@ dnl AC_MSG_RESULT([$mld2p4_cv_have_superludist])
 dnl AC_MSG_CHECKING([SuperLU])
 dnl AC_CHECK_LIB(superlu,[superlu_malloc],mld2p4_cv_have_superlu=yes,mld2p4_cv_have_superlu=no)
 dnl AC_MSG_RESULT([$mld2p4_cv_have_superlu])
+PAC_CHECK_MC64
+if test "x$mld2p4_cv_have_mc64" == "xyes" ; then 
+   FDEFINES="$mld_cv_define_prepend-DHAVE_MC64_ $FDEFINES"
+fi
 
 PAC_CHECK_UMFPACK
 if test "x$mld2p4_cv_have_umfpack" == "xyes" ; then 
@@ -259,6 +263,7 @@ AC_SUBST(UMF_FLAGS)
 AC_SUBST(UMF_LIBS)
 AC_SUBST(SLUDIST_FLAGS)
 AC_SUBST(SLUDIST_LIBS)
+AC_SUBST(MC64_LIBS)
 AC_SUBST(FDEFINES)
 
 ###############################################################################

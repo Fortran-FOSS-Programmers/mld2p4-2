@@ -929,3 +929,62 @@ else
 fi
 ]
 )
+
+
+dnl @synopsis PAC_CHECK_MC64
+dnl
+dnl Will try to find the MC64 package.
+dnl
+dnl Will use $FC
+dnl
+dnl If the test passes, will execute ACTION-IF-FOUND. Otherwise, ACTION-IF-NOT-FOUND.
+dnl Note : This file will be likely to induce the compiler to create a module file
+dnl (for a module called conftest).
+dnl Depending on the compiler flags, this could cause a conftest.mod file to appear
+dnl in the present directory, or in another, or with another name. So be warned!
+dnl
+dnl @author Salvatore Filippone <salvatore.filippone@uniroma2.it>
+dnl
+AC_DEFUN(PAC_CHECK_MC64,
+[AC_ARG_WITH(mc64, AC_HELP_STRING([--with-mc64=LIBNAME], [Specify the library name for the library containing MC64.
+Default: "-lmc64"]),
+        [mld2p4_cv_mc64=$withval],
+        [mld2p4_cv_mc64='-lmc64'])
+MC64_LIBS="$mld2p4_cv_mc64"
+AC_ARG_WITH(mc64dir, AC_HELP_STRING([--with-mc64dir=DIR], [Specify the directory for MC64 library and includes.]),
+        [mld2p4_cv_mc64dir=$withval],
+        [mld2p4_cv_mc64dir=''])
+AC_LANG([Fortran])
+save_LIBS="$LIBS"
+save_CPPFLAGS="$CPPFLAGS"
+if test "x$mld2p4_cv_mc64dir" != "x"; then 
+   MC64_LIBS="-L$mld2p4_cv_mc64dir $MC64_LIBS"
+fi
+LIBS="$MC64_LIBS $LIBS"
+AC_MSG_CHECKING([Looking  for mc64 in dir $mld2p4_cv_mc64dir])
+ac_exeext=''
+ac_ext='f90'
+ac_link='${MPIFC-$FC} -o conftest${ac_exeext} conftest.$ac_ext  $LIBS  1>&5'
+dnl Warning : square brackets are EVIL!
+cat > conftest.$ac_ext <<EOF
+           program test
+              integer icntl(10)
+	      call mc64id(icntl)
+           end program test
+EOF
+if AC_TRY_EVAL(ac_link) && test -s conftest${ac_exeext}; then
+  AC_MSG_RESULT([yes])
+ mld2p4_cv_have_mc64=yes;pac_mc64_lib_ok=yes;
+  ifelse([$1], , :, [rm -rf conftest*
+  $1])
+else
+  AC_MSG_RESULT([no])
+  mld2p4_cv_have_mc64=no;pac_mc64_lib_ok=no; MC64_LIBS="";
+  echo "configure: failed program was:" >&AC_FD_CC
+  cat conftest.$ac_ext >&AC_FD_CC
+ifelse([$2], , , [  rm -rf conftest*
+  $2
+])dnl
+fi
+LIBS="$SAVE_LIBS";
+rm -f conftest*])dnl 
