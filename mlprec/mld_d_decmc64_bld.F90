@@ -16,19 +16,23 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   integer, allocatable        :: ils(:), neigh(:), irow(:), icol(:)
   real(psb_dpk_), allocatable :: val(:), diag(:)
   type(psb_dspmat_type)       :: atmp
-  type(psb_d_csc_sparse_mat)  :: acsc
-  type(psb_d_coo_sparse_mat)  :: acoo
-  integer :: icnt,nlp,k,n,ia,isz,naggr,i,j,m, nz
+  type(psb_d_csc_sparse_mat)  :: acsc, acred
+  type(psb_d_csr_sparse_mat)  :: acsr
+  integer :: icnt,nlp,k,n,ia,isz,naggr,i,j,m, nz, nagg1, i1, i2, ns, irdp
+  integer :: num_agg, num_unagg
   real(psb_dpk_)  :: cpling, tcl
   logical :: recovery
   integer :: debug_level, debug_unit
   integer :: ictxt,np,me,err_act
-  integer :: nrow, ncol, n_ne, nnz, job, nr, nc, num
-  character(len=20)  :: name, ch_err
+  integer :: nrow, ncol, n_ne, nnz, job, nr, nc, num, ir, ic, ip, nr2, nc2, nz2
+  integer           :: irmax, icmax, idx, mxk2
+  real(psb_dpk_)    :: rmax, cmax
+  character(len=20) :: name, ch_err
   integer :: icntl(10), infov(10)
   real(psb_dpk_) :: dcntl(10) 
   integer :: liw, ldw
-  integer, allocatable        :: iwork(:), perm(:)
+  integer, allocatable        :: iwork(:), perm(:), mark(:), perm2(:),mark2(:)
+  integer, allocatable        :: ind_agg(:), ind_unagg(:)
   real(psb_dpk_), allocatable :: dwork(:)
 
   if (psb_get_errstatus() /= 0) return 
@@ -61,7 +65,10 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
     goto 9999
   end if
 
-
+  !
+  ! Purely local aggregation, clip away halo
+  ! Also, take out diagonal for sake of mc64
+  !
   call a%csclip(atmp,info,jmax=nr)
   call atmp%get_diag(diag,info)
   call atmp%clip_diag(info)
@@ -74,7 +81,7 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   icntl(1) = -1
   icntl(2) = -1
   !
-  ! Job default. Should we add am option somewhere?
+  ! Job default. Should add an option somewhere. 
   ! 
   job      = 5  
   select case(job)
@@ -87,15 +94,19 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
     liw = 3*nc+2*nr
     ldw = nc+2*nr+nnz
   end select
-  
-  allocate(iwork(liw),dwork(ldw),perm(nr),stat=info)
+
+  allocate(iwork(liw),dwork(ldw),perm(nr),mark(nr),&
+       & perm2(nr),mark2(nr),stat=info)
   if (info /= 0) then 
     info=psb_err_alloc_request_
     call psb_errpush(info,name,i_err=(/ldw,0,0,0,0/),&
          & a_err='real(psb_dpk_)')
     goto 9999
   end if
-  call mc64d(job,nr,nc,nnz,acsc%icp,acsc%ia,acsc%val,&
+
+  ! First aggregation
+
+  call mc64ad(job,nr,nc,nnz,acsc%icp,acsc%ia,acsc%val,&
        & num,perm,liw,iwork,ldw,dwork,icntl,dcntl,infov)
   if (infov(1) < 0) then 
     write(psb_err_unit,*) 'MC64 returned a failure ',infov(1:2)
@@ -103,216 +114,160 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
     call psb_errpush(info,name)
     goto 9999
   end if
-  
-!!$  if(info /= psb_success_) then
-!!$    info=psb_err_from_subroutine_
-!!$    call psb_errpush(info,name,a_err='psb_sp_getdiag')
-!!$    goto 9999
-!!$  end if
-!!$
-!!$  do i=1, nr
-!!$    ilaggr(i) = -(nr+1)
-!!$  end do
-!!$
-!!$
-!!$  ! Note: -(nr+1)  Untouched as yet
-!!$  !       -i    1<=i<=nr  Adjacent to aggregate i
-!!$  !        i    1<=i<=nr  Belonging to aggregate i
-!!$  !
-!!$  ! Phase one: group nodes together. 
-!!$  ! Very simple minded strategy. 
-!!$  ! 
-!!$  naggr = 0
-!!$  nlp   = 0
-!!$  do
-!!$    icnt = 0
-!!$    do i=1, nr 
-!!$      if (ilaggr(i) == -(nr+1)) then 
-!!$        !
-!!$        ! 1. Untouched nodes are marked >0 together 
-!!$        !    with their neighbours
-!!$        !
-!!$        icnt      = icnt + 1 
-!!$        naggr     = naggr + 1 
-!!$        ilaggr(i) = naggr
-!!$
-!!$        call a%csget(i,i,nz,irow,icol,val,info)
-!!$        if (info /= psb_success_) then 
-!!$          info=psb_err_from_subroutine_
-!!$          call psb_errpush(info,name,a_err='csget')
-!!$          goto 9999
-!!$        end if
-!!$
-!!$        do k=1, nz
-!!$          j = icol(k)
-!!$          if ((1<=j).and.(j<=nr).and.(i /= j)) then 
-!!$            if (abs(val(k)) > theta*sqrt(abs(diag(i)*diag(j)))) then 
-!!$              ilaggr(j) = naggr
-!!$            else 
-!!$              ilaggr(j) = -naggr
-!!$            endif
-!!$          end if
-!!$        enddo
-!!$
-!!$        !
-!!$        ! 2. Untouched neighbours of these nodes are marked <0.
-!!$        !
-!!$        call a%get_neigh(i,neigh,n_ne,info,lev=2)
-!!$        if (info /= psb_success_) then 
-!!$          info=psb_err_from_subroutine_
-!!$          call psb_errpush(info,name,a_err='psb_neigh')
-!!$          goto 9999
-!!$        end if
-!!$
-!!$        do n = 1, n_ne
-!!$          m = neigh(n)
-!!$          if ((1<=m).and.(m<=nr)) then
-!!$            if (ilaggr(m) == -(nr+1)) ilaggr(m) = -naggr
-!!$          endif
-!!$        enddo
-!!$      endif
-!!$    enddo
-!!$    nlp = nlp + 1 
-!!$    if (icnt == 0) exit 
-!!$  enddo
-!!$  if (debug_level >= psb_debug_outer_) then 
-!!$    write(debug_unit,*) me,' ',trim(name),&
-!!$         & ' Check 1:',count(ilaggr == -(nr+1))
-!!$  end if
-!!$
-!!$  !
-!!$  ! Phase two: sweep over leftovers. 
-!!$  !
-!!$  allocate(ils(nr),stat=info) 
-!!$  if(info /= psb_success_) then
-!!$    info=psb_err_alloc_request_
-!!$    call psb_errpush(info,name,i_err=(/naggr+10,0,0,0,0/),&
-!!$         & a_err='integer')
-!!$    goto 9999
-!!$  end if
-!!$
-!!$  do i=1, size(ils)
-!!$    ils(i) = 0
-!!$  end do
-!!$  do i=1, nr 
-!!$    n = ilaggr(i)
-!!$    if (n>0) then 
-!!$      if (n>naggr) then 
-!!$        info=psb_err_internal_error_
-!!$        call psb_errpush(info,name,a_err='loc_Aggregate: n > naggr 1 ?')
-!!$        goto 9999        
-!!$      else
-!!$        ils(n) = ils(n) + 1 
-!!$      end if
-!!$
-!!$    end if
-!!$  end do
-!!$  if (debug_level >= psb_debug_outer_) then 
-!!$    write(debug_unit,*) me,' ',trim(name),&
-!!$         & 'Phase 1: number of aggregates ',naggr
-!!$    write(debug_unit,*) me,' ',trim(name),&
-!!$         & 'Phase 1: nodes aggregated     ',sum(ils)
-!!$  end if
-!!$
-!!$  recovery=.false.
-!!$  do i=1, nr
-!!$    if (ilaggr(i) < 0) then 
-!!$      !
-!!$      ! Now some silly rule to break ties:
-!!$      ! Group with adjacent aggregate. 
-!!$      !
-!!$      isz  = nr+1
-!!$      ia   = -1
-!!$      cpling = dzero
-!!$      call a%csget(i,i,nz,irow,icol,val,info)
-!!$      if (info /= psb_success_) then 
-!!$        info=psb_err_from_subroutine_
-!!$        call psb_errpush(info,name,a_err='psb_sp_getrow')
-!!$        goto 9999
-!!$      end if
-!!$
-!!$      do j=1, nz
-!!$        k = icol(j)
-!!$        if ((1<=k).and.(k<=nr).and.(k /= i))  then 
-!!$          tcl = abs(val(j)) / sqrt(abs(diag(i)*diag(k)))
-!!$          if (abs(val(j)) > theta*sqrt(abs(diag(i)*diag(k)))) then 
-!!$            n = ilaggr(k) 
-!!$            if (n>0) then 
-!!$              if (n>naggr) then 
-!!$                info=psb_err_internal_error_
-!!$                call psb_errpush(info,name,a_err='loc_Aggregate: n > naggr 2 ?')
-!!$                goto 9999        
-!!$              end if
-!!$
-!!$              if ((abs(val(j))>cpling) .or. &
-!!$                   & ((abs(val(j)) == cpling).and. (ils(n) < isz))) then 
-!!$                ia     = n
-!!$                isz    = ils(n)
-!!$                cpling = abs(val(j))
-!!$              endif
-!!$            endif
-!!$          endif
-!!$        end if
-!!$      enddo
-!!$
-!!$      if (ia == -1) then 
-!!$        ! At this point, the easiest thing is to start a new aggregate
-!!$        naggr          = naggr + 1
-!!$        ilaggr(i)      = naggr 
-!!$        ils(ilaggr(i)) = 1
-!!$
-!!$      else
-!!$
-!!$        ilaggr(i) = ia
-!!$
-!!$        if (ia>naggr) then 
-!!$          info=psb_err_internal_error_
-!!$          call psb_errpush(info,name,a_err='loc_Aggregate: n > naggr ? ')
-!!$          goto 9999        
-!!$        end if
-!!$        ils(ia)  = ils(ia) + 1
-!!$      endif
-!!$
-!!$    end if
-!!$  end do
-!!$  if (debug_level >= psb_debug_outer_) then 
-!!$    if (recovery) then 
-!!$      write(debug_unit,*) me,' ',trim(name),&
-!!$           & 'Had to recover from strange situation in loc_aggregate.'
-!!$      write(debug_unit,*) me,' ',trim(name),&
-!!$           & 'Perhaps an unsymmetric pattern?'
-!!$    endif
-!!$    write(debug_unit,*) me,' ',trim(name),&
-!!$         & 'Phase 2: number of aggregates ',naggr,sum(ils) 
-!!$    do i=1, naggr 
-!!$      write(debug_unit,*) me,' ',trim(name),&
-!!$           & 'Size of aggregate ',i,' :',count(ilaggr == i), ils(i)
-!!$    enddo
-!!$    write(debug_unit,*) me,' ',trim(name),&
-!!$         & maxval(ils(1:naggr))
-!!$    write(debug_unit,*) me,' ',trim(name),&
-!!$         & 'Leftovers ',count(ilaggr<0), '  in ',nlp,' loops'
-!!$  end if
-!!$
-!!$  if (count(ilaggr<0) >0) then 
-!!$    info=psb_err_internal_error_
-!!$    call psb_errpush(info,name,a_err='Fatal error: some leftovers')
-!!$    goto 9999
-!!$  endif
-!!$
-!!$  deallocate(ils,neigh,stat=info)
-!!$  if (info /= psb_success_) then 
-!!$    info=psb_err_alloc_dealloc_
-!!$    call psb_errpush(info,name)
-!!$    goto 9999
-!!$  end if
-!!$  if (naggr > ncol) then 
-!!$    write(0,*) name,'Error : naggr > ncol',naggr,ncol
-!!$    info=psb_err_internal_error_
-!!$    call psb_errpush(info,name,a_err='Fatal error: naggr>ncol')
-!!$    goto 9999
-!!$  end if
-!!$
+
+  ! Mark nodes
+  call marking(nr,perm,mark,info) 
+
+  if (info < 0) then 
+    write(psb_err_unit,*) 'marking returned a failure ',info
+    info=psb_err_internal_error_
+    call psb_errpush(info,name)
+    goto 9999
+  end if
+
+
+  nagg1     = 0
+  num_agg   = 0
+  num_unagg = 0
+  do i=1, nr
+    nagg1 = max(nagg1,mark(i))
+    if (mark(i) > 0) num_agg   = num_agg + 1
+    if (mark(i) < 0) num_unagg = num_unagg + 1
+  end do
+  allocate(ind_agg(num_agg), ind_unagg(num_unagg), stat=info)
+  if (info /= 0) then 
+    info=psb_err_alloc_request_
+    call psb_errpush(info,name,i_err=(/num_agg+num_unagg,0,0,0,0/),&
+         & a_err='integer')
+    goto 9999
+  end if
+  i1 = 0
+  i2 = 0
+  nagg1 = 0
+  do i=1, nr
+    if (mark(i) > 0) then 
+      nagg1 = max(nagg1,mark(i))
+      i1 = i1 + 1
+      ind_agg(i1) = i 
+    end if
+    if (mark(i) < 0) then 
+      i2 = i2 + 1 
+      ind_unagg(i2) = i
+    end if
+  end do
+
+  !
+  ! Build reduced matrix and perform second aggregation step 
+  !
+  if (num_agg < nr) then 
+    nr2 = num_unagg
+    nc2 = num_unagg
+    call acred%allocate(nr2,nc2,nnz)
+    acred%icp(1) = 1
+    irdp         = 1
+    do i=1, nc2
+      ic = ind_unagg(i)
+      j  = acsc%icp(ic)
+      nz = acsc%icp(ic+1)-j
+      do k=1, nz 
+        ir = acsc%ia(j)
+        if (ir /= ic) then 
+          ip = psb_ibsrch(ir,num_unagg,ind_unagg) 
+          if (ip > 0) then 
+            acred%ia(irdp)  = ip
+            acred%val(irdp) = acsc%val(j)
+            irdp = irdp + 1 
+          end if
+        end if
+        j = j + 1 
+      end do
+      acred%icp(i+1) = irdp
+    end do
+    nz2 = irdp - 1
+    call mc64ad(job,nr2,nc2,nz2,acred%icp,acred%ia,acred%val,&
+         & num,perm2,liw,iwork,ldw,dwork,icntl,dcntl,infov)
+
+    call marking(nc2,perm2,mark2,info) 
+    if (info < 0) then 
+      write(psb_err_unit,*) 'marking returned a failure ',info
+      info=psb_err_internal_error_
+      call psb_errpush(info,name)
+      goto 9999
+    end if
+
+    !
+    ! Update marks and rebuild list of unaggregated indices
+    !
+    num_unagg = 0
+    mxk2      = 0
+    do i=1, nc2 
+      if (mark2(i) > 0) then 
+        mark(ind_unagg(i))   = nagg1+mark2(i)
+        mxk2 = max(mxk2,mark2(i))
+      else
+        mark(ind_unagg(i))   = mark2(i)
+        num_unagg            = num_unagg + 1 
+        ind_unagg(num_unagg) = ind_unagg(i) 
+      end if
+    end do
+    call acred%free()
+    nagg1 = nagg1 + mxk2 
+  end if
+  !
+  ! Fixup leftover unaggregated nodes, if any
+  !
+
+  !
+  ! A CSR copy comes in handy. Can we do it
+  ! with less memory? 
+  !
+  call acsc%cp_to_fmt(acsr,info)
+  do i=1, num_unagg 
+    ! Look at row/col neighbours of row unagg(i)
+    k = ind_unagg(i)
+    ! Max along the row
+    rmax  = dzero
+    irmax = -1
+    do j=acsr%irp(k),acsr%irp(k+1)-1
+      if (abs(acsr%val(j)) > rmax) then 
+        rmax  = abs(acsr%val(j))
+        irmax = acsr%ja(j)
+      end if
+    end do
+    ! Max along the column
+    cmax  = dzero
+    icmax = -1
+    do j=acsc%icp(k),acsc%icp(k+1)-1
+      if (abs(acsc%val(j)) > cmax) then 
+        cmax  = abs(acsc%val(j))
+        icmax = acsc%ia(j)
+      end if
+    end do
+    if (rmax > cmax) then 
+      idx = irmax
+    else
+      idx = icmax
+    end if
+    if (mark(idx) < 0) then 
+      nagg1 = nagg1 + 1 
+      mark(idx) = nagg1
+      mark(k)   = nagg1
+    else
+      mark(k)   = mark(idx)
+    end if
+  end do
+
+  call acsr%free()
+  call acsc%free()
+
+  naggr = nagg1 
+  if (naggr > ncol) then 
+    write(0,*) name,'Error : naggr > ncol',naggr,ncol
+    info=psb_err_internal_error_
+    call psb_errpush(info,name,a_err='Fatal error: naggr>ncol')
+    goto 9999
+  end if
+
 
   call psb_realloc(ncol,ilaggr,info)
   if (info /= psb_success_) then 
@@ -321,6 +276,10 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
     call psb_errpush(info,name,a_err=ch_err)
     goto 9999
   end if
+  do i=1, nr
+    ilaggr(i) = mark(i) 
+  end do
+
 
   allocate(nlaggr(np),stat=info)
   if (info /= psb_success_) then 
@@ -334,7 +293,7 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   nlaggr(me+1) = naggr
   call psb_sum(ictxt,nlaggr(1:np))
 
-  
+
   call psb_erractionrestore(err_act)
   return
 #else 
@@ -344,7 +303,7 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   call psb_errpush(info,name)
 
   goto 9999
-  
+
 #endif
 9999 continue
   call psb_erractionrestore(err_act)
@@ -356,3 +315,66 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
 
 end subroutine mld_d_decmc64_bld
 
+subroutine marking(nr,perm,mark,info)
+  implicit none 
+  integer, intent(in)  :: nr, perm(*)
+  integer, intent(out) :: mark(*)
+  
+  integer, allocatable :: pinv(:)
+  integer :: i,j,k, info, nagg
+
+  allocate(pinv(nr),stat=info) 
+  
+  if (info /= 0) then 
+    write(0,*) 'Allocation error'
+    info = -1
+    return
+  end if
+  pinv = 0
+  do i=1, nr
+    if (perm(i) > 0) then 
+      pinv(perm(i)) = i
+    end if
+  end do
+  do i=1,nr
+    if (pinv(i) == 0) pinv(i) = -3
+  end do
+  mark(1:nr) = 0
+  nagg = 0
+  do i=1, nr
+    if (mark(i) == 0) then 
+      if (perm(i) < 0) then 
+        ! Unmatched node
+        mark(i) = -1
+      else if (perm(i) == i) then 
+        ! Self-matched node
+        mark(i) = -2
+      else 
+        if (mark(perm(i)) <= 0) then 
+          ! adjacent node unmarked
+          nagg          = nagg + 1 
+          mark(i)       = nagg
+          mark(perm(i)) = nagg
+        else 
+          ! Adjacent node marked, check dual of I
+          if (pinv(i) < 0) then 
+            ! unmatched dual 
+            mark(i) = -4
+          else 
+            if (mark(pinv(i))  == 0 ) then 
+              nagg          = nagg + 1 
+              mark(i)       = nagg
+              mark(perm(i)) = nagg
+            else 
+              mark(i)    = -3
+            end if
+            
+          end if
+        end if
+      end if
+    end if
+  end do
+  
+
+end subroutine marking
+  

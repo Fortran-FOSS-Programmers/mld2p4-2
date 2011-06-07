@@ -225,12 +225,13 @@ module mld_base_prec_type
   !  
   ! Legal values for entry: mld_aggr_alg_
   !
-  integer, parameter :: mld_dec_aggr_=0
-  integer, parameter :: mld_sym_dec_aggr_=1
-  integer, parameter :: mld_glb_aggr_=2
-  integer, parameter :: mld_new_dec_aggr_=3
-  integer, parameter :: mld_new_glb_aggr_=4
-  integer, parameter :: mld_max_aggr_alg_=mld_dec_aggr_
+  integer, parameter :: mld_dec_aggr_      = 0
+  integer, parameter :: mld_sym_dec_aggr_  = 1
+  integer, parameter :: mld_glb_aggr_      = 2
+  integer, parameter :: mld_new_dec_aggr_  = 3
+  integer, parameter :: mld_new_glb_aggr_  = 4
+  integer, parameter :: mld_dec_mc64_aggr_ = 5
+  integer, parameter :: mld_max_aggr_alg_  = mld_dec_mc64_aggr_
 
   !
   ! Legal values for entry: mld_aggr_omega_alg_
@@ -288,8 +289,9 @@ module mld_base_prec_type
   character(len=15), parameter, private :: &
        &  matrix_names(0:1)=(/'distributed   ','replicated    '/)
   character(len=18), parameter, private :: &
-       &  aggr_names(0:4)=(/'local aggregation ','sym. local aggr.  ',&
-       &     'global aggregation', 'new local aggr.   ','new global aggr.  '/)
+       &  aggr_names(0:5)=(/'local aggregation ','sym. local aggr.  ',&
+       &     'global aggregation', 'new local aggr.   ','new global aggr.  ',&
+       &     'dec matching mc64 '/)
   character(len=6), parameter, private :: &
        &  restrict_names(0:4)=(/'none ','halo ','     ','     ','     '/)
   character(len=12), parameter, private :: &
@@ -373,6 +375,8 @@ contains
       val = mld_sym_dec_aggr_
     case('GLB')
       val = mld_glb_aggr_
+    case ('MC64')
+      val = mld_dec_mc64_aggr_
     case('REPL')
       val = mld_repl_mat_
     case('DIST')

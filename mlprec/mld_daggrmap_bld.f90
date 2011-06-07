@@ -113,8 +113,8 @@ subroutine mld_daggrmap_bld(aggr_type,theta,a,desc_a,ilaggr,nlaggr,info)
   !
   ictxt=psb_cd_get_context(desc_a)
   call psb_info(ictxt,me,np)
-  nrow  = psb_cd_get_local_rows(desc_a)
-  ncol  = psb_cd_get_local_cols(desc_a)
+  nrow  = desc_a%get_local_rows()
+  ncol  = desc_a%get_local_cols()
 
   select case (aggr_type)
   case (mld_dec_aggr_)  
@@ -135,6 +135,15 @@ subroutine mld_daggrmap_bld(aggr_type,theta,a,desc_a,ilaggr,nlaggr,info)
     if (info == psb_success_) call atmp%cscnv(info,type='CSR')
     if (info == psb_success_) call mld_dec_map_bld(theta,atmp,desc_a,nlaggr,ilaggr,info)    
     if (info == psb_success_) call atmp%free()
+
+  case (mld_dec_mc64_aggr_) 
+    !
+    ! Just to test things in the beginnig. 
+    ! 
+    write(0,*) 'Calling DEC_MC64' 
+    call mld_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)    
+    write(0,*) 'DEC_MC64 done.  ' 
+!!$    call mld_dec_map_bld(theta,a,desc_a,nlaggr,ilaggr,info)    
 
   case default
 
