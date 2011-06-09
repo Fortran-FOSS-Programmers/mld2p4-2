@@ -13,7 +13,7 @@ SMODOBJS=mld_s_prec_type.o mld_s_prec_mod.o mld_s_move_alloc_mod.o mld_s_ilu_fac
 
 DMODOBJS=mld_d_prec_type.o mld_d_prec_mod.o mld_d_move_alloc_mod.o mld_d_ilu_fact_mod.o \
 	mld_d_inner_mod.o mld_d_ilu_solver.o mld_d_diag_solver.o mld_d_jac_smoother.o mld_d_as_smoother.o \
-	mld_d_umf_solver.o mld_d_slu_solver.o mld_d_sludist_solver.o mld_d_id_solver.o 
+	mld_d_umf_solver.o mld_d_slu_solver.o mld_d_sludist_solver.o mld_d_id_solver.o  mld_mc64_tools_mod.o
 
 CMODOBJS=mld_c_prec_type.o mld_c_prec_mod.o mld_c_move_alloc_mod.o mld_c_ilu_fact_mod.o \
 	mld_c_inner_mod.o mld_c_ilu_solver.o mld_c_diag_solver.o mld_c_jac_smoother.o mld_c_as_smoother.o \
@@ -148,7 +148,7 @@ mld_c_as_smoother.o mld_c_jac_smoother.o: mld_c_prec_type.o
 mld_c_jac_smoother.o: mld_c_diag_solver.o
 mld_cprecinit.o mld_cprecset.o: mld_c_diag_solver.o mld_c_ilu_solver.o \
 		mld_c_as_smoother.o mld_c_jac_smoother.o
-
+mld_d_decmc64_bld.o: mld_mc64_tools_mod.o
  
 mpobjs: $(MODOBJS)
 	(make $(MPFOBJS) F90="$(MPF90)" F90COPT="$(F90COPT)")
