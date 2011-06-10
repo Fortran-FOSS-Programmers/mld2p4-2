@@ -19,7 +19,7 @@ contains
     end if
     pinv = 0
     do i=1, nr
-      if (perm(i) > 0) then 
+      if ((perm(i) > 0).and.(perm(i)<=nr)) then 
         pinv(perm(i)) = i
       end if
     end do
@@ -30,7 +30,7 @@ contains
     nagg = 0
     do i=1, nr
       if (mark(i) == 0) then 
-        if (perm(i) < 0) then 
+        if ((perm(i) <= 0).or.(perm(i)>nr)) then 
           ! Unmatched node
           mark(i) = -1
         else if (perm(i) == i) then 
@@ -139,11 +139,14 @@ contains
            & a_err='real(psb_dpk_)')
       goto 9999
     end if
-
+    
+    perm  = 0
+    perm2 = 0 
     ! First aggregation
 
     call mc64ad(job,nr,nc,nnz,acsc%icp,acsc%ia,acsc%val,&
          & num,perm,liw,iwork,ldw,dwork,icntl,dcntl,infov)
+
     if (infov(1) < 0) then 
       write(psb_err_unit,*) 'MC64 returned a failure ',infov(1:2)
       info=psb_err_internal_error_
@@ -151,6 +154,7 @@ contains
       goto 9999
     end if
 
+   
     ! Mark nodes
     call marking(nr,perm,mark,info) 
 

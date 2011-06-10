@@ -137,13 +137,8 @@ subroutine mld_daggrmap_bld(aggr_type,theta,a,desc_a,ilaggr,nlaggr,info)
     if (info == psb_success_) call atmp%free()
 
   case (mld_dec_mc64_aggr_) 
-    !
-    ! Just to test things in the beginnig. 
-    ! 
-    write(0,*) 'Calling DEC_MC64' 
+
     call mld_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)    
-    write(0,*) 'DEC_MC64 done.  ' 
-!!$    call mld_dec_map_bld(theta,a,desc_a,nlaggr,ilaggr,info)    
 
   case default
 

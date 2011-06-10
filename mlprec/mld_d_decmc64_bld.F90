@@ -20,22 +20,20 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   type(psb_d_csc_sparse_mat)  :: acsc, acred
   type(psb_d_csr_sparse_mat)  :: acsr
   type(psb_d_coo_sparse_mat)  :: acoo
-  integer :: icnt,nlp,k,n,ia,isz,naggr,i,j,m, nz, nagg1, nagg2, i1, i2, ns, irdp
+  integer :: icnt,nlp,k,n,ia,isz,naggr,i,j,m, nz, nagg1, nagg2, nagg3
   integer :: num_agg, num_unagg
   real(psb_dpk_)  :: cpling, tcl
   logical :: recovery
   integer :: debug_level, debug_unit
   integer :: ictxt,np,me,err_act
-  integer :: nrow, ncol, n_ne, nnz, job, nr, nc, num, ir, ic, ip, nr2, nc2, nz2
+  integer :: nrow, ncol, n_ne, nnz, job, nr, nc, num, ir, ic, ip, nr2, nc2, nz2, nr3, nc4, nz3
   integer           :: irmax, icmax, idx, mxk2
   real(psb_dpk_)    :: rmax, cmax
   character(len=20) :: name, ch_err
   integer :: icntl(10), infov(10)
   real(psb_dpk_) :: dcntl(10) 
   integer :: liw, ldw
-  integer, allocatable        :: iwork(:), perm(:), mark(:), perm2(:),mark2(:)
-  integer, allocatable        :: ind_agg(:), ind_unagg(:)
-  real(psb_dpk_), allocatable :: dwork(:)
+  integer, allocatable        :: mark(:), mark2(:), mark3(:)
 
   if (psb_get_errstatus() /= 0) return 
   info = psb_success_
@@ -50,6 +48,13 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   ncol  = desc_a%get_local_cols()
 
 #ifdef HAVE_MC64_
+  call psb_realloc(ncol,ilaggr,info)
+  if (info /= psb_success_) then 
+    info=psb_err_from_subroutine_
+    ch_err='psb_realloc'
+    call psb_errpush(info,name,a_err=ch_err)
+    goto 9999
+  end if
   nr  = a%get_nrows()
   nnz = a%get_nzeros()
   call mld_d_match(a,nagg1,mark,info)
@@ -76,20 +81,32 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   call atmp%clip_diag(info)
   
   call mld_d_match(atmp,nagg2,mark2,info)
-
-
-  naggr = nagg2
-  call psb_realloc(ncol,ilaggr,info)
-  if (info /= psb_success_) then 
-    info=psb_err_from_subroutine_
-    ch_err='psb_realloc'
-    call psb_errpush(info,name,a_err=ch_err)
-    goto 9999
+  
+  if (.false.) then 
+    call atmp%mv_to(acoo)
+    nz3 = acoo%get_nzeros()
+    do i=1, nz3
+      acoo%ia(i) = mark2(acoo%ia(i))
+      acoo%ja(i) = mark2(acoo%ja(i))
+    end do
+    call acoo%set_nrows(nagg2)
+    call acoo%set_ncols(nagg2)
+    call acoo%set_dupl(psb_dupl_add_)
+    call acoo%fix(info)
+    call atmp%mv_from(acoo)
+    call atmp%clip_diag(info)
+    call mld_d_match(atmp,nagg3,mark3,info)
+    
+    naggr = nagg3
+    do i=1, nr
+      ilaggr(i) = mark3(mark2(mark(i)))
+    end do
+  else 
+    naggr = nagg2
+    do i=1, nr
+      ilaggr(i) = (mark2(mark(i)))
+    end do
   end if
-  do i=1, nr
-    ilaggr(i) = mark2(mark(i))
-  end do
-
 
   allocate(nlaggr(np),stat=info)
   if (info /= psb_success_) then 
