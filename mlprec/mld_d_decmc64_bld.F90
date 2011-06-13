@@ -14,8 +14,6 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   integer, intent(out)               :: info
 
   ! Local variables
-  integer, allocatable        :: ils(:), neigh(:), irow(:), icol(:)
-  real(psb_dpk_), allocatable :: val(:), diag(:)
   type(psb_dspmat_type)       :: atmp
   type(psb_d_csc_sparse_mat)  :: acsc, acred
   type(psb_d_csr_sparse_mat)  :: acsr
@@ -26,14 +24,21 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   logical :: recovery
   integer :: debug_level, debug_unit
   integer :: ictxt,np,me,err_act
-  integer :: nrow, ncol, n_ne, nnz, job, nr, nc, num, ir, ic, ip, nr2, nc2, nz2, nr3, nc4, nz3
-  integer           :: irmax, icmax, idx, mxk2
+  integer :: nrow, ncol, nr, nc, nnz
+  integer           :: irmax, icmax, idx, mxk2, istep
   real(psb_dpk_)    :: rmax, cmax
   character(len=20) :: name, ch_err
   integer :: icntl(10), infov(10)
   real(psb_dpk_) :: dcntl(10) 
-  integer :: liw, ldw
-  integer, allocatable        :: mark(:), mark2(:), mark3(:)
+  integer              :: liw, ldw
+  integer, allocatable :: mark(:), mark2(:), mark3(:)
+  type :: match_data_type
+    integer              :: nagg=0
+    integer, allocatable :: mark(:)
+  end type match_data_type
+  type(match_data_type), allocatable :: match_data(:)
+  integer                :: nsteps=3
+
 
   if (psb_get_errstatus() /= 0) return 
   info = psb_success_
@@ -55,9 +60,17 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
     call psb_errpush(info,name,a_err=ch_err)
     goto 9999
   end if
+  allocate(match_data(nsteps),stat=info) 
+  if (info /= psb_success_) then 
+    info=psb_err_alloc_request_
+    call psb_errpush(info,name,i_err=(/nsteps,0,0,0,0/),&
+         & a_err='match_data')
+    goto 9999
+  end if
+
   nr  = a%get_nrows()
   nnz = a%get_nzeros()
-  call mld_d_match(a,nagg1,mark,info)
+  call mld_d_match(a,match_data(1)%nagg,match_data(1)%mark,info)
   if (info /= psb_success_) then 
     info=psb_err_internal_error_
     call psb_errpush(info,name,a_err='Fatal error: naggr>ncol')
@@ -65,48 +78,37 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   end if
 
   ! Now call matching a second time
-
-  ! First prepare an aggregated matrix
-  call a%csclip(acoo,info,jmax=nr)
-  nz2 = acoo%get_nzeros()
-  do i=1, nz2
-    acoo%ia(i) = mark(acoo%ia(i))
-    acoo%ja(i) = mark(acoo%ja(i))
-  end do
-  call acoo%set_nrows(nagg1)
-  call acoo%set_ncols(nagg1)
-  call acoo%set_dupl(psb_dupl_add_)
-  call acoo%fix(info)
-  call atmp%mv_from(acoo)
-  call atmp%clip_diag(info)
-  
-  call mld_d_match(atmp,nagg2,mark2,info)
-  
-  if (.false.) then 
-    call atmp%mv_to(acoo)
-    nz3 = acoo%get_nzeros()
-    do i=1, nz3
-      acoo%ia(i) = mark2(acoo%ia(i))
-      acoo%ja(i) = mark2(acoo%ja(i))
+  if (nsteps > 1) then 
+    call a%csclip(acoo,info,jmax=nr)
+  end if
+  do istep = 2, nsteps
+    ! First prepare an aggregated matrix
+    nz = acoo%get_nzeros()
+    do i=1, nz
+      acoo%ia(i) = match_data(istep-1)%mark(acoo%ia(i))
+      acoo%ja(i) = match_data(istep-1)%mark(acoo%ja(i))
     end do
-    call acoo%set_nrows(nagg2)
-    call acoo%set_ncols(nagg2)
+    call acoo%set_nrows(match_data(istep-1)%nagg)
+    call acoo%set_ncols(match_data(istep-1)%nagg)
     call acoo%set_dupl(psb_dupl_add_)
     call acoo%fix(info)
     call atmp%mv_from(acoo)
     call atmp%clip_diag(info)
-    call mld_d_match(atmp,nagg3,mark3,info)
-    
-    naggr = nagg3
-    do i=1, nr
-      ilaggr(i) = mark3(mark2(mark(i)))
+
+    call mld_d_match(atmp,match_data(istep)%nagg,match_data(istep)%mark,info)
+
+    call atmp%mv_to(acoo)
+  end do
+
+  naggr = match_data(nsteps)%nagg
+  do i=1, nr
+    ilaggr(i) = i
+    do istep=1, nsteps
+      ilaggr(i) = match_data(istep)%mark(ilaggr(i))
     end do
-  else 
-    naggr = nagg2
-    do i=1, nr
-      ilaggr(i) = (mark2(mark(i)))
-    end do
-  end if
+  end do
+
+
 
   allocate(nlaggr(np),stat=info)
   if (info /= psb_success_) then 
