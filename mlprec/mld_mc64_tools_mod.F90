@@ -65,7 +65,7 @@ contains
 
   end subroutine marking
 
-  subroutine mld_d_match(a,nagg1,mark,info)
+  subroutine mld_d_match_old(a,nagg1,mark,info)
     use psb_base_mod
     implicit none 
     type(psb_dspmat_type), intent(in) :: a
@@ -311,7 +311,170 @@ contains
     return
 
 
-  end subroutine mld_d_match
+  end subroutine mld_d_match_old
+
+  subroutine mld_d_match_new(theta,diag,a,nagg,mark,info)
+    use psb_base_mod
+    implicit none 
+    real(psb_dpk_), intent(in)        :: theta
+    real(psb_dpk_), intent(in)        :: diag(:)
+    type(psb_dspmat_type), intent(in) :: a
+    integer, intent(out)              :: nagg 
+    integer, allocatable, intent(out) :: mark(:)
+    integer, intent(out)              :: info
+    !
+
+    type(psb_dspmat_type)       :: atmp
+    type(psb_d_csc_sparse_mat)  :: acsc, acred
+    type(psb_d_csr_sparse_mat)  :: acsr
+    integer :: icnt,nlp,k,n,ia,isz,naggr,i,j,m, nz, i1, i2, ns, irdp
+    integer :: num_agg, num_unagg
+    real(psb_dpk_)  :: cpling, tcl
+    logical :: recovery
+    integer :: debug_level, debug_unit
+    integer :: ictxt,np,me,err_act
+    integer :: nrow, ncol, n_ne, nnz, job, nr, nc, num, ir, ic, ip, nr2, nc2, nz2
+    integer           :: irmax, icmax, idx, mxk2
+    real(psb_dpk_)    :: rmax, cmax
+    character(len=20) :: name, ch_err
+    integer :: icntl(10), infov(10)
+    real(psb_dpk_) :: dcntl(10) 
+    integer :: liw, ldw
+    integer, allocatable        :: iwork(:), perm(:), perm2(:),mark2(:)
+    integer, allocatable        :: ind_agg(:), ind_unagg(:)
+    real(psb_dpk_), allocatable :: dwork(:)
+
+    if (psb_get_errstatus() /= 0) return 
+    info = psb_success_
+    name = 'mld_d_match'
+    call psb_erractionsave(err_act)
+    debug_unit  = psb_get_debug_unit()
+    debug_level = psb_get_debug_level()
+
+    !
+    ! Assume purely local A, without diagonal 
+    ! Also, assume diagonal in DIAG. 
+    !
+    call a%cp_to(acsc)  
+    nr  = acsc%get_nrows()
+    nc  = acsc%get_ncols()
+    nnz = acsc%get_nzeros()
+
+    call mc64id(icntl,dcntl)
+    icntl(1) = -1
+    icntl(2) = -1
+    !
+    ! Job default. Should add an option somewhere. 
+    ! 
+    job      = 5  
+    select case(job)
+    case (5) 
+      liw = 3*nc+2*nr
+      ldw = nc+2*nr+nnz
+    case default
+      ! Unknown job, set to 5 
+      job = 5
+      liw = 3*nc+2*nr
+      ldw = nc+2*nr+nnz
+    end select
+
+    allocate(iwork(liw),dwork(ldw),perm(nr),mark(nr),&
+         & perm2(nr),mark2(nr),stat=info)
+    if (info /= 0) then 
+      info=psb_err_alloc_request_
+      call psb_errpush(info,name,i_err=(/ldw,0,0,0,0/),&
+           & a_err='real(psb_dpk_)')
+      goto 9999
+    end if
+
+    !  Aggregation
+    perm = 0
+    call mc64ad(job,nr,nc,nnz,acsc%icp,acsc%ia,acsc%val,&
+         & num,perm,liw,iwork,ldw,dwork,icntl,dcntl,infov)
+
+    if (infov(1) < 0) then 
+      write(psb_err_unit,*) 'MC64 returned a failure ',infov(1:2)
+      info=psb_err_internal_error_
+      call psb_errpush(info,name)
+      goto 9999
+    end if
+
+
+    ! Mark nodes
+    ! First pass: mark unaggregated nodes that are
+    ! strongly connected.
+    nagg = 0 
+    mark = 0
+    do i=1, nr    
+      j = perm(i) 
+      if ((1 <= j).and.(j <= nr)) then 
+        if ((mark(i)==0).and.(mark(j)==0)) then 
+          do k=acsc%icp(j), acsc%icp(j+1)-1
+            if (acsc%ia(k) == i) then 
+              if (abs(acsc%val(k)) > theta*dsqrt(abs(diag(i)*diag(j)))) then 
+                nagg    = nagg + 1
+                mark(i) = nagg
+                mark(j) = nagg
+              end if
+              exit
+            end if
+          end do
+        end if
+      end if
+    end do
+    if (info < 0) then 
+      write(psb_err_unit,*) 'marking returned a failure ',info
+      info=psb_err_internal_error_
+      call psb_errpush(info,name)
+      goto 9999
+    end if
+
+    !
+    ! Second pass. Convert to CSR
+    !
+    call acsc%mv_to_fmt(acsr,info)
+    do i=1, nr
+      if (mark(i) == 0) then 
+        cmax  = dzero
+        icmax = -1
+        do k=acsr%irp(i), acsr%irp(i+1)-1
+          if (abs(acsr%val(k))>cmax) then 
+            cmax  = abs(acsr%val(k))
+            icmax = acsr%ja(k)
+          end if
+        end do
+        if (icmax == -1) then 
+          write(0,*) 'Fatal error in match_new: empty row'
+        else 
+          if (mark(icmax) <= 0 ) then 
+            if (cmax >theta*sqrt(abs(diag(i)*diag(icmax))))  then 
+              nagg        = nagg + 1 
+              mark(i)     = nagg
+              mark(icmax) = nagg
+            end if
+          end if
+        end if
+      end if
+      if (mark(i) == 0) then 
+        nagg        = nagg + 1 
+        mark(i)     = nagg
+      end if
+    end do
+
+    call acsr%free()
+
+    return
+
+9999 continue
+    call psb_erractionrestore(err_act)
+    if (err_act.eq.psb_act_abort_) then
+      call psb_error()
+      return
+    end if
+    return
+
+
+  end subroutine mld_d_match_new
 
 #endif  
 end module mld_mc64_tools_mod

@@ -1,4 +1,4 @@
-subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
+subroutine mld_d_decmc64_bld(nsteps,theta,a,desc_a,nlaggr,ilaggr,info)
 
   use psb_base_mod
   use mld_mc64_tools_mod
@@ -7,11 +7,12 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   implicit none
 
   ! Arguments
+  integer, intent(in)               :: nsteps
   type(psb_dspmat_type), intent(in) :: a
-  type(psb_desc_type), intent(in)    :: desc_a
-  real(psb_dpk_), intent(in)         :: theta
-  integer, allocatable, intent(out)  :: ilaggr(:),nlaggr(:)
-  integer, intent(out)               :: info
+  type(psb_desc_type), intent(in)   :: desc_a
+  real(psb_dpk_), intent(in)        :: theta
+  integer, allocatable, intent(out) :: ilaggr(:),nlaggr(:)
+  integer, intent(out)              :: info
 
   ! Local variables
   type(psb_dspmat_type)       :: atmp
@@ -32,13 +33,12 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
   real(psb_dpk_) :: dcntl(10) 
   integer              :: liw, ldw
   integer, allocatable :: mark(:), mark2(:), mark3(:)
+  real(psb_dpk_), allocatable :: diag(:)
   type :: match_data_type
     integer              :: nagg=0
     integer, allocatable :: mark(:)
   end type match_data_type
   type(match_data_type), allocatable :: match_data(:)
-  integer                :: nsteps=3
-
 
   if (psb_get_errstatus() /= 0) return 
   info = psb_success_
@@ -68,38 +68,60 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
     goto 9999
   end if
 
-  nr  = a%get_nrows()
-  nnz = a%get_nzeros()
-  call mld_d_match(a,match_data(1)%nagg,match_data(1)%mark,info)
-  if (info /= psb_success_) then 
-    info=psb_err_internal_error_
-    call psb_errpush(info,name,a_err='Fatal error: naggr>ncol')
-    goto 9999
-  end if
+  nr = a%get_nrows()
+  call a%csclip(atmp,info,jmax=nr)
+  call atmp%mv_to(acoo)
+  acoo%val=abs(acoo%val)
+  call atmp%mv_from(acoo)
+  call psb_realloc(nr,diag,info)
+  call atmp%get_diag(diag,info)
+  call atmp%clip_diag(info)
 
-  ! Now call matching a second time
-  if (nsteps > 1) then 
-    call a%csclip(acoo,info,jmax=nr)
-  end if
-  do istep = 2, nsteps
-    ! First prepare an aggregated matrix
-    nz = acoo%get_nzeros()
-    do i=1, nz
-      acoo%ia(i) = match_data(istep-1)%mark(acoo%ia(i))
-      acoo%ja(i) = match_data(istep-1)%mark(acoo%ja(i))
-    end do
-    call acoo%set_nrows(match_data(istep-1)%nagg)
-    call acoo%set_ncols(match_data(istep-1)%nagg)
-    call acoo%set_dupl(psb_dupl_add_)
-    call acoo%fix(info)
-    call atmp%mv_from(acoo)
+  do istep = 1, nsteps
+    if (istep >1) then 
+      call atmp%mv_to(acoo)
+      ! First prepare an aggregated matrix
+      nz = acoo%get_nzeros()
+      nr = acoo%get_nrows()
+      ! Put back the diagonal
+      call psb_ensure_size(nz+nr,acoo%ia,info)
+      call psb_ensure_size(nz+nr,acoo%ja,info)
+      call psb_ensure_size(nz+nr,acoo%val,info)
+      do i=1, nr
+        acoo%ia(nz+i)  = i
+        acoo%ja(nz+i)  = i
+        acoo%val(nz+i) = diag(i)
+      end do
+      call acoo%set_sorted(.false.)
+      call acoo%set_nzeros(nz+nr)
+      nz = acoo%get_nzeros()
+      do i=1, nz
+        acoo%ia(i) = match_data(istep-1)%mark(acoo%ia(i))
+        acoo%ja(i) = match_data(istep-1)%mark(acoo%ja(i))
+      end do
+      call acoo%set_nrows(match_data(istep-1)%nagg)
+      call acoo%set_ncols(match_data(istep-1)%nagg)
+      call acoo%set_dupl(psb_dupl_add_)
+      call acoo%fix(info)
+      call atmp%mv_from(acoo)
+    endif
+    ! Take the diagonal out of the matrix
+    call atmp%get_diag(diag,info)
     call atmp%clip_diag(info)
+    if (.true.) then 
+      call mld_d_match_new(theta,diag,atmp,match_data(istep)%nagg,&
+           & match_data(istep)%mark,info)
+    else
+      call mld_d_match_old(atmp,match_data(istep)%nagg,&
+           & match_data(istep)%mark,info)
+    end if
 
-    call mld_d_match(atmp,match_data(istep)%nagg,match_data(istep)%mark,info)
-
-    call atmp%mv_to(acoo)
   end do
 
+  !
+  ! Go back to initial NR
+  !
+  nr    = a%get_nrows()
   naggr = match_data(nsteps)%nagg
   do i=1, nr
     ilaggr(i) = i
@@ -107,7 +129,13 @@ subroutine mld_d_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)
       ilaggr(i) = match_data(istep)%mark(ilaggr(i))
     end do
   end do
-
+  do i=1, nr
+    if ((ilaggr(i)<1).or.(ilaggr(i)>naggr)) then 
+      write(0,*) 'Invalid entry ',i,ilaggr(i)
+    end if
+  end do
+  
+  call atmp%free()
 
 
   allocate(nlaggr(np),stat=info)

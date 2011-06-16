@@ -138,7 +138,8 @@ subroutine mld_daggrmap_bld(aggr_type,theta,a,desc_a,ilaggr,nlaggr,info)
 
   case (mld_dec_mc64_aggr_) 
 
-    call mld_decmc64_bld(theta,a,desc_a,nlaggr,ilaggr,info)    
+    ! For the time being, 2 steps of matching.
+    call mld_decmc64_bld(2,theta,a,desc_a,nlaggr,ilaggr,info)    
 
   case default
 
