@@ -358,6 +358,9 @@ program df_sample
     write(psb_out_unit,'("Total memory occupation for DESC_A : ",i12)')descsize
     write(psb_out_unit,'("Total memory occupation for PREC   : ",i12)')precsize
   end if
+  if (.true.) then 
+    call prec%dump(info,istart=2,iend=2,prefix="matching-test",rp=.true.,head='anibfe30')
+  end if
 
   allocate(x_col_glob(m_problem),r_col_glob(m_problem),stat=ierr)
   if (ierr /= 0) then 
