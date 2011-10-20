@@ -63,6 +63,7 @@ module mld_d_ilu_solver
     procedure, pass(sv) :: setr    => d_ilu_solver_setr
     procedure, pass(sv) :: descr   => d_ilu_solver_descr
     procedure, pass(sv) :: sizeof  => d_ilu_solver_sizeof
+    procedure, pass(sv) :: get_nzeros => d_ilu_solver_get_nzeros
     procedure, pass(sv) :: default => d_ilu_solver_default
   end type mld_d_ilu_solver_type
 
@@ -71,7 +72,8 @@ module mld_d_ilu_solver
        &  d_ilu_solver_free,   d_ilu_solver_seti, &
        &  d_ilu_solver_setc,   d_ilu_solver_setr,&
        &  d_ilu_solver_descr,  d_ilu_solver_sizeof, &
-       &  d_ilu_solver_default, d_ilu_solver_dmp
+       &  d_ilu_solver_default, d_ilu_solver_dmp,&
+       &  d_ilu_solver_get_nzeros
 
 
   character(len=15), parameter, private :: &
@@ -627,8 +629,24 @@ contains
     return
   end subroutine d_ilu_solver_descr
 
+  function d_ilu_solver_get_nzeros(sv) result(val)
+    use psb_base_mod, only : psb_long_int_k_
+    implicit none 
+    ! Arguments
+    class(mld_d_ilu_solver_type), intent(in) :: sv
+    integer(psb_long_int_k_) :: val
+    integer             :: i
+    
+    val = 0 
+    if (allocated(sv%d)) val = val + size(sv%d)
+    val = val + sv%l%get_nzeros()
+    val = val + sv%u%get_nzeros()
+
+    return
+  end function d_ilu_solver_get_nzeros
+
   function d_ilu_solver_sizeof(sv) result(val)
-    use psb_base_mod
+    use psb_base_mod, only : psb_long_int_k_
     implicit none 
     ! Arguments
     class(mld_d_ilu_solver_type), intent(in) :: sv

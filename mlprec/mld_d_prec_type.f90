@@ -191,6 +191,7 @@ module mld_d_prec_type
     procedure, pass(sv) :: default => d_base_solver_default
     procedure, pass(sv) :: descr   => d_base_solver_descr
     procedure, pass(sv) :: sizeof  => d_base_solver_sizeof
+    procedure, pass(sv) :: get_nzeros => d_base_solver_get_nzeros
   end type mld_d_base_solver_type
 
   type  mld_d_base_smoother_type
@@ -210,6 +211,7 @@ module mld_d_prec_type
     procedure, pass(sm) :: default => d_base_smoother_default
     procedure, pass(sm) :: descr =>   d_base_smoother_descr
     procedure, pass(sm) :: sizeof =>  d_base_smoother_sizeof
+    procedure, pass(sm) :: get_nzeros => d_base_smoother_get_nzeros
   end type mld_d_base_smoother_type
 
   type mld_donelev_type
@@ -229,6 +231,7 @@ module mld_d_prec_type
     procedure, pass(lv) :: setr  => d_base_onelev_setr
     procedure, pass(lv) :: setc  => d_base_onelev_setc
     generic, public     :: set   => seti, setr, setc
+    procedure, pass(lv) :: get_nzeros => d_base_onelev_get_nzeros
   end type mld_donelev_type
 
   type, extends(psb_dprec_type)         :: mld_dprec_type
@@ -242,6 +245,7 @@ module mld_d_prec_type
     procedure, pass(prec)               :: dump      => mld_d_dump
     procedure, pass(prec)               :: get_complexity => mld_d_get_compl
     procedure, pass(prec)               :: cmp_complexity => mld_d_cmp_compl
+    procedure, pass(prec)               :: get_nzeros => mld_d_get_nzeros
   end type mld_dprec_type
 
   private :: d_base_solver_bld,  d_base_solver_apply, &
@@ -259,8 +263,10 @@ module mld_d_prec_type
        &  d_base_onelev_seti, d_base_onelev_setc, &
        &  d_base_onelev_setr, d_base_onelev_check, &
        &  d_base_onelev_default, d_base_onelev_dump, &
-       &  d_base_onelev_descr, mld_d_dump, &
-       &  mld_d_get_compl,  mld_d_cmp_compl
+       &  d_base_onelev_descr,  mld_d_dump, &
+       &  mld_d_get_compl,  mld_d_cmp_compl,&
+       &  mld_d_get_nzeros, d_base_onelev_get_nzeros, &
+       &  d_base_smoother_get_nzeros, d_base_solver_get_nzeros
 
 
   !
@@ -323,6 +329,48 @@ contains
   !
   ! Function returning the size of the mld_prec_type data structure
   !
+
+  function d_base_solver_get_nzeros(sv) result(val)
+    implicit none 
+    class(mld_d_base_solver_type), intent(in) :: sv
+    integer(psb_long_int_k_) :: val
+    integer             :: i
+    val = 0
+  end function d_base_solver_get_nzeros
+
+  function d_base_smoother_get_nzeros(sm) result(val)
+    implicit none 
+    class(mld_d_base_smoother_type), intent(in) :: sm
+    integer(psb_long_int_k_) :: val
+    integer             :: i
+    val = 0
+    if (allocated(sm%sv)) &
+         &  val =  sm%sv%get_nzeros()
+  end function d_base_smoother_get_nzeros
+
+  function d_base_onelev_get_nzeros(lv) result(val)
+    implicit none 
+    class(mld_donelev_type), intent(in) :: lv
+    integer(psb_long_int_k_) :: val
+    integer             :: i
+    val = 0
+    if (allocated(lv%sm)) &
+         &  val =  lv%sm%get_nzeros()
+  end function d_base_onelev_get_nzeros
+
+  function mld_d_get_nzeros(prec) result(val)
+    implicit none 
+    class(mld_dprec_type), intent(in) :: prec
+    integer(psb_long_int_k_) :: val
+    integer             :: i
+    val = 0
+    if (allocated(prec%precv)) then 
+      do i=1, size(prec%precv)
+        val = val + prec%precv(i)%get_nzeros()
+      end do
+    end if
+  end function mld_d_get_nzeros
+
 
   function mld_dprec_sizeof(prec) result(val)
     implicit none 
@@ -1762,11 +1810,9 @@ contains
     write(fname(lname+1:lname+5),'(a,i3.3)') '_p',iam
     lname = lname + 5
 
-    if (level >= 2) then 
-      write(fname(lname+1:),'(a,i3.3,a)')'_l',level,'_ac.mtx'
-      write(0,*) 'Filename ',fname
-      if (ac_) call lv%ac%print(fname,head=head)
-    end if
+    write(fname(lname+1:),'(a,i3.3,a)')'_l',level,'_ac.mtx'
+    ! write(0,*) 'Filename ',fname
+    if (ac_) call lv%ac%print(fname,head=head)
     if (allocated(lv%sm)) &
          & call lv%sm%dump(icontxt,level,info,smoother=smoother,solver=solver)
 
