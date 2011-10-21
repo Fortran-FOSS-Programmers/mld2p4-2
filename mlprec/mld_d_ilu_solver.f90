@@ -51,7 +51,7 @@ module mld_d_ilu_solver
   type, extends(mld_d_base_solver_type) :: mld_d_ilu_solver_type
     type(psb_dspmat_type)       :: l, u
     real(psb_dpk_), allocatable :: d(:)
-    integer                     :: fact_type, fill_in
+    integer                     :: fact_type, fill_in, scale 
     real(psb_dpk_)              :: thresh
   contains
     procedure, pass(sv) :: dump    => d_ilu_solver_dmp
@@ -83,6 +83,10 @@ module mld_d_ilu_solver
        &  'none          ','DIAG ??       ',&
        &  'ILU(n)        ',&
        &  'MILU(n)       ','ILU(t,n)      '/)
+  character(len=15), parameter, private :: &
+       &  scale_names(0:2)=(/&
+       &  'None          ','Max A entry   ',&
+       &  'Diagonal      '/)
 
 
 contains
@@ -98,6 +102,7 @@ contains
 
     sv%fact_type = mld_ilu_n_
     sv%fill_in   = 0
+    sv%scale     = mld_ilu_scale_none_
     sv%thresh    = dzero
 
     return
@@ -120,6 +125,9 @@ contains
 
     call mld_check_def(sv%fact_type,&
          & 'Factorization',mld_ilu_n_,is_legal_ilu_fact)
+
+    call mld_check_def(sv%scale,&
+         & 'Scaling',mld_ilu_scale_none_,is_legal_ilu_scale)
 
     select case(sv%fact_type)
     case(mld_ilu_n_,mld_milu_n_)      
@@ -450,6 +458,8 @@ contains
       sv%fact_type = val
     case(mld_sub_fillin_)
       sv%fill_in   = val
+    case(mld_ilu_scale_)
+      sv%scale   = val
     case default
 !!$      write(0,*) name,': Error: invalid WHAT'
 !!$      info = -2
@@ -611,10 +621,11 @@ contains
            &  fact_names(sv%fact_type)
     select case(sv%fact_type)
     case(mld_ilu_n_,mld_milu_n_)      
-      write(iout_,*) '  Fill level:',sv%fill_in
+      write(iout_,*) '  Fill level     : ',sv%fill_in
     case(mld_ilu_t_)         
-      write(iout_,*) '  Fill level:',sv%fill_in
-      write(iout_,*) '  Fill threshold :',sv%thresh
+      write(iout_,*) '  Fill level     : ',sv%fill_in
+      write(iout_,*) '  Fill threshold : ',sv%thresh
+      write(iout_,*) '  Scaling        : ',scale_names(sv%scale)
     end select
 
     call psb_erractionrestore(err_act)
