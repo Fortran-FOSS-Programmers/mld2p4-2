@@ -217,8 +217,9 @@ module mld_base_prec_type
   integer(psb_ipk_), parameter :: mld_mult_ml_ = 2
   integer(psb_ipk_), parameter :: mld_vcycle_ml_ = 3
   integer(psb_ipk_), parameter :: mld_wcycle_ml_ = 4
-  integer(psb_ipk_), parameter :: mld_new_ml_prec_ = 5
-  integer(psb_ipk_), parameter :: mld_max_ml_type_ = 4
+  integer(psb_ipk_), parameter :: mld_kcycle_ml_ = 5
+  integer(psb_ipk_), parameter :: mld_new_ml_prec_ = 6
+  integer(psb_ipk_), parameter :: mld_max_ml_type_ = 5
 
   !
   ! Legal values for entry: mld_smoother_pos_
@@ -317,8 +318,8 @@ module mld_base_prec_type
   character(len=12), parameter, private :: &
        &  prolong_names(0:3)=(/'none       ','sum        ','average    ','square root'/)
   character(len=15), parameter, private :: &
-       &  ml_names(0:5)=(/'none          ','additive      ','multiplicative',&
-       & 'VCycle        ','WCycle        ','new ML        '/)
+       &  ml_names(0:6)=(/'none          ','additive      ','multiplicative',&
+       & 'VCycle        ','WCycle        ','KCycle        ','new ML        '/)
   character(len=15), parameter, private :: &
        &  fact_names(0:mld_slv_delta_+7)=(/&
        & 'none          ','none          ',&
@@ -392,6 +393,8 @@ contains
       val = 3
     case('WCYCLE')
       val = 4
+    case('KCYCLE')
+      val = 5
     case('DEC')
       val = mld_dec_aggr_
     case('SYMDEC')
