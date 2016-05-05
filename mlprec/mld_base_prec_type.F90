@@ -188,8 +188,10 @@ module mld_base_prec_type
   integer(psb_ipk_), parameter :: mld_slu_        = mld_slv_delta_+6
   integer(psb_ipk_), parameter :: mld_umf_        = mld_slv_delta_+7
   integer(psb_ipk_), parameter :: mld_sludist_    = mld_slv_delta_+8
-  integer(psb_ipk_), parameter :: mld_max_sub_solve_= mld_slv_delta_+8
+  integer(psb_ipk_), parameter :: mld_mumps_      = mld_slv_delta_+9
+  integer(psb_ipk_), parameter :: mld_max_sub_solve_= mld_slv_delta_+9
   integer(psb_ipk_), parameter :: mld_min_sub_solve_= mld_diag_scale_
+
   !
   ! Legal values for entry: mld_sub_ren_
   !
@@ -284,6 +286,15 @@ module mld_base_prec_type
   integer(psb_ipk_), parameter :: mld_solver_eps_     = 6
   integer(psb_ipk_), parameter :: mld_rfpsz_          = 8
 
+
+  !
+  ! Entries for mumps
+  !
+  !parameter controling the sequential/parallel building of MUMPS
+  integer(psb_ipk_), parameter :: mld_as_sequential_    =40
+  !parameter regulating the error printing of MUMPS
+  integer(psb_ipk_), parameter :: mld_mumps_print_err_ = 41
+
   !
   ! Fields for sparse matrices ensembles stored in av()
   ! 
@@ -320,14 +331,15 @@ module mld_base_prec_type
   character(len=15), parameter, private :: &
        &  ml_names(0:6)=(/'none          ','additive      ','multiplicative',&
        & 'VCycle        ','WCycle        ','KCycle        ','new ML        '/)
-  character(len=15), parameter, private :: &
-       &  fact_names(0:mld_slv_delta_+7)=(/&
+  character(len=15), parameter :: &
+       &  mld_fact_names(0:mld_max_sub_solve_)=(/&
        & 'none          ','none          ',&
        & 'none          ','none          ',&
-       & 'none          ', 'Point Jacobi  ','ILU(n)        ',&
-       &  'MILU(n)       ','ILU(t,n)      ',&
-       &  'SuperLU       ','UMFPACK LU    ',&
-       &  'SuperLU_Dist  '/)
+       & 'none          ','Point Jacobi  ',&
+       & 'Gauss-Seidel  ','ILU(n)        ',&
+       & 'MILU(n)       ','ILU(t,n)      ',&
+       & 'SuperLU       ','UMFPACK LU    ',&
+       & 'SuperLU_Dist  ','MUMPS         '/)
 
   interface mld_check_def
     module procedure mld_icheck_def, mld_scheck_def, mld_dcheck_def
@@ -357,8 +369,16 @@ contains
     character(len=*), intent(in) :: string
     integer(psb_ipk_) :: val 
     character(len=*), parameter :: name='mld_stringval'
-    
-    select case(psb_toupper(trim(string)))
+  ! Local variable
+    integer :: index_tab
+    character(len=15) ::string2
+    index_tab=index(string,char(9))
+    if (index_tab.NE.0)  then
+       string2=string(1:index_tab-1)
+    else 
+       string2=string
+    endif
+    select case(psb_toupper(trim(string2)))
     case('NONE')
       val = 0
     case('HALO')
@@ -377,6 +397,8 @@ contains
       val = mld_milu_n_
     case('ILUT')
       val = mld_ilu_t_
+    case('MUMPS')
+      val = mld_mumps_
     case('UMF')
       val = mld_umf_
     case('SLU')
@@ -560,7 +582,7 @@ contains
            & 'Block Jacobi'
     else
       write(iout,*) '  Coarse solver: ',&
-           & fact_names(pm%coarse_solve)
+           & mld_fact_names(pm%coarse_solve)
     end if
 
   end subroutine ml_parms_coarsedescr
