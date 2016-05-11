@@ -220,8 +220,9 @@ module mld_base_prec_type
   integer(psb_ipk_), parameter :: mld_vcycle_ml_ = 3
   integer(psb_ipk_), parameter :: mld_wcycle_ml_ = 4
   integer(psb_ipk_), parameter :: mld_kcycle_ml_ = 5
-  integer(psb_ipk_), parameter :: mld_new_ml_prec_ = 6
-  integer(psb_ipk_), parameter :: mld_max_ml_type_ = 5
+  integer(psb_ipk_), parameter :: mld_kcycle_ml_sym = 6
+  integer(psb_ipk_), parameter :: mld_new_ml_prec_ = 7
+  integer(psb_ipk_), parameter :: mld_max_ml_type_ = 8
 
   !
   ! Legal values for entry: mld_smoother_pos_
@@ -329,8 +330,8 @@ module mld_base_prec_type
   character(len=12), parameter, private :: &
        &  prolong_names(0:3)=(/'none       ','sum        ','average    ','square root'/)
   character(len=15), parameter, private :: &
-       &  ml_names(0:6)=(/'none          ','additive      ','multiplicative',&
-       & 'VCycle        ','WCycle        ','KCycle        ','new ML        '/)
+       &  ml_names(0:7)=(/'none          ','additive      ','multiplicative',&
+       & 'VCycle        ','WCycle        ','KCycle        ','KCyclesym     ','new ML        '/)
   character(len=15), parameter :: &
        &  mld_fact_names(0:mld_max_sub_solve_)=(/&
        & 'none          ','none          ',&
@@ -416,6 +417,8 @@ contains
     case('WCYCLE')
       val = 4
     case('KCYCLE')
+      val = 5
+    case('KCYCLESYM')
       val = 5
     case('DEC')
       val = mld_dec_aggr_

@@ -1397,7 +1397,7 @@ subroutine mld_dmlprec_aply_vect(alpha,p,x,beta,y,desc_data,trans,work,info)
   select case(p%precv(level)%parms%ml_type) 
     case(mld_kcycle_ml_)
       if ((level < nlev - 2).AND.(mod(level,2)==0)) then
-        call mld_dinneritkcycle(p, mlprec_wrk, level, trans, work)
+        call mld_dinneritkcycle(p, mlprec_wrk, level, trans, work, 'CGR')
       else
         call inner_ml_aply(level,p,mlprec_wrk,trans_,work,info)    
       endif
@@ -2263,7 +2263,7 @@ contains
     case(mld_kcycle_ml_)
       ! 
       !  K-cycle multilevel 
-      !
+      !  CGR inner solver
       !  Pre/post-smoothing.
       !
 
@@ -2344,7 +2344,7 @@ contains
 
        
           if ((level < nlev - 2)) then
-            call mld_dinneritkcycle(p, mlprec_wrk, level + 1, trans, work)
+            call mld_dinneritkcycle(p, mlprec_wrk, level + 1, trans, work, 'CGR')
           else
             call inner_ml_aply(level + 1 ,p,mlprec_wrk,trans,work,info)
           endif
@@ -2399,6 +2399,144 @@ contains
 
         endif
 
+    case(mld_kcycle_ml_sym)
+      ! 
+      !  K-cycle multilevel 
+      !  FCG as inner solver
+      !  Pre/post-smoothing.
+      !
+
+        call psb_geaxpby(done,mlprec_wrk(level)%vx2l,&
+             & dzero,mlprec_wrk(level)%vtx,&
+             & p%precv(level)%base_desc,info)
+        !
+        ! Apply the base preconditioner
+        !
+        if (level < nlev) then 
+          if (trans == 'N') then 
+            sweeps = p%precv(level)%parms%sweeps_pre
+          else
+            sweeps = p%precv(level)%parms%sweeps_post
+          end if
+        else
+          sweeps = p%precv(level)%parms%sweeps
+        end if
+
+        
+        if (present(u)) then
+   	  mlprec_wrk(level)%vy2l=u
+        else
+          call mlprec_wrk(level)%vy2l%set(dzero)
+        endif
+	
+        res = mlprec_wrk(level)%vx2l
+
+        call psb_spmm(-done,p%precv(level)%base_a,mlprec_wrk(level)%vy2l,& 
+		done, res, p%precv(level)%base_desc, info, work=work, trans=trans) 
+
+        if (info /= psb_success_) then
+          call psb_errpush(psb_err_internal_error_,name,&
+               & a_err='Error during residue')
+          goto 9999
+        end if
+
+	if (info == psb_success_) call p%precv(level)%sm%apply(done,&
+        	& res,done,mlprec_wrk(level)%vy2l,&
+        	& p%precv(level)%base_desc, trans,&
+        	& sweeps,work,info)
+
+        if (info /= psb_success_) then
+          call psb_errpush(psb_err_internal_error_,name,&
+               & a_err='Error during smoother_apply')
+          goto 9999
+        end if
+
+        !
+        ! Compute the residual (at all levels but the coarsest one)
+        ! and call recursively
+        !
+        if(level < nlev) then
+          call psb_geaxpby(done,mlprec_wrk(level)%vx2l,&
+               & dzero,mlprec_wrk(level)%vty,&
+               & p%precv(level)%base_desc,info)
+
+          if (info == psb_success_) call psb_spmm(-done,p%precv(level)%base_a,&
+               & mlprec_wrk(level)%vy2l,done,mlprec_wrk(level)%vty,&
+               & p%precv(level)%base_desc,info,work=work,trans=trans)
+          if (info /= psb_success_) then
+            call psb_errpush(psb_err_internal_error_,name,&
+                 & a_err='Error during residue')
+            goto 9999
+          end if
+ 
+          ! Apply the restriction
+          call psb_map_X2Y(done,mlprec_wrk(level)%vty,&
+               & dzero,mlprec_wrk(level + 1)%vx2l,&
+               & p%precv(level + 1)%map,info,work=work)
+          if (info /= psb_success_) then
+            call psb_errpush(psb_err_internal_error_,name,&
+                 & a_err='Error during restriction')
+            goto 9999
+          end if
+           
+          !Set the preconditioner
+
+       
+          if ((level < nlev - 2)) then
+            call mld_dinneritkcycle(p, mlprec_wrk, level + 1, trans, work, 'FCG')
+          else
+            call inner_ml_aply(level + 1 ,p,mlprec_wrk,trans,work,info)
+          endif
+
+          if (info /= psb_success_) then
+            call psb_errpush(psb_err_internal_error_,name,&
+                 & a_err='Error in recursive call')
+            goto 9999
+          end if
+
+          !
+          ! Apply the prolongator
+          !  
+          call psb_map_Y2X(done,mlprec_wrk(level+1)%vy2l,&
+               & done,mlprec_wrk(level)%vy2l,&
+               & p%precv(level+1)%map,info,work=work)
+          
+          if (info /= psb_success_) then
+            call psb_errpush(psb_err_internal_error_,name,&
+                 & a_err='Error during prolongation')
+            goto 9999
+          end if
+          !
+          ! Compute the residual
+          !
+          call psb_spmm(-done,p%precv(level)%base_a,mlprec_wrk(level)%vy2l,&
+               & done,mlprec_wrk(level)%vtx,p%precv(level)%base_desc,info,&
+               & work=work,trans=trans)
+
+          if (info /= psb_success_) then
+            call psb_errpush(psb_err_internal_error_,name,&
+                 & a_err='Error during residue')
+            goto 9999
+          end if
+          !
+          ! Apply the base preconditioner
+          !
+          if (trans == 'N') then 
+            sweeps = p%precv(level)%parms%sweeps_post
+          else
+            sweeps = p%precv(level)%parms%sweeps_pre
+          end if
+          if (info == psb_success_) call p%precv(level)%sm%apply(done,&
+               & mlprec_wrk(level)%vtx,done,mlprec_wrk(level)%vy2l,&
+               & p%precv(level)%base_desc, trans,&
+               & sweeps,work,info)
+          if (info /= psb_success_) then
+            call psb_errpush(psb_err_internal_error_,name,&
+                 & a_err='Error during smoother_apply')
+            goto 9999
+          end if
+
+        endif
 
     case default
       info = psb_err_from_subroutine_ai_
@@ -2421,7 +2559,7 @@ contains
 
   end subroutine inner_ml_aply
 
-recursive subroutine mld_dinneritkcycle(p, mlprec_wrk, level, trans, work)
+recursive subroutine mld_dinneritkcycle(p, mlprec_wrk, level, trans, work, innersolv)
   use psb_base_mod
   use mld_prec_mod
   use mld_dmlprec_wrk_type
@@ -2434,7 +2572,7 @@ recursive subroutine mld_dinneritkcycle(p, mlprec_wrk, level, trans, work)
 
   type(mld_mlprec_wrk_type), intent(inout) :: mlprec_wrk(:)
   integer(psb_ipk_), intent(in) :: level
-  character, intent(in)             :: trans
+  character, intent(in)             :: trans, innersolv
   real(psb_dpk_),target            :: work(:)
 
   !Other variables
@@ -2500,16 +2638,22 @@ recursive subroutine mld_dinneritkcycle(p, mlprec_wrk, level, trans, work)
   call psb_geaxpby(done,mlprec_wrk(level)%vy2l,dzero,d(idx),p%precv(level)%base_desc,info)
 
 
-  delta_old = psb_gedot(d(idx), w, p%precv(level)%base_desc, info)
-
   call psb_spmm(done,p%precv(level)%base_a,d(idx),dzero,v,p%precv(level)%base_desc,info)
   if (info /= psb_success_) then
     call psb_errpush(psb_err_internal_error_,name,&
        & a_err='Error during residue')
     goto 9999
   end if
-  tau = psb_gedot(d(idx), v, p%precv(level)%base_desc, info) 
 
+  !FCG
+  if (innersolv == 'FCG') then
+    delta_old = psb_gedot(d(idx), w, p%precv(level)%base_desc, info)
+    tau = psb_gedot(d(idx), v, p%precv(level)%base_desc, info) 
+  !CGR
+  else
+    delta_old = psb_gedot(v, w, p%precv(level)%base_desc, info)
+    tau = psb_gedot(v, v, p%precv(level)%base_desc, info) 
+  endif
 
   alpha = delta_old/tau
   !Update residual w
@@ -2541,11 +2685,19 @@ recursive subroutine mld_dinneritkcycle(p, mlprec_wrk, level, trans, work)
     end if
     
     !tau1, tau2, tau3, tau4
-
-    tau1= psb_gedot(d(idx), v, p%precv(level)%base_desc, info)
-    tau2= psb_gedot(d(idx), v1, p%precv(level)%base_desc, info)
-    tau3= psb_gedot(d(idx), w, p%precv(level)%base_desc, info)
-    tau4= tau2 - (tau1*tau1)/tau
+    !FCG
+    if (innersolv == 'FCG') then
+      tau1= psb_gedot(d(idx), v, p%precv(level)%base_desc, info)
+      tau2= psb_gedot(d(idx), v1, p%precv(level)%base_desc, info)
+      tau3= psb_gedot(d(idx), w, p%precv(level)%base_desc, info)
+      tau4= tau2 - (tau1*tau1)/tau
+    !CGR
+    else
+      tau1= psb_gedot(v1, v, p%precv(level)%base_desc, info)
+      tau2= psb_gedot(v1, v1, p%precv(level)%base_desc, info)
+      tau3= psb_gedot(v1, w, p%precv(level)%base_desc, info)
+      tau4= tau2 - (tau1*tau1)/tau
+    endif
 
     !Update solution
     alpha=alpha-(tau1*tau3)/(tau*tau4)

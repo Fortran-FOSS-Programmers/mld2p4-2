@@ -1,4 +1,4 @@
-!!!$ 
+!!$ 
 !!$ 
 !!$                           MLD2P4  version 2.0
 !!$  MultiLevel Domain Decomposition Parallel Preconditioners Package
@@ -72,7 +72,7 @@ contains
     use psb_base_mod, only : psb_dpk_
     real(psb_dpk_) :: b1
     real(psb_dpk_), intent(in) :: x,y
-    b1=0.d0/sqrt(2.d0)
+    b1=1.d0/sqrt(2.d0)
   end function b1
   function b2(x,y)
     use psb_base_mod, only : psb_dpk_
@@ -295,14 +295,21 @@ program ppde2d
   if (iam == psb_root_) then
     open (unit=195,file="matrix.mm",action="write",status="replace")
     open (unit=157,file="rhs.mm",action="write",status="replace")
+    open (unit=107,file="sol.mm",action="write",status="replace")
 
     call mm_mat_write(a , 'matrice di test' , info, 195, 'matrix.mm')
-
     call mm_array_write( b%get_vect(),'rhs di test', info , 157, 'rhs.mm')
   end if
   t1 = psb_wtime()  
   call psb_krylov(kmethd,a,prec,b,x,eps,desc_a,info,& 
        & itmax=itmax,iter=iter,err=err,itrace=itrace,istop=istopc,irst=irst)     
+
+  if (iam == psb_root_) then
+
+    call mm_array_write( x%get_vect(),'soluzione del problema di test', info , 107, 'sol.mm')
+ 
+  endif 
+
   if(info /= psb_success_) then
     info=psb_err_from_subroutine_
     ch_err='solver routine'
