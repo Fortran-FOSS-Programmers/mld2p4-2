@@ -1990,143 +1990,10 @@ contains
       end select
 
 
-    case(mld_vcycle_ml_)
+
+    case(mld_vcycle_ml_, mld_wcycle_ml_)
       ! 
-      !  V-cycle multilevel 
-      !
-      !  Pre/post-smoothing.
-      !
-
-        call psb_geaxpby(done,mlprec_wrk(level)%vx2l,&
-             & dzero,mlprec_wrk(level)%vtx,&
-             & p%precv(level)%base_desc,info)
-        !
-        ! Apply the base preconditioner
-        !
-        if (level < nlev) then 
-          if (trans == 'N') then 
-            sweeps = p%precv(level)%parms%sweeps_pre
-          else
-            sweeps = p%precv(level)%parms%sweeps_post
-          end if
-        else
-          sweeps = p%precv(level)%parms%sweeps
-        end if
-
-        
-        if (present(u)) then
-   	  mlprec_wrk(level)%vy2l=u
-        else
-          call mlprec_wrk(level)%vy2l%set(dzero)
-        endif
-	
-        res = mlprec_wrk(level)%vx2l
-
-        call psb_spmm(-done,p%precv(level)%base_a,mlprec_wrk(level)%vy2l,& 
-		done, res, p%precv(level)%base_desc, info, work=work, trans=trans) 
-
-        if (info /= psb_success_) then
-          call psb_errpush(psb_err_internal_error_,name,&
-               & a_err='Error during residue')
-          goto 9999
-        end if
-
-	if (info == psb_success_) call p%precv(level)%sm%apply(done,&
-        	& res,done,mlprec_wrk(level)%vy2l,&
-        	& p%precv(level)%base_desc, trans,&
-        	& sweeps,work,info)
-
-        if (info /= psb_success_) then
-          call psb_errpush(psb_err_internal_error_,name,&
-               & a_err='Error during smoother_apply')
-          goto 9999
-        end if
-
-        !
-        ! Compute the residual (at all levels but the coarsest one)
-        ! and call recursively
-        !
-        if(level < nlev) then
-          call psb_geaxpby(done,mlprec_wrk(level)%vx2l,&
-               & dzero,mlprec_wrk(level)%vty,&
-               & p%precv(level)%base_desc,info)
-
-          if (info == psb_success_) call psb_spmm(-done,p%precv(level)%base_a,&
-               & mlprec_wrk(level)%vy2l,done,mlprec_wrk(level)%vty,&
-               & p%precv(level)%base_desc,info,work=work,trans=trans)
-          if (info /= psb_success_) then
-            call psb_errpush(psb_err_internal_error_,name,&
-                 & a_err='Error during residue')
-            goto 9999
-          end if
- 
-          ! Apply the restriction
-          call psb_map_X2Y(done,mlprec_wrk(level)%vty,&
-               & dzero,mlprec_wrk(level + 1)%vx2l,&
-               & p%precv(level + 1)%map,info,work=work)
-          if (info /= psb_success_) then
-            call psb_errpush(psb_err_internal_error_,name,&
-                 & a_err='Error during restriction')
-            goto 9999
-          end if
-
-          call inner_ml_aply(level+1,p,mlprec_wrk,trans,work,info)
-
-          if (info /= psb_success_) then
-            call psb_errpush(psb_err_internal_error_,name,&
-                 & a_err='Error in recursive call')
-            goto 9999
-          end if
-
-          !
-          ! Apply the prolongator
-          !  
-          call psb_map_Y2X(done,mlprec_wrk(level+1)%vy2l,&
-               & done,mlprec_wrk(level)%vy2l,&
-               & p%precv(level+1)%map,info,work=work)
-          
-          if (info /= psb_success_) then
-            call psb_errpush(psb_err_internal_error_,name,&
-                 & a_err='Error during prolongation')
-            goto 9999
-          end if
-          !
-          ! Compute the residual
-          !
-          call psb_spmm(-done,p%precv(level)%base_a,mlprec_wrk(level)%vy2l,&
-               & done,mlprec_wrk(level)%vtx,p%precv(level)%base_desc,info,&
-               & work=work,trans=trans)
-
-          if (info /= psb_success_) then
-            call psb_errpush(psb_err_internal_error_,name,&
-                 & a_err='Error during residue')
-            goto 9999
-          end if
-          !
-          ! Apply the base preconditioner
-          !
-          if (trans == 'N') then 
-            sweeps = p%precv(level)%parms%sweeps_post
-          else
-            sweeps = p%precv(level)%parms%sweeps_pre
-          end if
-          if (info == psb_success_) call p%precv(level)%sm%apply(done,&
-               & mlprec_wrk(level)%vtx,done,mlprec_wrk(level)%vy2l,&
-               & p%precv(level)%base_desc, trans,&
-               & sweeps,work,info)
-          if (info /= psb_success_) then
-            call psb_errpush(psb_err_internal_error_,name,&
-                 & a_err='Error during smoother_apply')
-            goto 9999
-          end if
-
-        endif
-
-
-
-    case(mld_wcycle_ml_)
-      ! 
-      !  W-cycle multilevel 
+      !  W/V cycle multilevel 
       !
       !  Pre/post-smoothing.
       !
@@ -2200,7 +2067,10 @@ contains
             goto 9999
           end if
           call inner_ml_aply(level+1,p,mlprec_wrk,trans,work,info)
-	  call inner_ml_aply(level+1,p,mlprec_wrk,trans,work,info, mlprec_wrk(level+1)%vy2l)
+
+          if (p%precv(level)%parms%ml_type == mld_wcycle_ml_) then
+	    call inner_ml_aply(level+1,p,mlprec_wrk,trans,work,info, mlprec_wrk(level+1)%vy2l)
+          endif
 
           if (info /= psb_success_) then
             call psb_errpush(psb_err_internal_error_,name,&
