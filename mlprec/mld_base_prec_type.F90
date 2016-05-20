@@ -220,7 +220,7 @@ module mld_base_prec_type
   integer(psb_ipk_), parameter :: mld_vcycle_ml_ = 3
   integer(psb_ipk_), parameter :: mld_wcycle_ml_ = 4
   integer(psb_ipk_), parameter :: mld_kcycle_ml_ = 5
-  integer(psb_ipk_), parameter :: mld_kcycle_ml_sym = 6
+  integer(psb_ipk_), parameter :: mld_kcyclesym_ml_ = 6
   integer(psb_ipk_), parameter :: mld_new_ml_prec_ = 7
   integer(psb_ipk_), parameter :: mld_max_ml_type_ = 8
 
@@ -331,7 +331,7 @@ module mld_base_prec_type
        &  prolong_names(0:3)=(/'none       ','sum        ','average    ','square root'/)
   character(len=15), parameter, private :: &
        &  ml_names(0:7)=(/'none          ','additive      ','multiplicative',&
-       & 'VCycle        ','WCycle        ','KCycle        ','KCyclesym     ','new ML        '/)
+       & 'VCycle        ','WCycle        ','KCycle        ','KCycleSym     ','new ML        '/)
   character(len=15), parameter :: &
        &  mld_fact_names(0:mld_max_sub_solve_)=(/&
        & 'none          ','none          ',&
@@ -413,13 +413,13 @@ contains
     case('MULT')
       val = mld_mult_ml_
     case('VCYCLE')
-      val = 3
+      val = mld_vcycle_ml_
     case('WCYCLE')
-      val = 4
+      val = mld_wcycle_ml_
     case('KCYCLE')
-      val = 5
+      val = mld_kcycle_ml_
     case('KCYCLESYM')
-      val = 5
+      val = mld_kcyclesym_ml_
     case('DEC')
       val = mld_dec_aggr_
     case('SYMDEC')
