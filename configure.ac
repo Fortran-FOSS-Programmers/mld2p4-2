@@ -305,60 +305,60 @@ PAC_FORTRAN_TEST_CLASS_TBP(
  Please get a Fortran compiler that supports them, e.g. GNU Fortran 4.8.])]
 )
 
-dnl PAC_FORTRAN_TEST_SOURCE( 
-dnl 	[],
-dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for SOURCE= allocation. 
-dnl  Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
-dnl )
+PAC_FORTRAN_TEST_SOURCE( 
+	[],
+        [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for SOURCE= allocation. 
+ Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
+)
 
-dnl PAC_FORTRAN_HAVE_MOVE_ALLOC(
-dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_MOVE_ALLOC $FDEFINES"],
-dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for MOVE_ALLOC. 
-dnl  Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
-dnl )
+PAC_FORTRAN_HAVE_MOVE_ALLOC(
+	[FDEFINES="$psblas_cv_define_prepend-DHAVE_MOVE_ALLOC $FDEFINES"],
+        [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for MOVE_ALLOC. 
+ Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
+)
 
-dnl PAC_FORTRAN_TEST_ISO_C_BIND( 
-dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_ISO_C_BINDING $FDEFINES"],
-dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for ISO_C_BINDING. 
-dnl  Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
-dnl )
+PAC_FORTRAN_TEST_ISO_C_BIND( 
+	[FDEFINES="$psblas_cv_define_prepend-DHAVE_ISO_C_BINDING $FDEFINES"],
+        [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for ISO_C_BINDING. 
+ Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
+)
 
-dnl #
-dnl # Optional features
-dnl #
+#
+# Optional features
+#
 
-dnl PAC_FORTRAN_TEST_VOLATILE( 
-dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_VOLATILE $FDEFINES"],
-dnl )
+PAC_FORTRAN_TEST_VOLATILE( 
+	[FDEFINES="$psblas_cv_define_prepend-DHAVE_VOLATILE $FDEFINES"],
+)
 
-dnl PAC_FORTRAN_TEST_GENERICS( 
-dnl 	[],
-dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_BUGGY_GENERICS $FDEFINES"]
-dnl )
+PAC_FORTRAN_TEST_GENERICS( 
+	[],
+	[FDEFINES="$psblas_cv_define_prepend-DHAVE_BUGGY_GENERICS $FDEFINES"]
+)
 
-dnl PAC_FORTRAN_TEST_FLUSH( 
-dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_FLUSH_STMT $FDEFINES"],
-dnl )
+PAC_FORTRAN_TEST_FLUSH( 
+	[FDEFINES="$psblas_cv_define_prepend-DHAVE_FLUSH_STMT $FDEFINES"],
+)
 
-dnl PAC_FORTRAN_TEST_ISO_FORTRAN_ENV(
-dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_ISO_FORTRAN_ENV $FDEFINES"],
-dnl )
+PAC_FORTRAN_TEST_ISO_FORTRAN_ENV(
+	[FDEFINES="$psblas_cv_define_prepend-DHAVE_ISO_FORTRAN_ENV $FDEFINES"],
+)
 
-dnl PAC_FORTRAN_TEST_FINAL( 
-dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_FINAL $FDEFINES"],
-dnl )
+PAC_FORTRAN_TEST_FINAL( 
+	[FDEFINES="$psblas_cv_define_prepend-DHAVE_FINAL $FDEFINES"],
+)
 
-dnl PAC_FORTRAN_TEST_SAME_TYPE( 
-dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_SAME_TYPE_AS $FDEFINES"],
-dnl )
+PAC_FORTRAN_TEST_SAME_TYPE( 
+	[FDEFINES="$psblas_cv_define_prepend-DHAVE_SAME_TYPE_AS $FDEFINES"],
+)
 
-dnl PAC_FORTRAN_TEST_EXTENDS_TYPE( 
-dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_EXTENDS_TYPE_OF $FDEFINES"],
-dnl )
+PAC_FORTRAN_TEST_EXTENDS_TYPE( 
+	[FDEFINES="$psblas_cv_define_prepend-DHAVE_EXTENDS_TYPE_OF $FDEFINES"],
+)
 
-dnl PAC_FORTRAN_TEST_MOLD( 
-dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_MOLD $FDEFINES"],
-dnl )
+PAC_FORTRAN_TEST_MOLD( 
+	[FDEFINES="$psblas_cv_define_prepend-DHAVE_MOLD $FDEFINES"],
+)
 
 ###############################################################################
 #		Auxiliary packages
