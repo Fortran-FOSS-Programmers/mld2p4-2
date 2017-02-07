@@ -759,6 +759,7 @@ with_library_path
 with_include_path
 with_module_path
 with_extra_libs
+enable_long_integers
 with_mumps
 with_mumpsdir
 with_mumpsincdir
@@ -1414,6 +1415,7 @@ Optional Features:
                           speeds up one-time build
   --enable-serial         Specify whether to enable a fake mpi library to run
                           in serial mode.
+  --enable-long-integers  Specify usage of 64 bits integers.
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -4251,9 +4253,8 @@ fi
 # Note: Someday we will contemplate a fake MPI - configured version of PSBLAS
 ###############################################################################
 # First check whether the user required our serial (fake) mpi.
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we want serial (fake) mpi" >&5
-$as_echo_n "checking whether we want serial (fake) mpi... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we want serial  mpi stubs" >&5
+$as_echo_n "checking whether we want serial  mpi stubs... " >&6; }
 # Check whether --enable-serial was given.
 if test "${enable_serial+set}" = set; then :
   enableval=$enable_serial;
@@ -5765,9 +5766,185 @@ fi
 ###############################################################################
 
 
+###############################################################################
+# Custom test : do we have a module or include for MPI Fortran interface?
+if test x"$pac_cv_serial_mpi" == x"yes" ; then
+   FDEFINES="$psblas_cv_define_prepend-DSERIAL_MPI $psblas_cv_define_prepend-DMPI_MOD $FDEFINES";
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran MPI mod" >&5
+$as_echo_n "checking for Fortran MPI mod... " >&6; }
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+ ac_exeext=''
+ ac_ext='F90'
+  ac_fc=${MPIFC-$FC};
+ cat > conftest.$ac_ext <<_ACEOF
+
+           program test
+             use mpi
+           end program test
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		      FDEFINES="$psblas_cv_define_prepend-DMPI_MOD $FDEFINES"
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		     echo "configure: failed program was:" >&5
+		     cat conftest.$ac_ext >&5
+		      FDEFINES="$psblas_cv_define_prepend-DMPI_H $FDEFINES"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we want long (8 bytes) integers" >&5
+$as_echo_n "checking whether we want long (8 bytes) integers... " >&6; }
+# Check whether --enable-long-integers was given.
+if test "${enable_long_integers+set}" = set; then :
+  enableval=$enable_long_integers;
+pac_cv_long_integers="yes";
+
+
+fi
+
+if test x"$pac_cv_long_integers" == x"yes" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes." >&5
+$as_echo "yes." >&6; }
+else
+ pac_cv_long_integers="no";
+ { $as_echo "$as_me:${as_lineno-$LINENO}: result: no." >&5
+$as_echo "no." >&6; }
+fi
+
+
+if test x"$pac_cv_long_integers" == x"yes" ; then
+   FDEFINES="$psblas_cv_define_prepend-DLONG_INTEGERS $FDEFINES";
+fi
+
+#
+# Tests for support of various Fortran features; some of them are critical,
+# some optional
+#
+
+ac_exeext=''
+ac_ext='f90'
+ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FCFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking support for Fortran EXTENDS" >&5
+$as_echo_n "checking support for Fortran EXTENDS... " >&6; }
+ ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+ ac_exeext=''
+ ac_ext='F90'
+  ac_fc=${MPIFC-$FC};
+ cat > conftest.$ac_ext <<_ACEOF
+
+program conftest
+  type foo
+    integer :: i
+  end type foo
+  type, extends(foo) :: bar
+    integer j
+  end type bar
+  type(bar) :: barvar
+end program conftest
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		     :
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		     echo "configure: failed program was:" >&5
+		     cat conftest.$ac_ext >&5
+		      as_fn_error $? "Sorry, cannot build PSBLAS without support for EXTENDS.
+ Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking support for Fortran CLASS TBP" >&5
+$as_echo_n "checking support for Fortran CLASS TBP... " >&6; }
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+ ac_exeext=''
+ ac_ext='F90'
+  ac_fc=${MPIFC-$FC};
+ cat > conftest.$ac_ext <<_ACEOF
+
+module conftest_mod
+  type foo
+    integer :: i
+  contains
+    procedure, pass(a) :: doit
+    procedure, pass(a) :: getit
+  end type foo
+
+  private doit,getit
+contains
+  subroutine  doit(a)
+    class(foo) :: a
+
+    a%i = 1
+    write(*,*) 'FOO%DOIT base version'
+  end subroutine doit
+  function getit(a) result(res)
+    class(foo) :: a
+    integer :: res
+
+    res = a%i
+  end function getit
+
+end module conftest_mod
+program conftest
+  use conftest_mod
+  type(foo) :: foovar
+end program conftest
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		     :
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		     echo "configure: failed program was:" >&5
+		     cat conftest.$ac_ext >&5
+		      as_fn_error $? "Sorry, cannot build PSBLAS without support for CLASS and type bound procedures.
+ Please get a Fortran compiler that supports them, e.g. GNU Fortran 4.8." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 

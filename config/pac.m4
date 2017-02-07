@@ -184,70 +184,6 @@ AC_DEFUN(PAC_HAVE_MODERN_GFORTRAN,
 AC_LANG_POP([Fortran])
 ])
 
-dnl @synopsis PAC_FORTRAN_CHECK_HAVE_MPI_MOD( [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
-dnl
-dnl Will determine if the fortran compiler MPIFC needs to include mpi.h or needs
-dnl to use the mpi module.
-dnl
-dnl If yes, will execute ACTION-IF-FOUND. Otherwise, ACTION-IF-NOT-FOUND.
-dnl 
-dnl @author Michele Martone <michele.martone@uniroma2.it>
-dnl Modified Salvatore Filippone <salvatore.filippone@uniroma2.it>
-dnl
-AC_DEFUN(PAC_FORTRAN_CHECK_HAVE_MPI_MOD,
- [AC_MSG_CHECKING([for Fortran MPI mod])
-  AC_LANG_PUSH([Fortran])
- ac_exeext=''
- ac_ext='F90'
- dnl ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
- ac_fc=${MPIFC-$FC};
- AC_COMPILE_IFELSE([
-           program test
-             use mpi
-           end program test],
-		  [  AC_MSG_RESULT([yes])
-		     ifelse([$1], , :, [ $1])],
-		  [  AC_MSG_RESULT([no])	
-		     echo "configure: failed program was:" >&AC_FD_CC
-		     cat conftest.$ac_ext >&AC_FD_CC
-		     ifelse([$2], , , [ $2])])
-AC_LANG_POP([Fortran])
-])
-
-
-dnl @synopsis PAC_FORTRAN_CHECK_HAVE_MPI_MOD_F08( [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
-dnl
-dnl Will determine if the fortran compiler MPIFC provides mpi_f08
-dnl
-dnl If yes, will execute ACTION-IF-FOUND. Otherwise, ACTION-IF-NOT-FOUND.
-dnl 
-dnl @author Michele Martone <michele.martone@uniroma2.it>
-dnl Modified Salvatore Filippone <salvatore.filippone@uniroma2.it>
-dnl
-AC_DEFUN(PAC_FORTRAN_CHECK_HAVE_MPI_MOD_F08,
-dnl Warning : square brackets are EVIL!
-[AC_MSG_CHECKING([MPI Fortran 2008 interface])
- AC_LANG_PUSH([Fortran])
- ac_exeext=''
- ac_ext='F90'
- dnl ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
- ac_fc=${MPIFC-$FC};
- AC_COMPILE_IFELSE([
-           program test
-             use mpi_f08
-           end program test],
-		   [  AC_MSG_RESULT([yes])
-		      pac_cv_mpi_f08="yes";
-		      ifelse([$1], , :, [ $1])],
-		   [  AC_MSG_RESULT([no])
-	              pac_cv_mpi_f08="no";
-		      echo "configure: failed program was:" >&AC_FD_CC
-		      cat conftest.$ac_ext >&AC_FD_CC
-		      ifelse([$2], , , [ $2])])
-AC_LANG_POP([Fortran])
-])
-
-
 
 dnl @synopsis PAC_ARG_WITH_FLAGS(lcase_name, UCASE_NAME)
 dnl
@@ -495,85 +431,6 @@ FCFLAGS="$save_FCFLAGS";
 AC_MSG_RESULT([Done])
 AC_LANG_POP([Fortran])])
 
-dnl @synopsis PAC_FORTRAN_TEST_TR15581( [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
-dnl
-dnl Will try to compile and link a program checking the TR15581 Fortran extension support.
-dnl
-dnl Will use MPIFC, otherwise '$FC'.
-dnl
-dnl If the test passes, will execute ACTION-IF-FOUND. Otherwise, ACTION-IF-NOT-FOUND.
-dnl Note : This file will be likely to induce the compiler to create a module file
-dnl (for a module called conftest).
-dnl Depending on the compiler flags, this could cause a conftest.mod file to appear
-dnl in the present directory, or in another, or with another name. So be warned!
-dnl
-dnl @author Michele Martone <michele.martone@uniroma2.it>
-dnl @author Salvatore Filippone <salvatore.filippone@uniroma2.it>
-AC_DEFUN(PAC_FORTRAN_TEST_TR15581,
-[AC_MSG_CHECKING([support for Fortran allocatables TR15581])
- AC_LANG_PUSH([Fortran])
- ac_exeext=''
- ac_ext='F90'
- dnl ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
- ac_fc=${MPIFC-$FC};
- AC_COMPILE_IFELSE([
-module conftest
-  type outer
-    integer,  allocatable :: v(:)
-  end type outer
-
-  interface foo
-    module procedure foov, food
-  end interface
-contains
-
-  subroutine foov(a,b)
-
-    implicit none
-    integer, allocatable, intent(inout) :: a(:)
-    integer, allocatable, intent(out) :: b(:)
-
-
-    allocate(b(size(a)))
-
-  end subroutine foov
-  subroutine food(a,b)
-
-    implicit none
-    type(outer), intent(inout) :: a
-    type(outer), intent(out) :: b
-
-
-    allocate(b%v(size(a%v)))
-
-  end subroutine food
-
-end module conftest
-
-
-
-program testtr15581
-  use conftest
-  type(outer) :: da, db
-  integer, allocatable :: a(:), b(:)
-
-  allocate(a(10),da%v(10))
-  a = (/ (i,i=1,10) /)
-  da%v = (/ (i,i=1,10) /)
-  call foo(a,b)
-  call foo(da,db)
-  write(*,*) b
-  write(*,*) db%v
-
-end program testtr15581],
-		  [  AC_MSG_RESULT([yes])
-		     ifelse([$1], , :, [ $1])],
-		  [  AC_MSG_RESULT([no])	
-		     echo "configure: failed program was:" >&AC_FD_CC
-		     cat conftest.$ac_ext >&AC_FD_CC
-		     ifelse([$2], , , [ $2])])
-AC_LANG_POP([Fortran])
-])
 
 dnl @synopsis PAC_FORTRAN_TEST_VOLATILE( [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
 dnl
@@ -1065,7 +922,7 @@ AC_LANG_POP([Fortran])
 
 dnl @synopsis PAC_ARG_SERIAL_MPI
 dnl
-dnl Test for --with-serial-mpi={yes|no}
+dnl Test for --enable-serial
 dnl 
 dnl 
 dnl
@@ -1075,8 +932,7 @@ dnl
 dnl @author Salvatore Filippone <salvatore.filippone@uniroma2.it>
 dnl
 AC_DEFUN([PAC_ARG_SERIAL_MPI],
-[
-AC_MSG_CHECKING([whether we want serial (fake) mpi])
+[AC_MSG_CHECKING([whether we want serial  mpi stubs])
 AC_ARG_ENABLE(serial,
 AC_HELP_STRING([--enable-serial], 
 [Specify whether to enable a fake mpi library to run in serial mode. ]),
@@ -1094,4 +950,169 @@ else
 fi
 ]
 )
+
+dnl @synopsis PAC_FORTRAN_CHECK_HAVE_MPI_MOD( [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
+dnl
+dnl Will determine if the fortran compiler MPIFC needs to include mpi.h or needs
+dnl to use the mpi module.
+dnl
+dnl If yes, will execute ACTION-IF-FOUND. Otherwise, ACTION-IF-NOT-FOUND.
+dnl 
+dnl @author Michele Martone <michele.martone@uniroma2.it>
+dnl Modified Salvatore Filippone <salvatore.filippone@uniroma2.it>
+dnl
+AC_DEFUN(PAC_FORTRAN_CHECK_HAVE_MPI_MOD,
+ [AC_MSG_CHECKING([for Fortran MPI mod])
+  AC_LANG_PUSH([Fortran])
+ ac_exeext=''
+ ac_ext='F90'
+ dnl ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
+ ac_fc=${MPIFC-$FC};
+ AC_COMPILE_IFELSE([
+           program test
+             use mpi
+           end program test],
+		  [  AC_MSG_RESULT([yes])
+		     ifelse([$1], , :, [ $1])],
+		  [  AC_MSG_RESULT([no])	
+		     echo "configure: failed program was:" >&AC_FD_CC
+		     cat conftest.$ac_ext >&AC_FD_CC
+		     ifelse([$2], , , [ $2])])
+AC_LANG_POP([Fortran])
+])
+
+dnl @synopsis PAC_FORTRAN_TEST_EXTENDS( [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
+dnl
+dnl Will try to compile and link a program checking the EXTENDS Fortran support.
+dnl
+dnl Will use MPIFC, otherwise '$FC'.
+dnl
+dnl If the test passes, will execute ACTION-IF-FOUND. Otherwise, ACTION-IF-NOT-FOUND.
+dnl Note : This file will be likely to induce the compiler to create a module file
+dnl (for a module called conftest).
+dnl Depending on the compiler flags, this could cause a conftest.mod file to appear
+dnl in the present directory, or in another, or with another name. So be warned!
+dnl
+dnl @author Salvatore Filippone <salvatore.filippone@uniroma2.it>
+AC_DEFUN(PAC_FORTRAN_TEST_EXTENDS,
+ac_exeext=''
+ac_ext='f90'
+ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FCFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
+dnl Warning : square brackets are EVIL!
+[AC_MSG_CHECKING([support for Fortran EXTENDS])
+ AC_LANG_PUSH([Fortran])
+ ac_exeext=''
+ ac_ext='F90'
+ dnl ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
+ ac_fc=${MPIFC-$FC};
+ AC_COMPILE_IFELSE([
+program conftest
+  type foo
+    integer :: i
+  end type foo
+  type, extends(foo) :: bar
+    integer j
+  end type bar 
+  type(bar) :: barvar
+end program conftest],
+		  [  AC_MSG_RESULT([yes])
+		     ifelse([$1], , :, [ $1])],
+		  [  AC_MSG_RESULT([no])	
+		     echo "configure: failed program was:" >&AC_FD_CC
+		     cat conftest.$ac_ext >&AC_FD_CC
+		     ifelse([$2], , , [ $2])])
+AC_LANG_POP([Fortran])
+])
+
+
+dnl @synopsis PAC_ARG_LONG_INTEGERS
+dnl
+dnl Test for --enable-long-integers
+dnl 
+dnl 
+dnl
+dnl Example use:
+dnl
+dnl
+dnl @author Salvatore Filippone <salvatore.filippone@uniroma2.it>
+dnl
+AC_DEFUN([PAC_ARG_LONG_INTEGERS],
+[
+AC_MSG_CHECKING([whether we want long (8 bytes) integers])
+AC_ARG_ENABLE(long-integers,
+AC_HELP_STRING([--enable-long-integers], 
+[Specify usage of 64 bits integers. ]),
+[
+pac_cv_long_integers="yes";
+]
+dnl ,
+dnl [pac_cv_long_integers="no";]
+)
+if test x"$pac_cv_long_integers" == x"yes" ; then
+   AC_MSG_RESULT([yes.])
+else
+ pac_cv_long_integers="no";
+ AC_MSG_RESULT([no.])
+fi
+]
+)
+
+dnl @synopsis PAC_FORTRAN_TEST_CLASS_TBP( [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
+dnl
+dnl Will try to compile and link a program checking the TBP Fortran support.
+dnl
+dnl Will use MPIFC, otherwise '$FC'.
+dnl
+dnl If the test passes, will execute ACTION-IF-FOUND. Otherwise, ACTION-IF-NOT-FOUND.
+dnl Note : This file will be likely to induce the compiler to create a module file
+dnl (for a module called conftest).
+dnl Depending on the compiler flags, this could cause a conftest.mod file to appear
+dnl in the present directory, or in another, or with another name. So be warned!
+dnl
+dnl @author Salvatore Filippone <salvatore.filippone@uniroma2.it>
+AC_DEFUN(PAC_FORTRAN_TEST_CLASS_TBP,
+dnl Warning : square brackets are EVIL!
+[AC_MSG_CHECKING([support for Fortran CLASS TBP])
+AC_LANG_PUSH([Fortran])
+ ac_exeext=''
+ ac_ext='F90'
+ dnl ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
+ ac_fc=${MPIFC-$FC};
+ AC_COMPILE_IFELSE([
+module conftest_mod
+  type foo
+    integer :: i 
+  contains
+    procedure, pass(a) :: doit
+    procedure, pass(a) :: getit
+  end type foo
+
+  private doit,getit
+contains
+  subroutine  doit(a) 
+    class(foo) :: a
+    
+    a%i = 1
+    write(*,*) 'FOO%DOIT base version'
+  end subroutine doit
+  function getit(a) result(res)
+    class(foo) :: a
+    integer :: res
+
+    res = a%i
+  end function getit
+
+end module conftest_mod
+program conftest
+  use conftest_mod
+  type(foo) :: foovar
+end program conftest],
+		  [  AC_MSG_RESULT([yes])
+		     ifelse([$1], , :, [ $1])],
+		  [  AC_MSG_RESULT([no])	
+		     echo "configure: failed program was:" >&AC_FD_CC
+		     cat conftest.$ac_ext >&AC_FD_CC
+		     ifelse([$2], , , [ $2])])
+AC_LANG_POP([Fortran])
+])
 

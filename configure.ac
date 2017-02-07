@@ -273,52 +273,37 @@ fi
 ###############################################################################
 
 
-dnl ###############################################################################
-dnl # Custom test : do we have a module or include for MPI Fortran interface?
-dnl if test x"$pac_cv_serial_mpi" == x"yes" ; then
-dnl    FDEFINES="$psblas_cv_define_prepend-DSERIAL_MPI $psblas_cv_define_prepend-DMPI_MOD $FDEFINES";
-dnl else 
-dnl  PAC_FORTRAN_CHECK_HAVE_MPI_MOD_F08()
-dnl  if test x"$pac_cv_mpi_f08" == x"yes" ; then
-dnl dnl    FDEFINES="$psblas_cv_define_prepend-DMPI_MOD_F08 $FDEFINES";
-dnl     FDEFINES="$psblas_cv_define_prepend-DMPI_MOD $FDEFINES";
-dnl   else					     	     
-dnl     PAC_FORTRAN_CHECK_HAVE_MPI_MOD(
-dnl  	  [FDEFINES="$psblas_cv_define_prepend-DMPI_MOD $FDEFINES"],
-dnl 	  [FDEFINES="$psblas_cv_define_prepend-DMPI_H $FDEFINES"])	  
-dnl  fi
-dnl fi
+###############################################################################
+# Custom test : do we have a module or include for MPI Fortran interface?
+if test x"$pac_cv_serial_mpi" == x"yes" ; then
+   FDEFINES="$psblas_cv_define_prepend-DSERIAL_MPI $psblas_cv_define_prepend-DMPI_MOD $FDEFINES";
+else 
+    PAC_FORTRAN_CHECK_HAVE_MPI_MOD(
+ 	  [FDEFINES="$psblas_cv_define_prepend-DMPI_MOD $FDEFINES"],
+	  [FDEFINES="$psblas_cv_define_prepend-DMPI_H $FDEFINES"])	  
+fi
 
-dnl PAC_ARG_LONG_INTEGERS
-dnl if test x"$pac_cv_long_integers" == x"yes" ; then
-dnl    FDEFINES="$psblas_cv_define_prepend-DLONG_INTEGERS $FDEFINES";
-dnl fi
+PAC_ARG_LONG_INTEGERS
+if test x"$pac_cv_long_integers" == x"yes" ; then
+   FDEFINES="$psblas_cv_define_prepend-DLONG_INTEGERS $FDEFINES";
+fi
 
-dnl #
-dnl # Tests for support of various Fortran features; some of them are critical,
-dnl # some optional
-dnl #
+#
+# Tests for support of various Fortran features; some of them are critical,
+# some optional
+#
 
-dnl #
-dnl # Critical features
-dnl #
-dnl PAC_FORTRAN_TEST_TR15581( 
-dnl 	[],
-dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for TR15581. 
-dnl  Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
-dnl )
+PAC_FORTRAN_TEST_EXTENDS( 
+	[],
+        [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for EXTENDS. 
+ Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
+)
 
-dnl PAC_FORTRAN_TEST_EXTENDS( 
-dnl 	[],
-dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for EXTENDS. 
-dnl  Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
-dnl )
-
-dnl PAC_FORTRAN_TEST_CLASS_TBP( 
-dnl 	[],
-dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for CLASS and type bound procedures. 
-dnl  Please get a Fortran compiler that supports them, e.g. GNU Fortran 4.8.])]
-dnl )
+PAC_FORTRAN_TEST_CLASS_TBP( 
+	[],
+        [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for CLASS and type bound procedures. 
+ Please get a Fortran compiler that supports them, e.g. GNU Fortran 4.8.])]
+)
 
 dnl PAC_FORTRAN_TEST_SOURCE( 
 dnl 	[],
