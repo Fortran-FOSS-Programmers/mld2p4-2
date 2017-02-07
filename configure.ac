@@ -66,22 +66,28 @@ PSBLAS_DIR="$pac_cv_psblas_dir";
 PSBLAS_INCDIR="$pac_cv_psblas_incdir";
 PSBLAS_LIBDIR="$pac_cv_psblas_libdir";
 AC_MSG_CHECKING([for PSBLAS install dir])
-case $PSBLAS_DIR in 
-     /*) ;; 
-     *) AC_MSG_ERROR([The PSBLAS installation dir must be an absolute pathname
+if test "X$PSBLAS_DIR" != "X" ; then 
+   case $PSBLAS_DIR in 
+   	  /*) ;; 
+	   *)  AC_MSG_ERROR([The PSBLAS installation dir must be an absolute pathname
  specified with --with-psblas=/path/to/psblas])
-esac
-if test ! -d "$PSBLAS_DIR" ; then 
-   AC_MSG_ERROR([Could not find PSBLAS build dir $PSBLAS_DIR!])	
-fi
-AC_MSG_RESULT([$PSBLAS_DIR])
-pac_cv_status_file="$PSBLAS_INCDIR/Make.inc.psblas"
-if test ! -f "$pac_cv_status_file" ; then 
-   AC_MSG_ERROR([Could not find an installation  in $PSBLAS_DIR.])		
-fi
+ esac
+  if test ! -d "$PSBLAS_DIR" ; then 
+    AC_MSG_ERROR([Could not find PSBLAS build dir $PSBLAS_DIR!])	
+  fi
+  AC_MSG_RESULT([$PSBLAS_DIR])
+  pac_cv_status_file="$PSBLAS_INCDIR/Make.inc.psblas"
+  if test ! -f "$pac_cv_status_file" ; then 
+    AC_MSG_NOTICE([Could not find an installation  in $PSBLAS_DIR.])
+    pac_cv_status_file="NONE";
+  fi
+else
+  pac_cv_status_file="NONE";
+fi	
+
 dnl. $pac_cv_status_file
-dnl AC_MSG_NOTICE([Loaded $pac_cv_status_file $FC $MPIFC $BLACS_LIBS])
-dnl AM_INIT_AUTOMAKE
+AC_MSG_NOTICE([Loaded $pac_cv_status_file $FC $MPIFC $BLACS_LIBS])
+AM_INIT_AUTOMAKE
 dnl Specify required version of autoconf.
 AC_PREREQ(2.59)
 #
@@ -116,8 +122,7 @@ AC_MSG_RESULT([$INSTALL_DIR $INSTALL_INCLUDEDIR $INSTALL_LIBDIR $INSTALL_DOCSDIR
 ###############################################################################
 # Compilers detection: FC,F77,CC should be set, if found.
 ###############################################################################
-
-AC_PROG_FC([ftn xlf95 xlf90 xlf pgf95 pgf90 ifort ifc nagfor  gfortran])
+AC_PROG_FC([ftn xlf2003_r xlf2003 xlf95_r xlf95 xlf90 xlf pgf95 pgf90 ifort ifc  nagfor gfortran])
 AC_PROG_CC([xlc pgcc icc gcc cc])
 dnl AC_PROG_CXX
 
@@ -136,29 +141,12 @@ if eval "$FC -qversion 2>&1 | grep XL 2>/dev/null" ; then
  # since (as far as it is known to us) -WF, is not used in earlier versions.
  # More problems could be undocumented yet.
 fi 
-PAC_ARG_WITH_EXTRA_LIBS
-dnl PAC_ARG_WITH_FLAGS(clibs,CLIBS)
-dnl PAC_ARG_WITH_FLAGS(flibs,FLIBS)
-dnl PAC_ARG_WITH_FLAGS(library-path,LIBRARYPATH)
-dnl PAC_ARG_WITH_FLAGS(include-path,INCLUDEPATH)
-dnl PAC_ARG_WITH_FLAGS(module-path,MODULE_PATH)
-
-dnl CPPFLAGS="$INCLUDEPATH $CPPFLAGS"
 ###############################################################################
-#		BLAS  library presence checks
+#			Suitable MPI compilers detection
 ###############################################################################
-
-# Note : The libmkl.a (Intel Math Kernel Library) library could be used, too.
-# It is sufficient to specify it as -lmkl in the CLIBS or FLIBS or LIBS 
-# and specify its path adjusting -L/path in CFLAGS.
-
-# Right now it is a matter of user's taste when linking custom applications.
-# But PSBLAS examples could take advantage of these libraries, too.
-
-
+# Note: Someday we will contemplate a fake MPI - configured version of PSBLAS
 ###############################################################################
-#	
-###############################################################################
+# First check whether the user required our serial (fake) mpi.
 PAC_ARG_SERIAL_MPI
 
 #Note : we miss the name of the Intel C compiler
@@ -174,21 +162,26 @@ if test "X$MPICC" = "X" ; then
     AC_CHECK_PROGS([MPICC],[mpxlc mpcc mpicc cc])
 fi
 ACX_MPI([], [AC_MSG_ERROR([[Cannot find any suitable MPI implementation for C]])])
+
+
+AC_LANG([Fortran])
+
+if test "X$MPIFC" = "X" ; then
+    # This is our MPIFC compiler preference: it will override ACX_MPI's first try.
+    AC_CHECK_PROGS([MPIFC],[mpxlf2003_r mpxlf2003 mpxlf95_r mpxlf90 mpf95 mpf90 mpifort mpif95 mpif90 ftn ])
+fi
+
+ACX_MPI([], [AC_MSG_ERROR([[Cannot find any suitable MPI implementation for Fortran]])])
+
 AC_LANG(Fortran 77)
 if test "X$MPIF77" = "X" ; then
     # This is our MPIFC compiler preference: it will override ACX_MPI's first try.
     AC_CHECK_PROGS([MPIF77],[mpxlf mpf77 mpif77 ftn])
 fi
 ACX_MPI([], [AC_MSG_ERROR([[Cannot find any suitable MPI implementation for Fortran 77]])])
-
-AC_LANG([Fortran])
-
-if test "X$MPIFC" = "X" ; then
-    # This is our MPIFC compiler preference: it will override ACX_MPI's first try.
-    AC_CHECK_PROGS([MPIFC],[mpxlf2003_r mpxlf2003 mpxlf95_r mpxlf90 mpf95 mpf90  mpif95 mpif90  ])
-fi
-
-ACX_MPI([], [AC_MSG_ERROR([[Cannot find any suitable MPI implementation for Fortran]])])
+FC="$MPIFC" ;
+F77="$MPIF77";
+CC="$MPICC";
 fi
 
 # We leave a default language for the next checks.
@@ -201,9 +194,44 @@ dnl Now on, MPIFC should be set, as MPIF77 and MPICC
 # Sanity checks, although redundant (useful when debugging this configure.ac)!
 ###############################################################################
 
+if test "X$MPIFC" == "X" ; then
+	AC_MSG_ERROR([Problem : No MPI Fortran compiler specified nor found!])
+fi
+
+if test "X$MPICC" == "X" ; then
+	AC_MSG_ERROR([Problem : No MPI C compiler specified nor found!])
+fi
+
+###############################################################################
+# 			FLAGS and LIBS user customization
+###############################################################################
+
+dnl NOTE : no spaces before the comma, and no brackets before the second argument!
+PAC_ARG_WITH_FLAGS(ccopt,CCOPT)
+PAC_ARG_WITH_FLAGS(fcopt,FCOPT)
+#PAC_ARG_WITH_FLAGS(f90copt,F90COPT)
+#PAC_ARG_WITH_FLAGS(ldflags,LDFLAGS)
+PAC_ARG_WITH_LIBS
+PAC_ARG_WITH_FLAGS(clibs,CLIBS)
+PAC_ARG_WITH_FLAGS(flibs,FLIBS)
+
+dnl candidates for removal:
+PAC_ARG_WITH_FLAGS(library-path,LIBRARYPATH)
+PAC_ARG_WITH_FLAGS(include-path,INCLUDEPATH)
+PAC_ARG_WITH_FLAGS(module-path,MODULE_PATH)
+
+# we just gave the user the chance to append values to these variables
+PAC_ARG_WITH_EXTRA_LIBS
+
+###############################################################################
+# Sanity checks, although redundant (useful when debugging this configure.ac)!
+###############################################################################
+
 ###############################################################################
 #		PSBLAS library presence checks
 ###############################################################################
+AX_F90_MODULE_EXTENSION
+MODEXT=".$ax_cv_f90_modext"
 AX_F90_MODULE_FLAG
 FMFLAG="${ax_cv_f90_modflag%%[ ]*}"
 # Last resort attempt
@@ -219,6 +247,7 @@ PAC_FORTRAN_HAVE_PSBLAS([AC_MSG_RESULT([yes.])],
 	[AC_MSG_ERROR([no.  Could not find working version of PSBLAS.])])
 
 PAC_FORTRAN_PSBLAS_VERSION()
+
 if test "x$pac_cv_psblas_major" == "xunknown"; then
   AC_MSG_ERROR([PSBLAS version major "$pac_cv_psblas_major".])
 fi
@@ -234,6 +263,118 @@ if (( $pac_cv_psblas_major < 3 )) ||
 else
   AC_MSG_NOTICE([Am configuring with PSBLAS version $pac_cv_psblas_major.$pac_cv_psblas_minor.$pac_cv_psblas_patchlevel.])
 fi
+
+###############################################################################
+# NOTE :
+# Missing stuff : 
+# 		In the case the detected fortran compiler is ifort, icc or gcc
+#		should be valid options.
+#		The same for pg (Portland Group compilers).
+###############################################################################
+
+
+dnl ###############################################################################
+dnl # Custom test : do we have a module or include for MPI Fortran interface?
+dnl if test x"$pac_cv_serial_mpi" == x"yes" ; then
+dnl    FDEFINES="$psblas_cv_define_prepend-DSERIAL_MPI $psblas_cv_define_prepend-DMPI_MOD $FDEFINES";
+dnl else 
+dnl  PAC_FORTRAN_CHECK_HAVE_MPI_MOD_F08()
+dnl  if test x"$pac_cv_mpi_f08" == x"yes" ; then
+dnl dnl    FDEFINES="$psblas_cv_define_prepend-DMPI_MOD_F08 $FDEFINES";
+dnl     FDEFINES="$psblas_cv_define_prepend-DMPI_MOD $FDEFINES";
+dnl   else					     	     
+dnl     PAC_FORTRAN_CHECK_HAVE_MPI_MOD(
+dnl  	  [FDEFINES="$psblas_cv_define_prepend-DMPI_MOD $FDEFINES"],
+dnl 	  [FDEFINES="$psblas_cv_define_prepend-DMPI_H $FDEFINES"])	  
+dnl  fi
+dnl fi
+
+dnl PAC_ARG_LONG_INTEGERS
+dnl if test x"$pac_cv_long_integers" == x"yes" ; then
+dnl    FDEFINES="$psblas_cv_define_prepend-DLONG_INTEGERS $FDEFINES";
+dnl fi
+
+dnl #
+dnl # Tests for support of various Fortran features; some of them are critical,
+dnl # some optional
+dnl #
+
+dnl #
+dnl # Critical features
+dnl #
+dnl PAC_FORTRAN_TEST_TR15581( 
+dnl 	[],
+dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for TR15581. 
+dnl  Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
+dnl )
+
+dnl PAC_FORTRAN_TEST_EXTENDS( 
+dnl 	[],
+dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for EXTENDS. 
+dnl  Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
+dnl )
+
+dnl PAC_FORTRAN_TEST_CLASS_TBP( 
+dnl 	[],
+dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for CLASS and type bound procedures. 
+dnl  Please get a Fortran compiler that supports them, e.g. GNU Fortran 4.8.])]
+dnl )
+
+dnl PAC_FORTRAN_TEST_SOURCE( 
+dnl 	[],
+dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for SOURCE= allocation. 
+dnl  Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
+dnl )
+
+dnl PAC_FORTRAN_HAVE_MOVE_ALLOC(
+dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_MOVE_ALLOC $FDEFINES"],
+dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for MOVE_ALLOC. 
+dnl  Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
+dnl )
+
+dnl PAC_FORTRAN_TEST_ISO_C_BIND( 
+dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_ISO_C_BINDING $FDEFINES"],
+dnl         [AC_MSG_ERROR([Sorry, cannot build PSBLAS without support for ISO_C_BINDING. 
+dnl  Please get a Fortran compiler that supports it, e.g. GNU Fortran 4.8.])]
+dnl )
+
+dnl #
+dnl # Optional features
+dnl #
+
+dnl PAC_FORTRAN_TEST_VOLATILE( 
+dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_VOLATILE $FDEFINES"],
+dnl )
+
+dnl PAC_FORTRAN_TEST_GENERICS( 
+dnl 	[],
+dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_BUGGY_GENERICS $FDEFINES"]
+dnl )
+
+dnl PAC_FORTRAN_TEST_FLUSH( 
+dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_FLUSH_STMT $FDEFINES"],
+dnl )
+
+dnl PAC_FORTRAN_TEST_ISO_FORTRAN_ENV(
+dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_ISO_FORTRAN_ENV $FDEFINES"],
+dnl )
+
+dnl PAC_FORTRAN_TEST_FINAL( 
+dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_FINAL $FDEFINES"],
+dnl )
+
+dnl PAC_FORTRAN_TEST_SAME_TYPE( 
+dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_SAME_TYPE_AS $FDEFINES"],
+dnl )
+
+dnl PAC_FORTRAN_TEST_EXTENDS_TYPE( 
+dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_EXTENDS_TYPE_OF $FDEFINES"],
+dnl )
+
+dnl PAC_FORTRAN_TEST_MOLD( 
+dnl 	[FDEFINES="$psblas_cv_define_prepend-DHAVE_MOLD $FDEFINES"],
+dnl )
+
 ###############################################################################
 #		Auxiliary packages
 ###############################################################################
@@ -272,6 +413,26 @@ else
    SLUDIST_FLAGS=""
 fi
 
+##############################################
+FINCLUDES="$PSBLAS_INCLUDES"
+
+COMPILERULES='
+LDLIBS=$(LAPACK) $(BLAS) $(METIS_LIB) $(AMD_LIB) $(LIBS)
+	
+
+# These should be portable rules, arent they?
+.c.o:
+	$(CC) $(CCOPT) $(CINCLUDES) $(CDEFINES) -c $< -o $@
+.f.o:
+	$(FC) $(FCOPT) $(FINCLUDES)  -c $< -o $@
+.f90.o:
+	$(F90) $(F90COPT) $(FINCLUDES) -c $< -o $@
+.F.o:
+	$(FC)  $(FCOPT)   $(FINCLUDES) $(FDEFINES) -c $< -o $@
+.F90.o:
+	$(F90) $(F90COPT) $(FINCLUDES) $(FDEFINES) -c $< -o $@'
+
+
 
 ###############################################################################
 # Variable substitutions : the Make.inc.in will have these @VARIABLES@
@@ -279,6 +440,8 @@ fi
 
 AC_SUBST(PSBLAS_DIR)
 AC_SUBST(PSBLAS_INCDIR)
+AC_SUBST(PSBLAS_INCLUDES)
+AC_SUBST(PSBLAS_LIBS)
 
 AC_SUBST(INSTALL)
 AC_SUBST(INSTALL_DATA)
@@ -304,7 +467,7 @@ AC_SUBST(FDEFINES)
 
 AC_CONFIG_FILES([Make.inc])
 AC_OUTPUT()
-#AC_OUTPUT(Make.inc Makefile)
+
 ###############################################################################
 
 dnl Please note that brackets around variable identifiers are absolutely needed for compatibility..

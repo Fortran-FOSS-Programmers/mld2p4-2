@@ -1,4 +1,9 @@
 ##########################################################
+.mod=@MODEXT@
+.fh=.fh
+.SUFFIXES: 
+.SUFFIXES: .f90 .F90 .f .F .c .o
+##########################################################
 #                                                        #
 #  Note: directories external to the MLD2P4 subtree      #
 #  must be specified here with absolute pathnames        #
@@ -6,7 +11,11 @@
 ##########################################################
 PSBLASDIR=@PSBLAS_DIR@
 PSBLAS_INCDIR=@PSBLAS_INCDIR@
+PSBLAS_INCLUDES=@PSBLAS_INCLUDES@
+PSBLAS_LIBS=@PSBLAS_LIBS@	
 include $(PSBLAS_INCDIR)/Make.inc.psblas
+
+
 
 
 INSTALL=@INSTALL@
@@ -64,3 +73,25 @@ MLDFDEFINES=@FDEFINES@ $(PSBFDEFINES)
 
 CDEFINES=$(MLDCDEFINES)
 FDEFINES=$(MLDFDEFINES)
+# The following ones are the variables used by the PSBLAS make scripts.
+
+F90=@F90@
+FC=@FC@
+CC=@CC@
+F90COPT=@F90COPT@
+FCOPT=@FCOPT@
+CCOPT=@CCOPT@
+FMFLAG=@FMFLAG@
+FIFLAG=@FIFLAG@
+EXTRA_OPT=@EXTRA_OPT@
+
+# These three should be always set!
+MPF90=@MPF90@
+MPF77=@MPF77@
+MPCC=@MPCC@
+
+F90LINK=$(MPF90)
+FLINK=$(MPF77)
+
+@COMPILERULES@
+

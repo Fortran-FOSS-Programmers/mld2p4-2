@@ -75,6 +75,45 @@ AC_LANG_POP([Fortran])
 ])
 
 
+
+dnl @synopsis PAC_CHECK_HAVE_CRAYFTN( [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
+dnl
+dnl Will check if MPIFC is $FC.
+dnl The check will proceed by compiling a small Fortran program
+dnl containing the _CRAYFTN macro, which should be defined in the
+dnl gfortran compiled programs.
+dnl
+dnl On pass, will execute ACTION-IF-FOUND. Otherwise, ACTION-IF-NOT-FOUND.
+dnl
+dnl @author Salvatore Filippone <salvatore.filippone@uniroma2.it>
+dnl
+AC_DEFUN(PAC_CHECK_HAVE_CRAYFTN,
+dnl Warning : square brackets are EVIL!
+[AC_MSG_CHECKING([for Cray Fortran])
+ AC_LANG_PUSH([Fortran])
+ ac_exeext=''
+ ac_ext='F90'
+ dnl ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
+ ac_fc=${MPIFC-$FC};
+ AC_COMPILE_IFELSE([
+           program main
+#ifdef _CRAYFTN 
+              print *, "Cray FTN!"
+#else
+        this program will fail
+#endif
+           end],
+		  [  AC_MSG_RESULT([yes])
+		     ifelse([$1], , :, [ $1])],
+		  [  AC_MSG_RESULT([no])	
+		     echo "configure: failed program was:" >&AC_FD_CC
+		     cat conftest.$ac_ext >&AC_FD_CC
+		     ifelse([$2], , , [ $2])])
+AC_LANG_POP([Fortran])
+])
+
+
+
 dnl @synopsis PAC_CHECK_HAVE_GFORTRAN( [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
 dnl
 dnl Will check if MPIFC is $FC.
@@ -137,7 +176,8 @@ AC_DEFUN(PAC_HAVE_MODERN_GFORTRAN,
            end],
 		  [  AC_MSG_RESULT([yes])
 		     ifelse([$1], , :, [ $1])],
-		  [  AC_MSG_RESULT([no])	
+		  [  AC_MSG_RESULT([no])
+		     AC_MSG_NOTICE([Sorry, we require GNU Fortran version 4.8.4 or later.])
 		     echo "configure: failed program was:" >&AC_FD_CC
 		     cat conftest.$ac_ext >&AC_FD_CC
 		     ifelse([$2], , , [ $2])])
@@ -173,6 +213,41 @@ AC_DEFUN(PAC_FORTRAN_CHECK_HAVE_MPI_MOD,
 		     ifelse([$2], , , [ $2])])
 AC_LANG_POP([Fortran])
 ])
+
+
+dnl @synopsis PAC_FORTRAN_CHECK_HAVE_MPI_MOD_F08( [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
+dnl
+dnl Will determine if the fortran compiler MPIFC provides mpi_f08
+dnl
+dnl If yes, will execute ACTION-IF-FOUND. Otherwise, ACTION-IF-NOT-FOUND.
+dnl 
+dnl @author Michele Martone <michele.martone@uniroma2.it>
+dnl Modified Salvatore Filippone <salvatore.filippone@uniroma2.it>
+dnl
+AC_DEFUN(PAC_FORTRAN_CHECK_HAVE_MPI_MOD_F08,
+dnl Warning : square brackets are EVIL!
+[AC_MSG_CHECKING([MPI Fortran 2008 interface])
+ AC_LANG_PUSH([Fortran])
+ ac_exeext=''
+ ac_ext='F90'
+ dnl ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
+ ac_fc=${MPIFC-$FC};
+ AC_COMPILE_IFELSE([
+           program test
+             use mpi_f08
+           end program test],
+		   [  AC_MSG_RESULT([yes])
+		      pac_cv_mpi_f08="yes";
+		      ifelse([$1], , :, [ $1])],
+		   [  AC_MSG_RESULT([no])
+	              pac_cv_mpi_f08="no";
+		      echo "configure: failed program was:" >&AC_FD_CC
+		      cat conftest.$ac_ext >&AC_FD_CC
+		      ifelse([$2], , , [ $2])])
+AC_LANG_POP([Fortran])
+])
+
+
 
 dnl @synopsis PAC_ARG_WITH_FLAGS(lcase_name, UCASE_NAME)
 dnl
@@ -336,8 +411,18 @@ dnl Warning : square brackets are EVIL!
  ac_ext='f90'
  ac_fc="${MPIFC-$FC}";
  save_FCFLAGS="$FCFLAGS";
- FCFLAGS=" $FMFLAG$PSBLAS_DIR/include $save_FCFLAGS"
- AC_COMPILE_IFELSE([
+dnl FCFLAGS=" $FMFLAG$PSBLAS_DIR/include $save_FCFLAGS"
+dnl save_FCFLAGS="$FCFLAGS";
+ save_LDFLAGS="$LDFLAGS";
+if test "x$pac_cv_psblas_incdir" != "x"; then 
+dnl  AC_MSG_NOTICE([psblas include dir $pac_cv_psblas_incdir])
+ PSBLAS_INCLUDES="$FMFLAG$pac_cv_psblas_incdir"
+elif test "x$pac_cv_psblas_dir" != "x"; then 
+dnl AC_MSG_NOTICE([psblas dir $pac_cv_psblas_dir])
+ PSBLAS_INCLUDES="$FMFLAG$pac_cv_psblas_dir/include"
+fi
+ FCFLAGS=" $PSBLAS_INCLUDES $save_FCFLAGS"
+AC_COMPILE_IFELSE([
 		    program test
 		    use psb_base_mod
 		    end program test],
@@ -366,9 +451,16 @@ ac_exeext=''
 ac_objext='o'
 ac_ext='f90'
 save_FCFLAGS=$FCFLAGS;
-FCFLAGS=" $FMFLAG$PSBLAS_DIR/include $save_FCFLAGS"
+FCFLAGS=" $PSBLAS_INCLUDES $save_FCFLAGS"
 save_LDFLAGS=$LDFLAGS;
-LDFLAGS=" -L$PSBLAS_DIR/lib -lpsb_base $save_LDFLAGS"
+if test "x$pac_cv_psblas_libdir" != "x"; then 
+dnl AC_MSG_NOTICE([psblas lib dir $pac_cv_psblas_libdir])
+ PSBLAS_LIBS="-L$pac_cv_psblas_libdir"
+elif test "x$pac_cv_psblas_dir" != "x"; then 
+dnl AC_MSG_NOTICE([psblas dir $pac_cv_psblas_dir])
+ PSBLAS_LIBS="-L$pac_cv_psblas_dir/lib"
+fi
+LDFLAGS=" $PSBLAS_LIBS -lpsb_base $save_LDFLAGS"
 
 dnl ac_compile='${MPIFC-$FC} -c -o conftest${ac_objext} $FMFLAG$PSBLAS_DIR/include $FMFLAG$PSBLAS_DIR/lib conftest.$ac_ext  1>&5'
 dnl ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FCFLAGS $LDFLAGS conftest.$ac_ext $FMFLAG$PSBLAS_DIR/include -L$PSBLAS_DIR/lib -lpsb_base $LIBS 1>&5'
@@ -397,6 +489,8 @@ AC_LINK_IFELSE([
 		end program test],
 	       [pac_cv_psblas_patchlevel=`./conftest${ac_exeext} | sed 's/^ *//'`],
 	       [pac_cv_psblas_patchlevel="unknown"])
+LDFLAGS="$save_LDFLAGS";
+FCFLAGS="$save_FCFLAGS";
 
 AC_MSG_RESULT([Done])
 AC_LANG_POP([Fortran])])
@@ -1000,3 +1094,4 @@ else
 fi
 ]
 )
+
