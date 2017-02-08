@@ -693,7 +693,7 @@ fi
 FINCLUDES="$PSBLAS_INCLUDES"
 
 if test "x$pac_cv_status_file" != "xNONE"; then
-   PSBLAS_INSTALL_MAKEINC="include $(PSBLAS_INCDIR)/Make.inc.psblas";
+   PSBLAS_INSTALL_MAKEINC='include $(PSBLAS_INCDIR)/Make.inc.psblas';
 else
    PSBLAS_INSTALL_MAKEINC="";
 fi
