@@ -389,14 +389,15 @@ ac_ext='f90'
 save_FCFLAGS=$FCFLAGS;
 FCFLAGS=" $PSBLAS_INCLUDES $save_FCFLAGS"
 save_LDFLAGS=$LDFLAGS;
-if test "x$pac_cv_psblas_libdir" != "x"; then 
-dnl AC_MSG_NOTICE([psblas lib dir $pac_cv_psblas_libdir])
- PSBLAS_LIBS="-L$pac_cv_psblas_libdir"
-elif test "x$pac_cv_psblas_dir" != "x"; then 
-dnl AC_MSG_NOTICE([psblas dir $pac_cv_psblas_dir])
- PSBLAS_LIBS="-L$pac_cv_psblas_dir/lib"
-fi
-LDFLAGS=" $PSBLAS_LIBS -lpsb_base $save_LDFLAGS"
+## if test "x$pac_cv_psblas_libdir" != "x"; then 
+## dnl AC_MSG_NOTICE([psblas lib dir $pac_cv_psblas_libdir])
+##  PSBLAS_LIBS="-L$pac_cv_psblas_libdir"
+## elif test "x$pac_cv_psblas_dir" != "x"; then 
+## dnl AC_MSG_NOTICE([psblas dir $pac_cv_psblas_dir])
+##  PSBLAS_LIBS="-L$pac_cv_psblas_dir/lib"
+## fi
+PSBLAS_LIBS="-lpsb_krylov -lpsb_prec -lpsb_util -lpsb_base -L$PSBLAS_LIBDIR"
+LDFLAGS=" $PSBLAS_LIBS $save_LDFLAGS"
 
 dnl ac_compile='${MPIFC-$FC} -c -o conftest${ac_objext} $FMFLAG$PSBLAS_DIR/include $FMFLAG$PSBLAS_DIR/lib conftest.$ac_ext  1>&5'
 dnl ac_link='${MPIFC-$FC} -o conftest${ac_exeext} $FCFLAGS $LDFLAGS conftest.$ac_ext $FMFLAG$PSBLAS_DIR/include -L$PSBLAS_DIR/lib -lpsb_base $LIBS 1>&5'
@@ -1587,7 +1588,14 @@ case $with_blas in
 	-* | */* | *.a | *.so | *.so.* | *.o) BLAS_LIBS="$with_blas" ;;
 	*) BLAS_LIBS="-l$with_blas" ;;
 esac
-
+AC_ARG_WITH(blasdir,
+	[AC_HELP_STRING([--with-blasdir=<dir>], [search for BLAS library in <dir>])])
+case $with_blasdir in
+  "") ;;
+      *) if test -d $with_blasdir; then 
+	    BLAS_LIBDIR="-L$with_blasdir";
+	    fi ;;
+esac
 # Get fortran linker names of BLAS functions to check for.
 #AC_FC_FUNC(sgemm)
 #AC_FC_FUNC(dgemm)
@@ -1599,7 +1607,7 @@ AC_LANG([Fortran])
 # First, check BLAS_LIBS environment variable
 if test $pac_blas_ok = no; then
 if test "x$BLAS_LIBS" != x; then
-	save_LIBS="$LIBS"; LIBS="$BLAS_LIBS $LIBS"
+	save_LIBS="$LIBS"; LIBS="$BLAS_LIBS $BLAS_LIBDIR $LIBS"
 	AC_MSG_CHECKING([for sgemm in $BLAS_LIBS])
 	AC_TRY_LINK_FUNC(sgemm, [pac_blas_ok=yes], [BLAS_LIBS=""])
 	AC_MSG_RESULT($pac_blas_ok)
@@ -1617,7 +1625,7 @@ if test $pac_blas_ok = no; then
 		[AC_LANG([C])
 		 AC_CHECK_LIB(cblas, cblas_dgemm,
 			[pac_blas_ok=yes
-			 BLAS_LIBS="-lcblas -lf77blas -latlas"],
+			 BLAS_LIBS="-lcblas -lf77blas -latlas $BLAS_LIBDIR"],
 			[], [-lf77blas -latlas])],
 			[], [-latlas])])
 
@@ -1630,7 +1638,7 @@ if test $pac_blas_ok = no; then
 		[AC_LANG([C])
 		 AC_CHECK_LIB(satlas, cblas_dgemm,
 			[pac_blas_ok=yes
-			 BLAS_LIBS="-lsatlas"],
+			 BLAS_LIBS="-lsatlas $BLAS_LIBDIR"],
 			[], [-lsatlas])],
 			[], [-lsatlas])])
 
@@ -1642,19 +1650,19 @@ if test $pac_blas_ok = no; then
 	AC_CHECK_LIB(blas, sgemm,
 		[AC_CHECK_LIB(dgemm, dgemm,
 		[AC_CHECK_LIB(sgemm, sgemm,
-			[pac_blas_ok=yes; BLAS_LIBS="-lsgemm -ldgemm -lblas"],
+			[pac_blas_ok=yes; BLAS_LIBS="-lsgemm -ldgemm -lblas $BLAS_LIBDIR"],
 			[], [-lblas])],
 			[], [-lblas])])
 fi
 
 # BLAS in Alpha CXML library? 
 if test $pac_blas_ok = no; then
-	AC_CHECK_LIB(cxml, sgemm, [pac_blas_ok=yes;BLAS_LIBS="-lcxml"])
+	AC_CHECK_LIB(cxml, sgemm, [pac_blas_ok=yes;BLAS_LIBS="-lcxml $BLAS_LIBDIR"])
 fi
 
 # BLAS in Alpha DXML library? (now called CXML, see above)
 if test $pac_blas_ok = no; then
-	AC_CHECK_LIB(dxml, sgemm, [pac_blas_ok=yes;BLAS_LIBS="-ldxml"])
+	AC_CHECK_LIB(dxml, sgemm, [pac_blas_ok=yes;BLAS_LIBS="-ldxml $BLAS_LIBDIR"])
 
 fi
 
@@ -1663,7 +1671,7 @@ if test $pac_blas_ok = no; then
 	if test "x$GCC" != xyes; then # only works with Sun CC
 		AC_CHECK_LIB(sunmath, acosp,
 			[AC_CHECK_LIB(sunperf, sgemm,
-        			[BLAS_LIBS="-xlic_lib=sunperf -lsunmath"
+        			[BLAS_LIBS="-xlic_lib=sunperf -lsunmath $BLAS_LIBDIR"
                                  pac_blas_ok=yes],[],[-lsunmath])])
 
 	fi
@@ -1671,25 +1679,25 @@ fi
 
 # BLAS in SCSL library?  (SGI/Cray Scientific Library)
 if test $pac_blas_ok = no; then
-	AC_CHECK_LIB(scs, sgemm, [pac_blas_ok=yes; BLAS_LIBS="-lscs"])
+	AC_CHECK_LIB(scs, sgemm, [pac_blas_ok=yes; BLAS_LIBS="-lscs $BLAS_LIBDIR"])
 fi
 
 # BLAS in SGIMATH library?
 if test $pac_blas_ok = no; then
 	AC_CHECK_LIB(complib.sgimath, $sgemm,
-		     [pac_blas_ok=yes; BLAS_LIBS="-lcomplib.sgimath"])
+		     [pac_blas_ok=yes; BLAS_LIBS="-lcomplib.sgimath $BLAS_LIBDIR"])
 fi
 
 # BLAS in IBM ESSL library? (requires generic BLAS lib, too)
 if test $pac_blas_ok = no; then
 	AC_CHECK_LIB(blas, $sgemm,
 		[AC_CHECK_LIB(essl, sgemm,
-			[pac_blas_ok=yes; BLAS_LIBS="-lessl -lblas"],
+			[pac_blas_ok=yes; BLAS_LIBS="-lessl -lblas $BLAS_LIBDIR"],
 			[], [-lblas $FLIBS])])
 fi
 # BLAS linked to by default?  (happens on some supercomputers)
 if test $pac_blas_ok = no; then
-	save_LIBS="$LIBS"; LIBS="$LIBS"
+	save_LIBS="$LIBS"; LIBS=" $BLAS_LIBDIR $LIBS"
 	AC_TRY_LINK_FUNC(sgemm, [pac_blas_ok=yes], [BLAS_LIBS=""])
 dnl	AC_CHECK_FUNC(sgemm, [pac_blas_ok=yes])
 	LIBS="$save_LIBS"
@@ -1698,10 +1706,10 @@ fi
 # Generic BLAS library?
 if test $pac_blas_ok = no; then
   AC_LANG([Fortran])
-  AC_CHECK_LIB(blas, sgemm, [pac_blas_ok=yes; BLAS_LIBS="-lblas"])
+  AC_CHECK_LIB(blas, sgemm, [pac_blas_ok=yes; BLAS_LIBS="-lblas $BLAS_LIBDIR"])
 fi
 
-AC_SUBST(BLAS_LIBS)
+dnl AC_SUBST(BLAS_LIBS)
 
 LIBS="$pac_blas_save_LIBS"
 

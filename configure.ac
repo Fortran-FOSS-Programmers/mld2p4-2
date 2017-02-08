@@ -184,6 +184,7 @@ F77="$MPIF77";
 CC="$MPICC";
 fi
 
+
 # We leave a default language for the next checks.
 dnl AC_LANG([Fortran 77])
 AC_LANG([C])
@@ -230,16 +231,275 @@ PAC_ARG_WITH_EXTRA_LIBS
 ###############################################################################
 #		PSBLAS library presence checks
 ###############################################################################
-AX_F90_MODULE_EXTENSION
-MODEXT=".$ax_cv_f90_modext"
-AX_F90_MODULE_FLAG
-FMFLAG="${ax_cv_f90_modflag%%[ ]*}"
-# Last resort attempt
-if test "x$FMFLAG" == "xnot" ; then 
-   AC_MSG_NOTICE([Fortran inclusion flag detection failed, trying with -I])  
+
+PAC_CHECK_HAVE_GFORTRAN(
+	[psblas_cv_fc="gcc"],
+)
+
+PAC_CHECK_HAVE_CRAYFTN(
+	[psblas_cv_fc="cray"],
+)
+
+if test x"$psblas_cv_fc" == "x" ; then
+ if eval "$MPIFC -qversion 2>&1 | grep XL 2>/dev/null" ; then
+	psblas_cv_fc="xlf"
+	# Some configurations of the XLF want "-WF," prepended to -D.. flags.
+	# TODO : discover the exact conditions when the usage of -WF is needed.
+	psblas_cv_define_prepend="-WF,"
+        if eval "$MPIFC -qversion 2>&1 | grep -e\"Version: 10\.\" 2>/dev/null"; then
+        	FDEFINES="$psblas_cv_define_prepend-DXLF_10 $FDEFINES"		  
+        fi
+
+ # Note : there could be problems with old xlf compiler versions ( <10.1 )
+ # since (as far as it is known to us) -WF, is not used in earlier versions.
+ # More problems could be undocumented yet.
+ elif eval "$MPIFC -V  2>&1 | grep Sun 2>/dev/null" ; then
+   # Sun compiler detection
+  
+   psblas_cv_fc="sun"
+ elif eval "$MPIFC -V  2>&1 | grep Portland 2>/dev/null" ; then
+   # Portland group compiler detection
+   
+   psblas_cv_fc="pg"
+ elif eval "$MPIFC -V 2>&1 | grep Intel.*Fortran.*Compiler 2>/dev/null" ; then
+   # Intel compiler identification
+    
+   psblas_cv_fc="ifc"
+ elif eval "$MPIFC -v  2>&1 | grep NAG 2>/dev/null" ; then
+   psblas_cv_fc="nag"
+   FC="$MPIFC"
+   F77="$MPIFC"
+ else
+   psblas_cv_fc=""
+  # unsupported MPI Fortran compiler
+     AC_MSG_NOTICE([[Unknown Fortran compiler, proceeding with fingers crossed !]])
+ fi
+fi
+if test "X$psblas_cv_fc" == "Xgcc" ; then
+PAC_HAVE_MODERN_GFORTRAN(
+	[],
+        [AC_MSG_ERROR([Bailing out.])]
+)
+fi
+
+AC_LANG([C])
+AC_CHECK_SIZEOF(void *)
+# Define for platforms with 64 bit (void *     ) pointers
+if test X"$ac_cv_sizeof_void_p" == X"8" ; then
+  CDEFINES="-DPtr64Bits $CDEFINES"
+fi
+AC_LANG([Fortran])
+if test "X$psblas_cv_fc" == X"pg" ; then
+   save_FC=$FC
+   FC=$F77
+fi
+__AC_FC_NAME_MANGLING
+if test "X$psblas_cv_fc" == X"pg" ; then
+   FC=$save_FC
+fi
+AC_LANG([C])
+dnl AC_MSG_NOTICE([Fortran name mangling: $ac_cv_fc_mangling])
+[pac_fc_case=${ac_cv_fc_mangling%%,*}]
+[pac_fc_under=${ac_cv_fc_mangling#*,}]
+[pac_fc_sec_under=${pac_fc_under#*,}]
+[pac_fc_sec_under=${pac_fc_sec_under# }]
+[pac_fc_under=${pac_fc_under%%,*}]
+[pac_fc_under=${pac_fc_under# }]
+AC_MSG_CHECKING([defines for C/Fortran name interfaces])
+if test "x$pac_fc_case" == "xlower case"; then
+   if test "x$pac_fc_under" == "xunderscore"; then
+      if test "x$pac_fc_sec_under" == "xno extra underscore"; then 
+          pac_f_c_names="-DLowerUnderscore"
+      elif test "x$pac_fc_sec_under" == "xextra underscore"; then
+          pac_f_c_names="-DLowerDoubleUnderscore"
+      else
+          pac_f_c_names="-DUNKNOWN"
+dnl  AC_MSG_NOTICE([Fortran name mangling extra underscore unknown case])	
+      fi
+   elif test "x$pac_fc_under" == "xno underscore"; then
+      pac_f_c_names="-DLowerCase"
+   else		       
+      pac_f_c_names="-DUNKNOWN"
+dnl  AC_MSG_NOTICE([Fortran name mangling underscore unknown case])	
+   fi
+elif test "x$pac_fc_case" == "xupper case"; then
+   if test "x$pac_fc_under" == "xunderscore"; then
+      if test "x$pac_fc_sec_under" == "xno extra underscore"; then 
+          pac_f_c_names="-DUpperUnderscore"
+      elif test "x$pac_fc_sec_under" == "xextra underscore"; then
+          pac_f_c_names="-DUpperDoubleUnderscore"
+      else
+          pac_f_c_names="-DUNKNOWN"
+dnl  AC_MSG_NOTICE([Fortran name mangling extra underscore unknown case])	
+      fi
+   elif test "x$pac_fc_under" == "xno underscore"; then
+      pac_f_c_names="-DUpperCase"
+   else		       
+      pac_f_c_names="-DUNKNOWN"
+dnl  AC_MSG_NOTICE([Fortran name mangling underscore unknown case])	
+   fi
+dnl  AC_MSG_NOTICE([Fortran name mangling UPPERCASE not handled])	
+else
+   pac_f_c_names="-DUNKNOWN"   
+dnl   AC_MSG_NOTICE([Fortran name mangling unknown case])	
+fi
+CDEFINES="$pac_f_c_names $CDEFINES"
+
+AC_MSG_RESULT([ $pac_f_c_names ])
+
+###############################################################################
+# 			Make.inc generation logic
+###############################################################################
+F90COPT="$FCOPT"
+
+if test "X$CCOPT" == "X" ; then
+ if test "X$psblas_cv_fc" == "Xgcc" ; then
+ # note that no space should be placed around the equality symbol in assignements
+ # Note : 'native' is valid _only_ on GCC/x86  (32/64 bits)
+   CCOPT="-O3  $CCOPT"
+
+ elif test "X$psblas_cv_fc" == X"xlf" ; then
+   # XL compiler : consider using -qarch=auto
+     CCOPT="-O3 -qarch=auto $CCOPT"
+ elif test "X$psblas_cv_fc" == X"ifc" ; then
+   # other compilers ..
+     CCOPT="-O3 $CCOPT"
+ elif test "X$psblas_cv_fc" == X"pg" ; then
+   # other compilers ..
+     CCOPT="-fast $CCOPT"
+  # NOTE : PG & Sun use -fast instead -O3
+ elif test "X$psblas_cv_fc" == X"sun" ; then
+   # other compilers ..
+     CCOPT="-fast $CCOPT"
+ elif test "X$psblas_cv_fc" == X"cray" ; then
+     CCOPT="-O3 $CCOPT"
+     MPICC="cc"
+ elif test "X$psblas_cv_fc" == X"nag" ; then
+   # using GCC in conjunction with NAG.
+     CCOPT="-O2"
+ else 
+     CCOPT="-O2 $CCOPT"
+ fi
+fi
+#CFLAGS="${CCOPT}"
+
+if test "X$FCOPT" == "X" ; then
+ if test "X$psblas_cv_fc" == "Xgcc" ; then
+ # note that no space should be placed around the equality symbol in assignations
+ # Note : 'native' is valid _only_ on GCC/x86  (32/64 bits)
+   FCOPT="-O3  $FCOPT"
+ elif test "X$psblas_cv_fc" == X"xlf" ; then
+   # XL compiler : consider using -qarch=auto
+     FCOPT="-O3 -qarch=auto  -qfixed -qsuffix=f=f:cpp=F -qlanglvl=extended $FCOPT"
+     FCFLAGS="-qhalt=e $FCFLAGS"
+ elif test "X$psblas_cv_fc" == X"ifc" ; then
+   # other compilers ..
+     FCOPT="-O3 $FCOPT"
+ elif test "X$psblas_cv_fc" == X"pg" ; then
+   # other compilers ..
+     FCOPT="-fast $FCOPT"
+  # NOTE : PG & Sun use -fast instead -O3
+ elif test "X$psblas_cv_fc" == X"sun" ; then
+   # other compilers ..
+     FCOPT="-fast $FCOPT"
+ elif test "X$psblas_cv_fc" == X"cray" ; then
+     FCOPT="-O3 -em $FCOPT"
+ elif test "X$psblas_cv_fc" == X"nag" ; then
+   # NAG  compiler ..
+     FCOPT="-O2 "
+  # NOTE : PG & Sun use -fast instead -O3
+ else 
+     FCOPT="-O2 $FCOPT"
+ fi
+fi
+if test "X$psblas_cv_fc" == X"nag" ; then
+   # Add needed options 
+   FCOPT="$FCOPT  -dcfuns -f2003 -wmismatch=mpi_scatterv,mpi_alltoallv,mpi_gatherv,mpi_allgatherv"
+fi
+#FFLAGS="${FCOPT}"
+
+if test "X$F90COPT" == "X" ; then
+ if test "X$psblas_cv_fc" == "Xgcc" ; then
+ # note that no space should be placed around the equality symbol in assignations
+ # Note : 'native' is valid _only_ on GCC/x86  (32/64 bits)
+   F90COPT="-O3  $F90COPT"
+ elif test "X$psblas_cv_fc" == X"xlf" ; then
+   # XL compiler : consider using -qarch=auto
+     F90COPT="-O3 -qarch=auto -qsuffix=f=f90:cpp=F90 -qlanglvl=extended $F90COPT"
+ elif test "X$psblas_cv_fc" == X"ifc" ; then
+   # other compilers ..
+     F90COPT="-O3 $F90COPT"
+ elif test "X$psblas_cv_fc" == X"pg" ; then
+   # other compilers ..
+     F90COPT="-fast $F90COPT"
+ elif test "X$psblas_cv_fc" == X"sun" ; then
+     F90COPT="-fast $F90COPT"
+ elif test "X$psblas_cv_fc" == X"cray" ; then
+     MPIFC="ftn"
+     F90COPT="-O3 -em $F90COPT"
+ elif test "X$psblas_cv_fc" == X"nag" ; then
+   # NAG compiler
+     F90COPT="-O2"
+ else 
+   # other compilers ..
+     F90COPT="-O2 $F90COPT"
+ fi
+else
+ echo "Found FCFLAGS $F90COPT"
+  #F90COPT="${FCFLAGS}"
+fi
+if test "X$psblas_cv_fc" == X"nag" ; then
+   # Add needed options 
+     F90COPT="$F90COPT -dcfuns -f2003 -wmismatch=mpi_scatterv,mpi_alltoallv,mpi_gatherv,mpi_allgatherv"
+     EXTRA_OPT="-mismatch_all"
+fi
+
+#FCFLAGS="${F90COPT}"
+
+# COPT,FCOPT, F90COPT are aliases for FFLAGS,CFLAGS,FCFLAGS .
+
+##############################################################################
+# Compilers variables selection 
+##############################################################################
+F90=${FC}
+MPF90=${MPIFC}
+FC=${FC}
+MPF77=${MPIFC}
+CC=${CC}
+MPCC=${MPICC}
+
+if test "X$psblas_cv_fc" == X"cray" 
+then
    MODEXT=".mod"
    FMFLAG="-I"
    FIFLAG="-I"
+   BASEMODNAME=PSB_BASE_MOD
+   PRECMODNAME=PSB_PREC_MOD
+   METHDMODNAME=PSB_KRYLOV_MOD
+   UTILMODNAME=PSB_UTIL_MOD
+
+else 
+   AX_F90_MODULE_EXTENSION
+   AX_F90_MODULE_FLAG
+   MODEXT=".$ax_cv_f90_modext"
+   FMFLAG="${ax_cv_f90_modflag%%[ ]*}"
+   FIFLAG=-I
+   BASEMODNAME=psb_base_mod
+   PRECMODNAME=psb_prec_mod
+   METHDMODNAME=psb_krylov_mod
+   UTILMODNAME=psb_util_mod
+fi
+
+
+##############################################################################
+# Choice of our compilers, needed by Make.inc
+##############################################################################
+if test "X$FLINK" == "X" ; then
+   FLINK=${MPF77}
+fi
+
+if test "X$F90LINK" == "X" ; then
+   F90LINK=${MPF90}
 fi
 
 
@@ -263,6 +523,21 @@ if (( $pac_cv_psblas_major < 3 )) ||
 else
   AC_MSG_NOTICE([Am configuring with PSBLAS version $pac_cv_psblas_major.$pac_cv_psblas_minor.$pac_cv_psblas_patchlevel.])
 fi
+###############################################################################
+#	Parachute rules for ar and ranlib ... (could cause problems)
+###############################################################################
+
+if test "X$AR" == "X" ; then
+  AR="ar"
+fi
+
+if test "X$RANLIB" == "X" ; then
+  RANLIB="ranlib"
+fi
+
+# This should be portable
+AR="${AR} -cur"
+
 
 ###############################################################################
 # NOTE :
@@ -417,22 +692,63 @@ fi
 ##############################################
 FINCLUDES="$PSBLAS_INCLUDES"
 
+if test "x$pac_cv_status_file" != "xNONE"; then
+   PSBLAS_INSTALL_MAKEINC="include $(PSBLAS_INCDIR)/Make.inc.psblas";
+else
+   PSBLAS_INSTALL_MAKEINC="";
+fi
+
+if test "x$pac_cv_status_file" != "xNONE"; then
+  COMPILERULES='';
+else
 COMPILERULES='
-LDLIBS=$(LAPACK) $(BLAS) $(METIS_LIB) $(AMD_LIB) $(LIBS)
-	
+F90LINK=$(MPF90)
+FLINK=$(MPF77)
 
 # These should be portable rules, arent they?
 .c.o:
 	$(CC) $(CCOPT) $(CINCLUDES) $(CDEFINES) -c $< -o $@
 .f.o:
-	$(FC) $(FCOPT) $(FINCLUDES)  -c $< -o $@
+	$(FC) $(FCOPT) $(FINCLUDES) -c $< -o $@
 .f90.o:
-	$(F90) $(F90COPT) $(FINCLUDES) -c $< -o $@
+	$(F90) $(FCOPT) $(FINCLUDES) -c $< -o $@
 .F.o:
-	$(FC)  $(FCOPT)   $(FINCLUDES) $(FDEFINES) -c $< -o $@
+	$(FC) $(FCOPT) $(FINCLUDES) $(FDEFINES) -c $< -o $@
 .F90.o:
-	$(F90) $(F90COPT) $(FINCLUDES) $(FDEFINES) -c $< -o $@'
+	$(F90) $(FCOPT) $(FINCLUDES) $(FDEFINES) -c $< -o $@'
 
+COMPILERULES="
+# The following ones are the variables used by the PSBLAS make scripts.
+
+F90=$F90
+FC=$FC
+CC=$CC
+F90COPT=$F90COPT
+FCOPT=$FCOPT
+CCOPT=$CCOPT
+FMFLAG=$FMFLAG
+FIFLAG=$FIFLAG
+EXTRA_OPT=$EXTRA_OPT
+
+BASEMODNAME=$BASEMODNAME
+PRECMODNAME=$PRECMODNAME
+METHDMODNAME=$METHDMODNAME
+UTILMODNAME=$UTILMODNAME
+
+LIBS=$LIBS
+BLAS=$BLAS_LIBS
+
+# These three should be always set!
+MPF90=$MPF90
+MPF77=$MPF77
+MPCC=$MPCC
+
+AR=$AR
+RANLIB=$RANLIB
+PSBLDLIBS=$LAPACK $BLAS_LIBS $METIS_LIB $LIBS
+
+$COMPILERULES"
+fi 
 
 
 ###############################################################################
@@ -442,6 +758,7 @@ LDLIBS=$(LAPACK) $(BLAS) $(METIS_LIB) $(AMD_LIB) $(LIBS)
 AC_SUBST(PSBLAS_DIR)
 AC_SUBST(PSBLAS_INCDIR)
 AC_SUBST(PSBLAS_INCLUDES)
+AC_SUBST(PSBLAS_INSTALL_MAKEINC)
 AC_SUBST(PSBLAS_LIBS)
 
 AC_SUBST(INSTALL)
@@ -462,7 +779,8 @@ AC_SUBST(UMF_LIBS)
 AC_SUBST(SLUDIST_FLAGS)
 AC_SUBST(SLUDIST_LIBS)
 AC_SUBST(FDEFINES)
-
+AC_SUBST(MODEXT)
+AC_SUBST(COMPILERULES)
 ###############################################################################
 # the following files will be created by Automake
 
