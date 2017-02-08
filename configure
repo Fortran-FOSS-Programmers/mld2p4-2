@@ -649,6 +649,8 @@ PSBLAS_DIR
 EGREP
 GREP
 CPP
+LAPACK_LIBS
+BLAS_LIBS
 ac_ct_F77
 FFLAGS
 F77
@@ -760,6 +762,8 @@ with_include_path
 with_module_path
 with_extra_libs
 enable_long_integers
+with_blas
+with_lapack
 with_mumps
 with_mumpsdir
 with_mumpsincdir
@@ -1446,6 +1450,8 @@ Optional Packages:
   --with-extra-libs       List additional link flags here. For example,
                           --with-extra-libs=-lspecial_system_lib or
                           --with-extra-libs=-L/path/to/libs
+  --with-blas=<lib>       use BLAS library <lib>
+  --with-lapack=<lib>     use LAPACK library <lib>
   --with-mumps=LIBNAME    Specify the libname for MUMPS. Default: autodetect
                           with minimum "-lmumps_common -lpord"
   --with-mumpsdir=DIR     Specify the directory for MUMPS library and
@@ -6426,6 +6432,903 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
+
+###############################################################################
+#		BLAS  library presence checks
+###############################################################################
+
+# Note : The libmkl.a (Intel Math Kernel Library) library could be used, too.
+# It is sufficient to specify it as -lmkl in the CLIBS or FLIBS or LIBS
+# and specify its path adjusting -L/path in CFLAGS.
+
+# Right now it is a matter of user's taste when linking custom applications.
+# But PSBLAS examples could take advantage of these libraries, too.
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+
+pac_blas_ok=no
+
+
+# Check whether --with-blas was given.
+if test "${with_blas+set}" = set; then :
+  withval=$with_blas;
+fi
+
+case $with_blas in
+	yes | "") ;;
+	no) pac_blas_ok=disable ;;
+	-* | */* | *.a | *.so | *.so.* | *.o) BLAS_LIBS="$with_blas" ;;
+	*) BLAS_LIBS="-l$with_blas" ;;
+esac
+
+# Get fortran linker names of BLAS functions to check for.
+#AC_FC_FUNC(sgemm)
+#AC_FC_FUNC(dgemm)
+
+pac_blas_save_LIBS="$LIBS"
+#LIBS="$LIBS $FLIBS"
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+# First, check BLAS_LIBS environment variable
+if test $pac_blas_ok = no; then
+if test "x$BLAS_LIBS" != x; then
+	save_LIBS="$LIBS"; LIBS="$BLAS_LIBS $LIBS"
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgemm in $BLAS_LIBS" >&5
+$as_echo_n "checking for sgemm in $BLAS_LIBS... " >&6; }
+	cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  pac_blas_ok=yes
+else
+  BLAS_LIBS=""
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pac_blas_ok" >&5
+$as_echo "$pac_blas_ok" >&6; }
+	LIBS="$save_LIBS"
+fi
+fi
+
+
+# BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
+if test $pac_blas_ok = no; then
+	ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ATL_xerbla in -latlas" >&5
+$as_echo_n "checking for ATL_xerbla in -latlas... " >&6; }
+if ${ac_cv_lib_atlas_ATL_xerbla+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-latlas  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ATL_xerbla ();
+int
+main ()
+{
+return ATL_xerbla ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_atlas_ATL_xerbla=yes
+else
+  ac_cv_lib_atlas_ATL_xerbla=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_atlas_ATL_xerbla" >&5
+$as_echo "$ac_cv_lib_atlas_ATL_xerbla" >&6; }
+if test "x$ac_cv_lib_atlas_ATL_xerbla" = xyes; then :
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+		 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgemm in -lf77blas" >&5
+$as_echo_n "checking for sgemm in -lf77blas... " >&6; }
+if ${ac_cv_lib_f77blas_sgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lf77blas -latlas $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_f77blas_sgemm=yes
+else
+  ac_cv_lib_f77blas_sgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_f77blas_sgemm" >&5
+$as_echo "$ac_cv_lib_f77blas_sgemm" >&6; }
+if test "x$ac_cv_lib_f77blas_sgemm" = xyes; then :
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+		 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cblas_dgemm in -lcblas" >&5
+$as_echo_n "checking for cblas_dgemm in -lcblas... " >&6; }
+if ${ac_cv_lib_cblas_cblas_dgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcblas -lf77blas -latlas $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cblas_dgemm ();
+int
+main ()
+{
+return cblas_dgemm ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_cblas_cblas_dgemm=yes
+else
+  ac_cv_lib_cblas_cblas_dgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_cblas_cblas_dgemm" >&5
+$as_echo "$ac_cv_lib_cblas_cblas_dgemm" >&6; }
+if test "x$ac_cv_lib_cblas_cblas_dgemm" = xyes; then :
+  pac_blas_ok=yes
+			 BLAS_LIBS="-lcblas -lf77blas -latlas"
+fi
+
+fi
+
+fi
+
+
+fi
+if test $pac_blas_ok = no; then
+	ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ATL_xerbla in -lsatlas" >&5
+$as_echo_n "checking for ATL_xerbla in -lsatlas... " >&6; }
+if ${ac_cv_lib_satlas_ATL_xerbla+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsatlas  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ATL_xerbla ();
+int
+main ()
+{
+return ATL_xerbla ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_satlas_ATL_xerbla=yes
+else
+  ac_cv_lib_satlas_ATL_xerbla=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_satlas_ATL_xerbla" >&5
+$as_echo "$ac_cv_lib_satlas_ATL_xerbla" >&6; }
+if test "x$ac_cv_lib_satlas_ATL_xerbla" = xyes; then :
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+		 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgemm in -lsatlas" >&5
+$as_echo_n "checking for sgemm in -lsatlas... " >&6; }
+if ${ac_cv_lib_satlas_sgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsatlas -lsatlas $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_satlas_sgemm=yes
+else
+  ac_cv_lib_satlas_sgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_satlas_sgemm" >&5
+$as_echo "$ac_cv_lib_satlas_sgemm" >&6; }
+if test "x$ac_cv_lib_satlas_sgemm" = xyes; then :
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+		 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cblas_dgemm in -lsatlas" >&5
+$as_echo_n "checking for cblas_dgemm in -lsatlas... " >&6; }
+if ${ac_cv_lib_satlas_cblas_dgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsatlas -lsatlas $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cblas_dgemm ();
+int
+main ()
+{
+return cblas_dgemm ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_satlas_cblas_dgemm=yes
+else
+  ac_cv_lib_satlas_cblas_dgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_satlas_cblas_dgemm" >&5
+$as_echo "$ac_cv_lib_satlas_cblas_dgemm" >&6; }
+if test "x$ac_cv_lib_satlas_cblas_dgemm" = xyes; then :
+  pac_blas_ok=yes
+			 BLAS_LIBS="-lsatlas"
+fi
+
+fi
+
+fi
+
+
+fi
+
+# BLAS in PhiPACK libraries? (requires generic BLAS lib, too)
+if test $pac_blas_ok = no; then
+        ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgemm in -lblas" >&5
+$as_echo_n "checking for sgemm in -lblas... " >&6; }
+if ${ac_cv_lib_blas_sgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lblas  $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_blas_sgemm=yes
+else
+  ac_cv_lib_blas_sgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_blas_sgemm" >&5
+$as_echo "$ac_cv_lib_blas_sgemm" >&6; }
+if test "x$ac_cv_lib_blas_sgemm" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dgemm in -ldgemm" >&5
+$as_echo_n "checking for dgemm in -ldgemm... " >&6; }
+if ${ac_cv_lib_dgemm_dgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ldgemm -lblas $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call dgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_dgemm_dgemm=yes
+else
+  ac_cv_lib_dgemm_dgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_dgemm_dgemm" >&5
+$as_echo "$ac_cv_lib_dgemm_dgemm" >&6; }
+if test "x$ac_cv_lib_dgemm_dgemm" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgemm in -lsgemm" >&5
+$as_echo_n "checking for sgemm in -lsgemm... " >&6; }
+if ${ac_cv_lib_sgemm_sgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsgemm -lblas $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_sgemm_sgemm=yes
+else
+  ac_cv_lib_sgemm_sgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sgemm_sgemm" >&5
+$as_echo "$ac_cv_lib_sgemm_sgemm" >&6; }
+if test "x$ac_cv_lib_sgemm_sgemm" = xyes; then :
+  pac_blas_ok=yes; BLAS_LIBS="-lsgemm -ldgemm -lblas"
+fi
+
+fi
+
+fi
+
+fi
+
+# BLAS in Alpha CXML library?
+if test $pac_blas_ok = no; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgemm in -lcxml" >&5
+$as_echo_n "checking for sgemm in -lcxml... " >&6; }
+if ${ac_cv_lib_cxml_sgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcxml  $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_cxml_sgemm=yes
+else
+  ac_cv_lib_cxml_sgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_cxml_sgemm" >&5
+$as_echo "$ac_cv_lib_cxml_sgemm" >&6; }
+if test "x$ac_cv_lib_cxml_sgemm" = xyes; then :
+  pac_blas_ok=yes;BLAS_LIBS="-lcxml"
+fi
+
+fi
+
+# BLAS in Alpha DXML library? (now called CXML, see above)
+if test $pac_blas_ok = no; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgemm in -ldxml" >&5
+$as_echo_n "checking for sgemm in -ldxml... " >&6; }
+if ${ac_cv_lib_dxml_sgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ldxml  $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_dxml_sgemm=yes
+else
+  ac_cv_lib_dxml_sgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_dxml_sgemm" >&5
+$as_echo "$ac_cv_lib_dxml_sgemm" >&6; }
+if test "x$ac_cv_lib_dxml_sgemm" = xyes; then :
+  pac_blas_ok=yes;BLAS_LIBS="-ldxml"
+fi
+
+
+fi
+
+# BLAS in Sun Performance library?
+if test $pac_blas_ok = no; then
+	if test "x$GCC" != xyes; then # only works with Sun CC
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for acosp in -lsunmath" >&5
+$as_echo_n "checking for acosp in -lsunmath... " >&6; }
+if ${ac_cv_lib_sunmath_acosp+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsunmath  $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call acosp
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_sunmath_acosp=yes
+else
+  ac_cv_lib_sunmath_acosp=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sunmath_acosp" >&5
+$as_echo "$ac_cv_lib_sunmath_acosp" >&6; }
+if test "x$ac_cv_lib_sunmath_acosp" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgemm in -lsunperf" >&5
+$as_echo_n "checking for sgemm in -lsunperf... " >&6; }
+if ${ac_cv_lib_sunperf_sgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsunperf -lsunmath $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_sunperf_sgemm=yes
+else
+  ac_cv_lib_sunperf_sgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sunperf_sgemm" >&5
+$as_echo "$ac_cv_lib_sunperf_sgemm" >&6; }
+if test "x$ac_cv_lib_sunperf_sgemm" = xyes; then :
+  BLAS_LIBS="-xlic_lib=sunperf -lsunmath"
+                                 pac_blas_ok=yes
+fi
+
+fi
+
+
+	fi
+fi
+
+# BLAS in SCSL library?  (SGI/Cray Scientific Library)
+if test $pac_blas_ok = no; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgemm in -lscs" >&5
+$as_echo_n "checking for sgemm in -lscs... " >&6; }
+if ${ac_cv_lib_scs_sgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lscs  $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_scs_sgemm=yes
+else
+  ac_cv_lib_scs_sgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_scs_sgemm" >&5
+$as_echo "$ac_cv_lib_scs_sgemm" >&6; }
+if test "x$ac_cv_lib_scs_sgemm" = xyes; then :
+  pac_blas_ok=yes; BLAS_LIBS="-lscs"
+fi
+
+fi
+
+# BLAS in SGIMATH library?
+if test $pac_blas_ok = no; then
+	as_ac_Lib=`$as_echo "ac_cv_lib_complib.sgimath_$sgemm" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $sgemm in -lcomplib.sgimath" >&5
+$as_echo_n "checking for $sgemm in -lcomplib.sgimath... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcomplib.sgimath  $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call $sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  pac_blas_ok=yes; BLAS_LIBS="-lcomplib.sgimath"
+fi
+
+fi
+
+# BLAS in IBM ESSL library? (requires generic BLAS lib, too)
+if test $pac_blas_ok = no; then
+	as_ac_Lib=`$as_echo "ac_cv_lib_blas_$sgemm" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $sgemm in -lblas" >&5
+$as_echo_n "checking for $sgemm in -lblas... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lblas  $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call $sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgemm in -lessl" >&5
+$as_echo_n "checking for sgemm in -lessl... " >&6; }
+if ${ac_cv_lib_essl_sgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lessl -lblas $FLIBS $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_essl_sgemm=yes
+else
+  ac_cv_lib_essl_sgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_essl_sgemm" >&5
+$as_echo "$ac_cv_lib_essl_sgemm" >&6; }
+if test "x$ac_cv_lib_essl_sgemm" = xyes; then :
+  pac_blas_ok=yes; BLAS_LIBS="-lessl -lblas"
+fi
+
+fi
+
+fi
+# BLAS linked to by default?  (happens on some supercomputers)
+if test $pac_blas_ok = no; then
+	save_LIBS="$LIBS"; LIBS="$LIBS"
+	cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  pac_blas_ok=yes
+else
+  BLAS_LIBS=""
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+	LIBS="$save_LIBS"
+fi
+
+# Generic BLAS library?
+if test $pac_blas_ok = no; then
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgemm in -lblas" >&5
+$as_echo_n "checking for sgemm in -lblas... " >&6; }
+if ${ac_cv_lib_blas_sgemm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lblas  $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call sgemm
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_blas_sgemm=yes
+else
+  ac_cv_lib_blas_sgemm=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_blas_sgemm" >&5
+$as_echo "$ac_cv_lib_blas_sgemm" >&6; }
+if test "x$ac_cv_lib_blas_sgemm" = xyes; then :
+  pac_blas_ok=yes; BLAS_LIBS="-lblas"
+fi
+
+fi
+
+
+
+LIBS="$pac_blas_save_LIBS"
+
+# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
+if test x"$pac_blas_ok" = xyes; then
+
+$as_echo "#define HAVE_BLAS 1" >>confdefs.h
+
+        :
+else
+        pac_blas_ok=no
+        as_fn_error $? "Cannot find BLAS library, specify a path using --with-blas=DIR/LIB (for example --with-blas=/usr/path/lib/libcxml.a)" "$LINENO" 5
+fi
+
+
+
+pac_lapack_ok=no
+
+
+# Check whether --with-lapack was given.
+if test "${with_lapack+set}" = set; then :
+  withval=$with_lapack;
+fi
+
+case $with_lapack in
+        yes | "") ;;
+        no) pac_lapack_ok=disable ;;
+        -* | */* | *.a | *.so | *.so.* | *.o) LAPACK_LIBS="$with_lapack" ;;
+        *) LAPACK_LIBS="-l$with_lapack" ;;
+esac
+
+# Get fortran linker name of LAPACK function to check for.
+#AC_FC_FUNC(cheev)
+
+# We cannot use LAPACK if BLAS is not found
+if test "x$pac_blas_ok" != xyes; then
+        pac_lapack_ok=noblas
+fi
+
+# First, check LAPACK_LIBS environment variable
+if test "x$LAPACK_LIBS" != x; then
+        save_LIBS="$LIBS"; LIBS="$LAPACK_LIBS $BLAS_LIBS $LIBS $FLIBS"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cheev in $LAPACK_LIBS" >&5
+$as_echo_n "checking for cheev in $LAPACK_LIBS... " >&6; }
+	ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+		cat > conftest.$ac_ext <<EOF
+        program test_cheev
+          call cheev
+        end
+EOF
+	if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_link\""; } >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && test -s conftest${ac_exeext}; then
+	  pac_lapack_ok=yes
+	  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+	  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	  echo "configure: failed program was:" >&5
+	  cat conftest.$ac_ext >&5
+	fi
+	rm -f conftest*
+        LIBS="$save_LIBS"
+        if test pac_lapack_ok = no; then
+                LAPACK_LIBS=""
+        fi
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+
+# LAPACK linked to by default?  (is sometimes included in BLAS lib)
+if test $pac_lapack_ok = no; then
+        save_LIBS="$LIBS"; LIBS="$LIBS $BLAS_LIBS $FLIBS"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cheev in default libs" >&5
+$as_echo_n "checking for cheev in default libs... " >&6; }
+	ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+		cat > conftest.$ac_ext <<EOF
+        program test_cheev
+          call cheev
+        end
+EOF
+	if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_link\""; } >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && test -s conftest${ac_exeext}; then
+	  pac_lapack_ok=yes
+	  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+	  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	  echo "configure: failed program was:" >&5
+	  cat conftest.$ac_ext >&5
+	fi
+	rm -f conftest*
+        LIBS="$save_LIBS"
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+
+# Generic LAPACK library?
+for lapack in lapack lapack_rs6k; do
+        if test $pac_lapack_ok = no; then
+                save_LIBS="$LIBS"; LIBS="$BLAS_LIBS $LIBS"
+		ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+		as_ac_Lib=`$as_echo "ac_cv_lib_$lapack''_cheev" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cheev in -l$lapack" >&5
+$as_echo_n "checking for cheev in -l$lapack... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$lapack $FLIBS $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call cheev
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  pac_lapack_ok=yes; LAPACK_LIBS="-l$lapack"
+fi
+
+		ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+                LIBS="$save_LIBS"
+        fi
+done
+
+
+
+# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
+if test x"$pac_lapack_ok" = xyes; then
+        FDEFINES="$psblas_cv_define_prepend-DHAVE_LAPACK $FDEFINES"
+        :
+else
+        pac_lapack_ok=no
+
+fi
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 ###############################################################################
 #		Auxiliary packages

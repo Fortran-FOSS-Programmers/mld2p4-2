@@ -361,6 +361,22 @@ PAC_FORTRAN_TEST_MOLD(
 )
 
 ###############################################################################
+#		BLAS  library presence checks
+###############################################################################
+
+# Note : The libmkl.a (Intel Math Kernel Library) library could be used, too.
+# It is sufficient to specify it as -lmkl in the CLIBS or FLIBS or LIBS 
+# and specify its path adjusting -L/path in CFLAGS.
+
+# Right now it is a matter of user's taste when linking custom applications.
+# But PSBLAS examples could take advantage of these libraries, too.
+AC_LANG([Fortran])
+PAC_BLAS([], [AC_MSG_ERROR([[Cannot find BLAS library, specify a path using --with-blas=DIR/LIB (for example --with-blas=/usr/path/lib/libcxml.a)]])])
+PAC_LAPACK(
+[FDEFINES="$psblas_cv_define_prepend-DHAVE_LAPACK $FDEFINES"],
+)
+AC_LANG([C])
+###############################################################################
 #		Auxiliary packages
 ###############################################################################
 
