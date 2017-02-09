@@ -1615,7 +1615,7 @@ if test "x$BLAS_LIBS" != x; then
 fi
 fi
 
-
+LIBS="$BLAS_LIBDIR $save_LIBS "
 # BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
 if test $pac_blas_ok = no; then
 	AC_LANG([C])
@@ -1709,10 +1709,8 @@ fi
 	
 # BLAS linked to by default?  (happens on some supercomputers)
 if test $pac_blas_ok = no; then
-	save_LIBS="$LIBS"; LIBS=" $BLAS_LIBDIR $LIBS"
 	AC_TRY_LINK_FUNC(sgemm, [pac_blas_ok=yes], [BLAS_LIBS=""])
 dnl	AC_CHECK_FUNC(sgemm, [pac_blas_ok=yes])
-	LIBS="$save_LIBS"
 fi
 
 # Generic BLAS library?

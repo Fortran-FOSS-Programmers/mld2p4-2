@@ -7665,7 +7665,7 @@ $as_echo "$pac_blas_ok" >&6; }
 fi
 fi
 
-
+LIBS="$BLAS_LIBDIR $save_LIBS "
 # BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
 if test $pac_blas_ok = no; then
 	ac_ext=c
@@ -8335,7 +8335,6 @@ fi
 
 # BLAS linked to by default?  (happens on some supercomputers)
 if test $pac_blas_ok = no; then
-	save_LIBS="$LIBS"; LIBS=" $BLAS_LIBDIR $LIBS"
 	cat > conftest.$ac_ext <<_ACEOF
       program main
       call sgemm
@@ -8348,7 +8347,6 @@ else
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-	LIBS="$save_LIBS"
 fi
 
 # Generic BLAS library?
